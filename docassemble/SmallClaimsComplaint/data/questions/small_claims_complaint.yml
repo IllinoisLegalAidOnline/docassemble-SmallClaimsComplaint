@@ -15,22 +15,24 @@ include:
 objects:
   - users: ALPeopleList.using(there_are_any=True)
   - filing_location: ALAddress
-  - other_parties: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True)
+  - other_parties: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True, maximum_number=9)
   - other_parties[i].agent: ALIndividual
   - other_parties[i].service_address: ALAdress
   - other_parties[i].alt_service_address: ALAddress
----
-sections:
-  - section_intro: Start
-  #- section_employer: Employer information
-  #- section_user: Your information
-  - section_download: Download
 ---
 code: |
   ilao_easy_form_title = "Small claims complaint"
   ilao_easy_form_url = "https://www.illinoislegalaid.org/legal-information/small-claims-complaint"
   github_user = 'IllinoisLegalAidOnline'
   github_repo_name = 'docassemble-SmallClaimsComplaint'
+---
+# Road map
+sections:
+  - section_intro: Start
+  - section_case: About the case
+  - section_defendants: Defendants
+  - section_about_you: About you
+  - section_download: Download
 ---
 # interview order block
 mandatory: True
@@ -45,6 +47,7 @@ code: |
   to_consider
   if age_check == False:
     age_kickout
+  nav.set_section('section_case')
   if corporation_check == True:
     corporation_kickout
   if money_check == True:
@@ -56,7 +59,10 @@ code: |
   if filing_location.county == "Cook County":
     if amount_check < 3000.01:
       daley_center_note
+  nav.set_section('section_defendants')
   other_parties.gather()
+  if other_parties.number_gathered() == 9:
+    blank_summons_check
   if landlord_check == True:
     under_construction
   else:
@@ -74,20 +80,23 @@ code: |
     person.service_phone
     person.service_email
     if person.alt_delivery == True:
-      person.alt_service_address
+      person.alt_service_address.address
       person.alt_service_phone
       person.alt_service_email
       person.service_method
+  nav.set_section('section_about_you')
   users[0].name.first
   users[0].address.address
   users[0].address.county_correct
   users[0].phone_number
   users[0].email
   e_signature
+  nav.set_section('section_download')
+  get_docs_screen
 ---
 code: |
   other_parties[i].name.first
-  other_parties[i].address.city
+  other_parties[i].address.address
   other_parties[i].complete = True
 ---
 id: welcome
@@ -359,6 +368,19 @@ fields:
       states_list()
   - ZIP code: other_parties[i].address.zip
 ---
+id: more than 9 defendants
+question: |
+  Are there any more defendants?
+subquestion: |
+  This program makes the *Summons* forms for the 9 defendants.
+  
+  You will need to fill out *Summons* forms for any other defendantsin your case. 
+  
+  If you choose **Yes**, you can download blank *Summons* forms at the end of this program.
+fields:
+  - "Anyone else?": blank_summons_check
+    datatype: yesnoradio
+---
 id: any other defendants
 question: |
   Do you have any other defendants to tell us about?
@@ -426,12 +448,12 @@ fields:
   - no label: demand_check
     datatype: yesnoradio
 ---
-id: claim_reason
+id: claim reason
 question: |
   % if other_parties.number_gathered() > 1:
-  Why do the defendants owe you '$'${amount_check}?
+  Why do the defendants owe you $${amount_check}?
   % else:
-  Why does ${other_parties[0].name.full(middle='full')} owe you '$'${amount_check}?
+  Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check}?
   % endif
 subquestion: |
   % if other_parties.number_gathered() > 1:
@@ -452,11 +474,11 @@ fields:
     maxlength: 2400
 ---
 depends on:
-  - x.person_type
+  - other_parties[i].person_type
 code: |
-  if x.person_type == "person":
-    x.agent_check = False
-  x.person_catch = True
+  if other_parties[i].person_type == "person":
+    other_parties[i].agent_check = False
+  other_parties[i].person_catch = True
 ---
 #This question should only be asked if a given defendant is a business.
 id: defendant agent check
@@ -516,34 +538,18 @@ fields:
       states_list()
   - ZIP code: other_parties[i].service_address.zip
 ---
-id: defendant contact info
-question: |
-  % if other_parties[i].agent_check == True:
-  What is ${other_parties[i].agent.name.full(middle='full')}'s contact information?
-  % else:
-  What is ${other_parties[i].name.full(middle='full')}'s contact information?
-  % endif
-fields:
-#Required is set to false until I dig up the contact information logic
-  - Phone number: other_parties[i].service_phone
-    datatype: al_international_phone
-    required: False
-  - Email: other_parties[i].service_email
-    datatype: email
-    required: False
----
 id: defendant alt service
 question: |
   % if other_parties[i].agent_check == True:
-  Do you have an alternate address, phone number, or email for ${other_parties[i].agent.name.full(middle='full')}?
+  Do you want to list an alternate address, phone number, or email for ${other_parties[i].agent.name.full(middle='full')}?
   % else:
-  Do you have an alternate address, phone number, or email for ${other_parties[i].name.full(middle='full')}?
+  Do you want to list an alternate address, phone number, or email for ${other_parties[i].name.full(middle='full')}?
   % endif
 fields:
   - no label: other_parties[i].alt_delivery
     datatype: yesnoradio
 ---
-id: defendant alt address
+id: defendant service address
 question: |
   % if other_parties[i].agent_check == True:
   What is the alternate address for ${other_parties[i].agent.name.full(middle='full')}?
@@ -551,19 +557,38 @@ question: |
   What is the alternate address for ${other_parties[i].name.full(middle='full')}?
   % endif
 fields:
-  - Street address: other_parties[i].service_address.address
+  - Street address: other_parties[i].alt_service_address.address
     address autocomplete: True
     required: False
-  - Address line 2: other_parties[i].service_address.unit
+  - Address line 2: other_parties[i].alt_service_address.unit
     required: False
-  - City: other_parties[i].service_address.city
+  - City: other_parties[i].alt_service_address.city
     required: False
-  - State: other_parties[i].service_address.state
+  - State: other_parties[i].alt_service_address.state
     code: |
       states_list()
     required: False
-  - ZIP code: other_parties[i].service_address.zip
+  - ZIP code: other_parties[i].alt_service_address.zip
     required: False
+---
+id: defendant service contact
+question: |
+  % if other_parties[i].agent_check == True:
+  What is ${other_parties[i].agent.name.full(middle='full')}'s contact information?
+  % else:
+  What is ${other_parties[i].name.full(middle='full')}'s contact information?
+  % endif
+fields:
+  - Phone number: other_parties[i].service_phone
+    datatype: al_international_phone
+    required: False
+  - Email: other_parties[i].service_email
+    datatype: email
+    required: False
+validation code: |
+  if (not showifdef('other_parties[i].service_phone') and \
+      (not showifdef('other_parties[i].service_email'))):
+    validation_error(word("You need to provide at least one contact method."), field="other_parties[i].service_email")
 ---
 id: defendant alt contact
 question: |
@@ -573,10 +598,10 @@ question: |
   What is ${other_parties[i].name.full(middle='full')}'s alternate contact information?
   % endif
 fields:
-  - Phone number: other_parties[i].service_phone
+  - Phone number: other_parties[i].alt_service_phone
     datatype: al_international_phone
     required: False
-  - Email: other_parties[i].service_email
+  - Email: other_parties[i].alt_service_email
     datatype: email
     required: False
 ---
@@ -604,7 +629,7 @@ choices:
 ---
 id: signature
 question: |
-  Do you want to add your electronic signature to your form?
+  Do you want to add your electronic signature to your forms?
 subquestion: |
   The program will put “/s/ ${users[0].name.full(middle='full')}” where you would sign your name so you do not have to sign the forms. The court will accept this as your signature.
 
@@ -681,13 +706,64 @@ objects:
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
   - letter_to_sheriff: ALDocument.using(title="Letter to sheriff", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
-  - summons: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
----
-#add code determining which forms are enabled. see evict a tenant program for example. Also code for summons bundles?
+  - summons_one: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
+  - summons_two: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
+  - summons_three: ALDocument.using(title="Summons 3", filename="summons_3.pdf", has_addendum=False)
+  - summons_four: ALDocument.using(title="Summons 4", filename="summons_4.pdf", has_addendum=False)
+  - summons_five: ALDocument.using(title="Summons 5", filename="summons_5.pdf", has_addendum=False)
+  - summons_six: ALDocument.using(title="Summons 6", filename="summons_6.pdf", has_addendum=False)
+  - summons_seven: ALDocument.using(title="Summons 7", filename="summons_7.pdf", has_addendum=False)
+  - summons_eight: ALDocument.using(title="Summons 8", filename="summons_8.pdf", has_addendum=False)
+  - summons_nine: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
+  - summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, getting_started, complaint, additional_defendants, additional_reasons, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, getting_started, complaint, additional_defendants, additional_reasons, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine], filename="small_claims_complaint.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, getting_started, complaint, additional_defendants, additional_reasons, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, getting_started, complaint, additional_defendants, additional_reasons, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+---
+code: |
+  instructions.enabled = True
+  getting_started.enabled = True
+  complaint.enabled = True
+  additional_defendants.enabled = False
+  additional_reasons.enabled = False
+  letter_to_sheriff.enabled = False
+  order.enabled = True
+  summons_one.enabled = True
+  summons_two.enabled = False
+  summons_three.enabled = False
+  summons_four.enabled = False
+  summons_five.enabled = False
+  summons_six.enabled = False
+  summons_seven.enabled = False
+  summons_eight.enabled = False
+  summons_nine.enabled = False
+  summons_blank.enabled = False
+  
+  if other_parties.number_gathered() > 2:
+    additional_defendants.enabled = True
+    
+  if len(claim_reason) > 1400:
+    additional_reasons.enabled = True
+  
+  if other_parties.number() > 1:
+      summons_two.enabled = True
+      if other_parties.number() > 2:
+        summons_three.enabled = True
+        if other_parties.number() > 3:
+          summons_four.enabled = True
+          if other_parties.number() > 4:
+            summons_five.enabled = True
+            if other_parties.number() > 5:
+              summons_six.enabled = True
+              if other_parties.number() > 6:
+                summons_seven.enabled = True
+                if other_parties.number() > 7:
+                  summons_eight.enabled = True
+                  if other_parties.number() > 8:
+                    summons_nine.enabled = True
+                    if blank_summons_check == True:
+                      summons_blank.enabled = True
 ---
 attachment:
   variable name: instructions[i]
@@ -720,7 +796,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.comma_and_list()}
+    - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_one_name": ${other_parties[0].name.full(middle='full')}
     - "defendant_one_address": ${other_parties[0].address.on_one_line(bare=True)}
     - "defendant_two_name": ${other_parties[1].name.full(middle='full')}
@@ -732,13 +808,14 @@ attachment:
     - "unattached_agreement": ${True if agreement_check == True and attach_check == False else False}
     - "unattached_reason": ${ attach_explain if agreement_check == True and attach_check == False else ""}
     - "demanded_and_failed": ${ True if demand_check == True else False}
-    - "why_owed": ${claim_reason[:1200]}
-    - "additional_reasons": ${ True if len(claim_reason) > 1200 else False}
+    - "why_owed": ${claim_reason[:1400]}
+    - "additional_reasons": ${ True if len(claim_reason) > 1400 else False}
     - "e_signature": ${users[0].name.full(middle='full') if e_signature == True else ""}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
     - "plaintiff_city_state_zip": ${users[0].address.line_two()}
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
+    - "amount_check": ${currency(amount_check)}
 ---
 attachment:
   variable name: additional_reasons[i]
@@ -751,8 +828,8 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.comma_and_list()}
-    - "further_reasons": ${claim_reason[1200:]}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "further_reasons": ${claim_reason[1400:]}
 ---
 attachment:
   variable name: additional_defendants[i]
@@ -765,7 +842,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.comma_and_list()}
+    - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_three_name": ${other_parties[2].name.full(middle='full')}
     - "defendant_three_address": ${other_parties[2].address.on_one_line(bare=True)}
     - "defendant_four_name": ${other_parties[3].name.full(middle='full')}
@@ -790,7 +867,14 @@ attachment:
   editable: False
   pdf template file: SMC_Letter_to_Sheriff.pdf
   fields:
-      - "fake": ${ "" }
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_address_one": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_address_two": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+    - "filing_county": ${filing_location.county}
+    - "defendant_list": ${other_parties.comma_and_list()}
+    - "short_defendant_list": ${other_parties.short_list(1)}
 ---
 attachment:
   variable name: order[i]
@@ -803,7 +887,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.comma_and_list()}
+    - "defendant_list": ${other_parties.short_list(4)}
 ---
 attachment:
   variable name: summons_one[i]
@@ -816,7 +900,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.comma_and_list()}
+    - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[0].name.full(middle='full')}
     - "agent_name": ${other_parties[0].agent.name.full(middle='full')}
     - "main_service_street": ${other_parties[0].address.line_one(bare=True)  if other_parties[0].same_address == True else other_parties[0].service_address.line_one(bare=True)}
@@ -834,3 +918,593 @@ attachment:
     - "plaintiff_csz": ${users[0].address.line_two()}
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_two[i]
+  name: summons_two
+  filename: summons_two
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[1].name.full(middle='full')}
+    - "agent_name": ${other_parties[1].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[1].address.line_one(bare=True)  if other_parties[1].same_address == True else other_parties[1].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[1].address.line_two()  if other_parties[1].same_address == True else other_parties[1].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[1].service_phone) if other_parties[1].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[1].service_email}
+    - "alt_service_street": ${other_parties[1].alt_service_address.line_one(bare=True)  if other_parties[1].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[1].alt_service_address.line_two()  if other_parties[1].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[1].alt_service_phone) if other_parties[1].alt_service_phone != "" and other_parties[1].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[1].alt_service_email if other_parties[1].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[1].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[1].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[1].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_three[i]
+  name: summons_three
+  filename: summons_three
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[2].name.full(middle='full')}
+    - "agent_name": ${other_parties[2].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[2].address.line_one(bare=True)  if other_parties[2].same_address == True else other_parties[2].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[2].address.line_two() if other_parties[2].same_address == True else other_parties[2].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[2].service_phone) if other_parties[2].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[2].service_email}
+    - "alt_service_street": ${other_parties[2].alt_service_address.line_one(bare=True)  if other_parties[2].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[2].alt_service_address.line_two()  if other_parties[2].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[2].alt_service_phone) if other_parties[2].alt_service_phone != "" and other_parties[2].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[2].alt_service_email if other_parties[2].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[2].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[2].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[2].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_four[i]
+  name: summons_four
+  filename: summons_four
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[3].name.full(middle='full')}
+    - "agent_name": ${other_parties[3].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[3].address.line_one(bare=True)  if other_parties[3].same_address == True else other_parties[3].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[3].address.line_two()  if other_parties[3].same_address == True else other_parties[3].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[3].service_phone) if other_parties[3].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[3].service_email}
+    - "alt_service_street": ${other_parties[3].alt_service_address.line_one(bare=True)  if other_parties[3].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[3].alt_service_address.line_two()  if other_parties[3].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[3].alt_service_phone) if other_parties[3].alt_service_phone != "" and other_parties[3].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[3].alt_service_email if other_parties[3].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[3].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[3].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[3].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_five[i]
+  name: summons_five
+  filename: summons_five
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[4].name.full(middle='full')}
+    - "agent_name": ${other_parties[4].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[4].address.line_one(bare=True)  if other_parties[4].same_address == True else other_parties[4].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[4].address.line_two()  if other_parties[4].same_address == True else other_parties[4].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[4].service_phone) if other_parties[4].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[4].service_email}
+    - "alt_service_street": ${other_parties[4].alt_service_address.line_one(bare=True)  if other_parties[4].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[4].alt_service_address.line_two()  if other_parties[4].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[4].alt_service_phone) if other_parties[4].alt_service_phone != "" and other_parties[4].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[4].alt_service_email if other_parties[4].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[4].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[4].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[4].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_six[i]
+  name: summons_six
+  filename: summons_six
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[5].name.full(middle='full')}
+    - "agent_name": ${other_parties[5].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[5].address.line_one(bare=True)  if other_parties[5].same_address == True else other_parties[5].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[5].address.line_two()  if other_parties[5].same_address == True else other_parties[5].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[5].service_phone) if other_parties[5].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[5].service_email}
+    - "alt_service_street": ${other_parties[5].alt_service_address.line_one(bare=True)  if other_parties[5].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[5].alt_service_address.line_two()  if other_parties[5].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[5].alt_service_phone) if other_parties[5].alt_service_phone != "" and other_parties[5].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[5].alt_service_email if other_parties[5].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[5].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[5].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[5].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_seven[i]
+  name: summons_seven
+  filename: summons_seven
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": $${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[6].name.full(middle='full')}
+    - "agent_name": ${other_parties[6].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[6].address.line_one(bare=True)  if other_parties[6].same_address == True else other_parties[6].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[6].address.line_two()  if other_parties[6].same_address == True else other_parties[6].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[6].service_phone) if other_parties[6].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[6].service_email}
+    - "alt_service_street": ${other_parties[6].alt_service_address.line_one(bare=True)  if other_parties[6].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[6].alt_service_address.line_two()  if other_parties[6].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[6].alt_service_phone) if other_parties[6].alt_service_phone != "" and other_parties[6].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[6].alt_service_email if other_parties[6].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[6].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[6].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[6].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_eight[i]
+  name: summons_eight
+  filename: summons_eight
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[7].name.full(middle='full')}
+    - "agent_name": ${other_parties[7].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[7].address.line_one(bare=True)  if other_parties[7].same_address == True else other_parties[7].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[7].address.line_two()  if other_parties[7].same_address == True else other_parties[7].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[7].service_phone) if other_parties[7].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[7].service_email}
+    - "alt_service_street": ${other_parties[7].alt_service_address.line_one(bare=True)  if other_parties[7].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[7].alt_service_address.line_two()  if other_parties[7].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[7].alt_service_phone) if other_parties[7].alt_service_phone != "" and other_parties[7].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[7].alt_service_email if other_parties[7].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[7].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[7].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[7].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_nine[i]
+  name: summons_nine
+  filename: summons_nine
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${other_parties[8].name.full(middle='full')}
+    - "agent_name": ${other_parties[8].agent.name.full(middle='full')}
+    - "main_service_street": ${other_parties[8].address.line_one(bare=True)  if other_parties[8].same_address == True else other_parties[8].service_address.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[8].address.line_two()  if other_parties[8].same_address == True else other_parties[8].service_address.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(other_parties[8].service_phone) if other_parties[8].service_phone != "" else ""}
+    - "main_service_email": ${other_parties[8].service_email}
+    - "alt_service_street": ${other_parties[8].alt_service_address.line_one(bare=True)  if other_parties[8].alt_delivery == True else ""}
+    - "alt_service_csz": ${other_parties[8].alt_service_address.line_two()  if other_parties[8].alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(other_parties[8].alt_service_phone) if other_parties[8].alt_service_phone != "" and other_parties[8].alt_delivery == True else ""}
+    - "alt_service_email": ${other_parties[8].alt_service_email if other_parties[8].alt_delivery == True else ""}
+    - "by_mail": ${ True if other_parties[8].service_method == "mail" else False}
+    - "by_sheriff": ${ True if other_parties[8].service_method == "sheriff" else False}
+    - "by_server": ${ True if other_parties[8].service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+attachment:
+  variable name: summons_blank[i]
+  name: summons_blank
+  filename: summons_blank
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${filing_location.county}
+    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_name": ${""}
+    - "agent_name": ${""}
+    - "main_service_street": ${""}
+    - "main_service_csz": ${""}
+    - "main_service_phone": ${""}
+    - "main_service_email": ${""}
+    - "alt_service_street": ${""}
+    - "alt_service_csz": ${""}
+    - "alt_service_phone": ${""}
+    - "alt_service_email": ${""}
+    - "by_mail": ${False}
+    - "by_sheriff": ${False}
+    - "by_server": ${False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+---
+id: review screen
+event: review_answers
+question: |
+  Review screen
+subquestion: |
+  Edit your answers below.
+review: 
+  - Edit: amount_check
+    button: |
+      **You are suing for:**
+      $${amount_check}  
+  - Edit: filing_location.county_number
+    button: |
+      **You are filing in:**
+      ${end_in_county(filing_location.county)}
+  - Edit: other_parties.revisit
+    button: |
+      **Defendants: (Edit to change names, addresses, and other information)**
+
+      % for my_var in other_parties:
+        * ${ my_var.name.full(middle="full") }
+      % endfor
+  - Edit: landlord_check
+    button: |
+      **Are you suing your former landlord to return a security deposit?**
+      ${word(yesno(landlord_check))}
+  - Edit: agreement_check
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Do you have a written agreement with the defendants?**
+      % else:
+      **Do you have a written agreement with ${other_parties[0].name.full(middle='full')}?**
+      % endif
+      ${word(yesno(agreement_check))}
+  - Edit: attach_check
+    button: |
+      **Will you attach your written agreement?**
+      ${word(yesno(attach_check))}
+    show if: agreement_check
+  - Edit: attach_explain
+    button: |
+      **Why can you not attach a copy of your written agreement?**
+      ${attach_explain}
+    show if: agreement_check == True and attach_check == False
+  - Edit: demand_check
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Have you demanded payment of $${amount_check} and have the defendants failed to pay you the full amount?**
+      % else:
+      **Have you demanded payment of $${amount_check} and has ${other_parties[0].name.full(middle='full')} failed to pay you the full amount?**
+      % endif
+      ${word(yesno(demand_check))}
+  - Edit: claim_reason
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Why do the defendants owe you $${amount_check}?**
+      % else:
+      **Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check}?**
+      % endif
+      ${claim_reason}
+  - Edit: users[0].name.first
+    button: |
+      **Your name:**
+      ${users[0].name.full(middle='full')}
+  - Edit: users[0].address.address
+    button: |
+      **Your address:**
+      ${users[0].address.on_one_line(bare=True)}
+  - Edit: users[0].phone_number
+    button: |
+      **Your phone number:**
+      ${phone_number_formatted(users[0].phone_number)}
+  - Edit: users[0].email
+    button: |
+      **Your email address:**
+      ${users[0].email}
+  - Edit: e_signature
+    button: |
+      **Do you want to add your electronic signature to your forms?**
+      ${word(yesno(e_signature))}
+---
+continue button field: other_parties.revisit
+question: |
+    Edit the defendants
+subquestion: |
+  ${ other_parties.table }
+
+  ${ other_parties.add_action() }
+---
+table: other_parties.table
+rows: other_parties
+columns:
+  - Name: |
+      row_item.name.full(middle="full") if defined("row_item.name.first") else ""
+  - Contact, service address, and additional information: |
+      action_button_html(url_action(row_item.attr_name("review_defendant_info")), label="Edit", icon="pencil-alt")
+delete buttons: True
+confirm: True
+---
+continue button field: x.review_defendant_info
+generic object: ALIndividual
+question: |
+  Edit ${ x.name.full(middle="full") }'s information
+review: 
+  - Edit: x.name.first
+    button: |
+      **Defendant name:**
+      ${x.name.full(middle='full')}
+  - Edit: x.person_type
+    button: |
+      **Is ${x.name.full(middle='full')} a person or a business?**
+      % if x.person_type == "person":
+      A person
+      % else:
+      A business
+      % endif
+  - Edit: x.address.address
+    button: |
+      **Defendant address:**
+      ${x.address.on_one_linw(bare=True)}
+  - Edit: x.agent_check
+    button: |
+      **Does ${x.name.full(middle='full')} have a registered agent?**
+      ${word(yesno(x.agent_check))}
+    show if: x.person_type != "person"
+  - Edit: x.agent.name.first
+    button: |
+      **What is ${x.name.full(middle='full')}'s registered agent's name?**
+      ${x.agent.name.full(middle='full')}
+    show if: x.agent_check
+  - Edit: x.same_address
+    button: |
+      % if x.agent_check == True:
+      **Do you want to serve ${x.agent.name.full(middle='full')} at ${x.address.on_one_line(bare=True)}?**
+      % else:
+      **Do you want to serve ${x.name.full(middle='full')} at ${x.address.on_one_line(bare=True)}?**
+      % endif
+      ${word(yesno(x.same_address))}
+  - Edit: x.service_address.address
+    button: |
+      % if x.agent_check == True:
+      **Where do you want to serve ${x.agent.name.full(middle='full')}?**
+      % else:
+      **Where do you want to serve ${x.name.full(middle='full')}?**
+      % endif
+      ${x.service_address.on_one_line(bare=True)}
+    show if: x.same_address == False
+  - Edit: x.service_phone
+    button: |
+      % if x.agent_check == True:
+      **What is ${x.agent.name.full(middle='full')}'s phone number?**
+      % else:
+      **What is ${x.name.full(middle='full')}'s phone number?**
+      % endif
+      ${phone_number_formatted(x.service_phone)}
+  - Edit: x.service_email
+    button: |
+      % if x.agent_check == True:
+      **What is ${x.agent.name.full(middle='full')}'s email address?**
+      % else:
+      **What is ${x.name.full(middle='full')}'s email address?**
+      % endif
+      ${x.service_email}
+  - Edit: x.alt_delivery
+    button: |
+      % if other_parties[i].agent_check == True:
+      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].agent.name.full(middle='full')}?**
+      % else:
+      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].name.full(middle='full')}?**
+      % endif
+      ${word(yesno(x.alt_delivery))}
+  - Edit: x.alt_service_address.address
+    button: |
+      % if x.agent_check == True:
+      **What is ${x.agent.name.full(middle='full')}'s alternate service address?**
+      % else:
+      **What is ${x.name.full(middle='full')}'s alternate service address?**
+      % endif
+      ${x.service_address.on_one_line(bare=True)}
+    show if: x.alt_delivery
+  - Edit: x.alt_service_phone
+    button: |
+      % if x.agent_check == True:
+      **What is ${x.agent.name.full(middle='full')}'s alternate phone number?**
+      % else:
+      **What is ${x.name.full(middle='full')}'s alternate phone number?**
+      % endif
+      ${phone_number_formatted(x.alt_service_phone)}
+    show if: x.alt_delivery
+  - Edit: x.alt_service_email
+    button: |
+      % if x.agent_check == True:
+      **What is ${x.agent.name.full(middle='full')}'s alternate email address?**
+      % else:
+      **What is ${x.name.full(middle='full')}'s alternate email address?**
+      % endif
+      ${x.alt_service_email}
+    show if: x.alt_delivery
+  - Edit: x.service_method
+    button: |
+      % if other_parties[i].agent_check == True:
+      **How will you serve ${other_parties[i].agent.name.full(middle='full')}?**
+      % else:
+      **How will you serve ${other_parties[i].name.full(middle='full')}?**
+      % endif
+      % if x.service_method == "mail":
+      By certified or registered mail
+      % elif x.service_method == "sheriff":
+      By sheriff
+      % elif x.service_method == "server":
+      By special process server
+      % elif x.service_method == "unknown":
+      I do not know yet
+      % endif
+---
+id: case review screen
+event: section_case
+question: |
+  About the case
+subquestion: |
+  Edit your answers below.
+review:
+  - Edit: amount_check
+    button: |
+      **You are suing for:**
+      $${amount_check}  
+  - Edit: filing_location.county_number
+    button: |
+      **You are filing in:**
+      ${end_in_county(filing_location.county)}
+  - Edit: landlord_check
+    button: |
+      **Are you suing your former landlord to return a security deposit?**
+      ${word(yesno(landlord_check))}
+  - Edit: agreement_check
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Do you have a written agreement with the defendants?**
+      % else:
+      **Do you have a written agreement with ${other_parties[0].name.full(middle='full')}?**
+      % endif
+      ${word(yesno(agreement_check))}
+  - Edit: attach_check
+    button: |
+      **Will you attach your written agreement?**
+      ${word(yesno(attach_check))}
+    show if: agreement_check
+  - Edit: attach_explain
+    button: |
+      **Why can you not attach a copy of your written agreement?**
+      ${attach_explain}
+    show if: agreement_check == True and attach_check == False
+  - Edit: demand_check
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Have you demanded payment of $${amount_check} and have the defendants failed to pay you the full amount?**
+      % else:
+      **Have you demanded payment of $${amount_check} and has ${other_parties[0].name.full(middle='full')} failed to pay you the full amount?**
+      % endif
+      ${word(yesno(demand_check))}
+  - Edit: claim_reason
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Why do the defendants owe you $${amount_check}?**
+      % else:
+      **Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check}?**
+      % endif
+      ${claim_reason}
+---
+id: defendants review screen
+event: section_defendants
+question: |
+  Defendants
+subquestion: |
+  Edit your answers below.
+review:
+  - Edit: other_parties.revisit
+    button: |
+      **Defendants: (Edit to change names, addresses, and other information)**
+
+      % for my_var in other_parties:
+        * ${ my_var.name.full(middle="full") }
+      % endfor
+  - Edit: demand_check
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Have you demanded payment of $${amount_check} and have the defendants failed to pay you the full amount?**
+      % else:
+      **Have you demanded payment of $${amount_check} and has ${other_parties[0].name.full(middle='full')} failed to pay you the full amount?**
+      % endif
+      ${word(yesno(demand_check))}
+---
+id: user review screen
+event: section_about_you
+question: |
+  About you
+subquestion: |
+  Edit your answers below.
+review:
+  - Edit: users[0].name.first
+    button: |
+      **Your name:**
+      ${users[0].name.full(middle='full')}
+  - Edit: users[0].address.address
+    button: |
+      **Your address:**
+      ${users[0].address.on_one_line(bare=True)}
+  - Edit: users[0].phone_number
+    button: |
+      **Your phone number:**
+      ${phone_number_formatted(users[0].phone_number)}
+  - Edit: users[0].email
+    button: |
+      **Your email address:**
+      ${users[0].email}
+  - Edit: e_signature
+    button: |
+      **Do you want to add your electronic signature to your forms?**
+      ${word(yesno(e_signature))}
