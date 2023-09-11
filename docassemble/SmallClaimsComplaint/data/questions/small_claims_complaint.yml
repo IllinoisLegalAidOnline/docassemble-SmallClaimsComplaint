@@ -20,6 +20,15 @@ objects:
   - other_parties[i].service_address: ALAdress
   - other_parties[i].alt_service_address: ALAddress
   - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts.xlsx')
+  - rental_address: ALAddress
+  - deposit_payments: DAList
+  - deposit_dates: DAList
+  - another_deposit: DAList
+  - other_parties[i].where_to_serve: ALAddress
+---
+mandatory: True
+objects:
+  - watermark: DAStaticFile.using(filename="preview_watermark_text.png")
 ---
 code: |
   ilao_easy_form_title = "Small claims complaint"
@@ -57,21 +66,89 @@ code: |
     amount_kickout
   filing_location.county_number
   filing_location.get_county
-  if filing_location.county == "Cook County":
+  if filing_location.county_number == -1:
     if amount_check < 3000.01:
-      daley_center_note
-    cook_district
+      if cook_district == "15":
+        daley_center_note
   other_parties.gather()
   if other_parties.number_gathered() == 9:
     blank_summons_check
   if landlord_check == True:
-    under_construction
+    move_in_date
+    if moved_out == False:
+      no_move_kickout
+    move_out_date
+    if demand_letter_check == False:
+      no_demand_kickout
+    demand_letter_date
+    if apartment_city != "None of the above" or cook_county_check == True:
+      municipal_intro
+      if property_type_check == False:
+        if apartment_city == "Chicago":
+          chicago_owner_occupant
+        elif apartment_city == "Oak Park":
+          if cook_owner_occupant == False:
+            cook_family_check
+        elif apartment_city == "None of the above" and cook_county_check == True:
+          if cook_owner_occupant == False:
+            cook_family_check
+      rental_address.address
+      if apartment_city == "Chicago" or apartment_city == "Oak Park" or cook_county_check == True:
+        unit_number_chicagoland
+      else:
+        unit_number_illinois
+    rlto_note
+    if date_diff_reference.days < 0:
+      landlord_time_kickout
+    landlord_deadline
+    deposit_payments[0]
+    deposit_dates[0]
+    if another_deposit[0] == True:
+      deposit_payments[1]
+      deposit_dates[1]
+      if another_deposit[1] == True:
+        deposit_payments[2]
+        deposit_dates[2]
+    if partial_return_check == True:
+      partial_return_amount
+      partial_return_date
+    if deposit_balance_owed > 0:
+      deposit_still_owed
+    else:
+      all_paid_error
+    #if rlto_applies == True:
+      #if damages_check == True:
+        #damages_date
+    deposit_damages_info
+    if deposit_with_damages != amount_check:
+      if claim_amount_update == True:
+        amount_updated
+    if lease_check == True:
+      if lease_attach_check == False:
+        lease_attach_explain
+    deposit_payment_proof
+    demand_letter_attach
+    generate_default
+    use_that_default
+    chop_off_county
+    if preview_deposit_complaint == "Additional page":
+      more_deposit_reason
+      preview_additional_deposit_reasons
+         
+
   else:
     if agreement_check == True:
       if attach_check == False:
         attach_explain
-    demand_check
+    if demand_check == True:
+      if demand_answer_check == "part_paid":
+        if partial_payment_amount == amount_check:
+          demand_answered_kickout
+        else:
+          if generic_amount_update == True:
+            generic_amount_updated
     claim_reason
+    chop_off_county
     if preview_complaint == "Additional page":
       more_reason
       preview_additional_reasons
@@ -82,7 +159,8 @@ code: |
     person.person_catch
     if person.agent_check == True:
       person.agent.name.first
-    if person.same_address != True:
+      person.service_address.address
+    elif person.same_address != True:
       person.service_address.address
     person.service_phone
     person.service_email
@@ -95,13 +173,13 @@ code: |
   nav.set_section('section_about_you')
   users[0].name.first
   users[0].address.address
-  users[0].address.county_correct
-  users[0].phone_number
-  users[0].email
+  users[0].has_email_address
   e_signature
   next_steps
   evidence
   nav.set_section('section_download')
+  attachment_logic
+  
   get_docs_screen
 ---
 code: |
@@ -109,11 +187,18 @@ code: |
   #other_parties[i].address.address
   other_parties[i].complete = True
 ---
+code: |
+  if filing_location.county.endswith(" County"):
+    filing_location.county = filing_location.county[:-7]
+    chop_off_county = True
+  else:
+    chop_off_county = False
+---
 id: welcome
 question: |
-  Small claims complaint
+  Small Claims Complaint
 subquestion: |
-  Welcome to Illinois Legal Aid Online's **Small claims complaint** Easy Form.
+  Welcome to Illinois Legal Aid Online's **Small Claims Complaint** Easy Form.
 
   This program makes the forms to sue a person or business for up to $10,000. It can be used to sue a landlord for a security deposit.
   
@@ -159,7 +244,7 @@ content: |
 id: small claims explainer
 continue button field: small_claims_explainer
 question: |
-  About small claims court
+  About Small Claims Court
 subquestion: |
   Small Claims Court is a place where you can sue a person or business for $10,000 or less. The case may be based on an agreement or the fact that someone has harmed you or your property.
 
@@ -173,11 +258,12 @@ subquestion: |
 id: considerations
 continue button field: to_consider
 question: |
-  Before filing a small claims complaint
+  Before filing a Small Claims 
+  complaint
 subquestion: |
-  Here are some things to consider before filing a Small Claims Complaint:
+  Here are some things to consider before filing a *Small Claims Complaint*:
 
-  * Try contacting the other person or business to solve the problem out of court. If you are successful, you save time, effort, and expense. Call or write the other party to explain your position and the settlement you want.
+  * Try contacting the other person or business to solve the problem out of court. If you are successful, you save time, effort, and money. Call or write the other party to explain your position and the settlement you want.
   * Consider whether the person or business has money, income, or property. If they do not have any money, you may not be able to collect even if the judge decides they owe you money.
   
   To learn more, read ILAO's article about [**your options before filing a small claims case**](https://www.illinoislegalaid.org/legal-information/what-consider-filing-small-claims-case).
@@ -206,29 +292,41 @@ fields:
     code: |
       states_list() 
   - ZIP code: users[0].address.zip
-  - County: users[0].address.county
 ---
-sets:
-  - users[0].phone_number
-  - users[0].email
 id: your contact information
 question: |
-  What is your phone number and email address?
+  What is your contact information?
 subquestion: |
-  This information can help the court contact you.
-  
-  If you have an email address, you must enter it.
-fields:
+  ${ collapse_template(contact_info_help) }  
+fields:  
   - Phone number: users[0].phone_number
     datatype: al_international_phone
     required: False
-  - Email: users[0].email
+  - label: |
+      I have an email address
+    field: users[0].has_email_address      
+    datatype: yesnoradio
+  - note: |
+      This email address will appear on your court forms. Be sure to check 
+      this email daily, otherwise you may miss important information about 
+      your case.
+    show if: x.has_email_address      
+  - Email address: users[0].email    
     datatype: email
     required: False
+    show if: 
+      variable: users[0].has_email_address
+      is: True
 validation code: |
   if (not showifdef('users[0].phone_number') and \
-      (not showifdef('users[0].email'))):
-    validation_error(word("You need to provide at least one contact method."), field="users[0].email")
+      (not showifdef('x=users[0].email'))):
+    validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
+---
+template: contact_info_help
+subject: |
+  **Why do I need to include this?**
+content: |  
+  The court **must** be able to reach you. So you have to give them some way to do this.
 ---
 id: age check
 question: |
@@ -244,7 +342,9 @@ question: |
 subquestion: |
   You must be 18 years old or older to use this program.
   
-  Click **Back** or **Restart** if you reached this page by mistake.
+  A parent or guardian can sue for injury or money loss to a minor child.
+  
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
   - Exit: exit
   - Restart: restart
@@ -265,9 +365,7 @@ subquestion: |
 
   Corporations can sue in Small Claims Court, but they need to be represented by a lawyer.
   
-  Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-  
-  Click **Back** or **Restart** if you reached this page by mistake.
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
   - Exit: exit
   - Restart: restart
@@ -294,13 +392,12 @@ subquestion: |
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
-  Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-  
-  Click **Back** or **Restart** if you reached this page by mistake.
+  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
   - Exit: exit
   - Restart: restart
 ---
+sets: amount_check
 id: amount check
 question: |
   How much money are you suing for?
@@ -322,9 +419,7 @@ subquestion: |
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
-  Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-  
-  Click **Back** or **Restart** if you reached this page by mistake.
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
   - Exit: exit
   - Restart: restart
@@ -393,7 +488,9 @@ continue button field: daley_center_note
 question: |
   Free help at the Daley Center
 subquestion: |
-  Since you are suing in Cook County for $3,000 or less, you can [**get free help at the Daley Center's Pro Se Filing Desk**](http://www.cookcountycourt.org/ABOUTTHECOURT/MunicipalDepartment/FirstMunicipalDistrict-Chicago/ProSeSmallClaimsCourt.aspx).
+  Since you are filing in Chicago for $3,000 or less, you may be able to get free help at the [**Daley Center's Pro Se Filing Desk**](https://www.cookcountycourt.org/FOR-PEOPLE-WITHOUT-LAWYERS/Help-Desks-in-the-Courthouse/cid/222/smid/2897/tmid/2803).
+  
+  While it may be easier to get help at the Daley Center, you can still continue to make forms with this program.
 ---
 #Note: may need to change this so that a non-incorporated business's name and owner's name are associated with the same indvidual within other_parties
 sets:
@@ -402,9 +499,11 @@ id: defendant name
 question: |
   What is the ${ordinal(i)} defendant's name?
 subquestion: |
+  % if i == 0:
   In Small Claims Court, the person filing the case is the plaintiff. The person or company that the plaintiff is suing is the defendant. There can be more than one defendant.
-
-  You cannot collect money against a defendant who is incorrectly named on the Small Claims Complaint.
+  
+  % endif
+  You cannot collect money against a defendant who is incorrectly named on the *Small Claims Complaint*.
   
   ${collapse_template(help_suing_business)}
   
@@ -416,13 +515,15 @@ template: help_suing_business
 subject: |
   **What if I am suing a business?**
 content: |  
-  If a business is not incorporated, you will need to list both the business and the business owner as defendants. You will need to list the business's owner if it is a:
+  **Important:** If a business is not incorporated, you will need to list both the business and the business owner as defendants.
+  
+  You will need to list both the business and it's owner if it the business is a:
   
   * Unincorporated business,
   * Sole proprietorship, or
-  * General partnership
+  * General partnership.
   
-  Incorporated businesses are listed in the[**Illinois Secretary of State's database**](https://apps.ilsos.gov/businessentitysearch/). You do not need to list an owner for an incorporated business.
+  Incorporated businesses are listed in the [**Illinois Secretary of State's database**](https://apps.ilsos.gov/businessentitysearch/). You do not need to list an owner for an incorporated business.
 ---
 sets:
   -other_parties[i].address.address
@@ -497,9 +598,9 @@ fields:
 ---
 id: attach check
 question: |
-  Will you attach your written agreement to the small claims complaint?
+  Will you attach your written agreement to the *Small Claims Complaint*?
 subquestion: |
-  If you have a written agreement, you should attach it to your Small Claims Complaint.
+  If you have a written agreement, you should attach it to your *Small Claims Complaint*.
 
   If you cannot attach the written agreement, you can explain why on the next screen.
 fields:
@@ -508,46 +609,122 @@ fields:
 ---
 id: no attachment explanation
 question: |
-   Why can you not attach a copy of your written agreement to your small claims complaint?
+   Why can you not attach a copy of your written agreement to your *Small Claims Complaint*?
 fields:
   - Explanation: attach_explain
     input type: area
-    rows: 2
+    rows: 4
     maxlength: 175
 ---
 id: demand payment check
 question: |
-  % if other_parties.number_gathered() > 1:
-  Have you demanded payment of $${amount_check} and have the defendants failed to pay you the full amount?
-  % else:
-  Have you demanded payment of $${amount_check} and has ${other_parties[0].name.full(middle='full')} failed to pay you the full amount?
-  % endif
+  Have you demanded payment of ${currency(amount_check)}?
 fields:
   - no label: demand_check
+    datatype: yesnoradio
+---
+id: demand answer check
+question: |
+  % if other_parties.number_gathered() > 1:
+  Have the defendants paid you any amount of ${currency(amount_check)}?
+  % else:
+  Has ${other_parties[0].name.full(middle='full')} paid you any amount of ${currency(amount_check)}?
+  % endif
+fields:
+  - no label: demand_answer_check
+    input type: radio
+    choices:
+      - They have not paid me.: not_paid
+      - They have paid part of the amount: part_paid
+  - How much did they pay you?: partial_payment_amount
+    datatype: currency
+    max: ${amount_check}
+    show if: 
+      variable: demand_answer_check
+      is: "part_paid" 
+---
+id: demand answered kickout
+event: demand_answered_kickout
+question: |
+  Sorry
+subquestion: |
+  % if other_parties.number_gathered() > 1: 
+  You can only use this program if the defendants still owe you money.
+  % else:
+  You can only use this program if ${other_parties[0].name.full(middle='full')} still owea you money.
+  % endif
+  
+  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
+reconsider: True
+code: |
+  remaining_total_storage = amount_check - partial_payment_amount
+---
+only sets:
+  - generic_amount_updated
+depends on:
+  - remaining_total_storage
+code: |
+  if  generic_amount_update == True:
+    amount_check =  remaining_total_storage
+  generic_amount_updated = True
+---
+id: generic claim amount update
+question: |
+  Do you want to update your claim amount from ${currency(amount_check)} to ${currency(remaining_total_storage)}?
+subquestion: |
+  % if other_parties.number_gathered() > 1: 
+  Since the defendants paid you ${currency(partial_payment_amount)} out of ${currency(amount_check)}, they still owe you ${currency(remaining_total_storage)}.
+  % else:
+  Since the ${other_parties[0].name.full(middle='full')} paid you ${currency(partial_payment_amount)} out of ${currency(amount_check)}, they still owe you ${currency(remaining_total_storage)}.
+  % endif
+fields:
+  - no label: generic_amount_update
     datatype: yesnoradio
 ---
 id: claim reason
 question: |
   % if other_parties.number_gathered() > 1:
-  Why do the defendants owe you $${amount_check}?
+  Why do the defendants owe you ${currency(amount_check)}?
   % else:
-  Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check}?
+  Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)}?
   % endif
 subquestion: |
   % if other_parties.number_gathered() > 1:
-  Explain why the defendants owe you money. Be specific. Include dates, what happened, and if any payments were made. If there was a contract, an agreement, or a receipt, mention it here. Remember you can only sue for money in Small Claims Court.
+  Explain why the defendants owe you money. 
+  
+  Be specific. Include:
+  
+  * Dates, 
+  * What happened, 
+  * Whether any payments were made, 
+  * Whether there was a contract, an agreement, or a receipt. 
+  
+  Remember you can only sue for money in Small Claims Court.
   % else:
-  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. Be specific. Include dates, what happened, and if any payments were made. If there was a contract, an agreement, or a receipt, mention it here. Remember you can only sue for money in Small Claims Court.
+  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. 
+  
+  Be specific. Include:
+  
+  * Dates, 
+  * What happened, 
+  * Whether any payments were made, 
+  * Whether there was a contract, an agreement, or a receipt. 
+  
+  Remember you can only sue for money in Small Claims Court.
   % endif
   
-  The form has space for about 24 lines of text, or about 2,250 characters. If you need more room to explain, you can add an additional page. You can preview the first page on the next screen.
+  The form has space for about 22 lines of text, or about 1,260 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen
 
   ${collapse_template(help_reason)}
 fields:
   - Explanation: claim_reason
     input type: area
     rows: 16
-    maxlength: 2400
+    maxlength: 1300
 ---
 id: preview complaint
 reconsider:
@@ -555,7 +732,7 @@ reconsider:
 question: |
   Complaint preview
 subquestion: |
-  Click the below image to preview your Small Claims Complaint.
+  Click the below image to preview page 2 of your *Small Claims Complaint*.
   
   **Note: this is not a complete form.** Finish the program to get all your forms.
  
@@ -565,6 +742,26 @@ subquestion: |
   
   If this looks good, click **Next** if you want to continue or **Additional page** if you need to add more.
 field: preview_complaint
+buttons:
+  - Additional page
+  - Next
+---
+id: preview deposit complaint
+reconsider:
+  - complaint['preview']
+question: |
+  Complaint preview
+subquestion: |
+  Click the below image to preview page 2 of your *Small Claims Complaint*.
+  
+  **Note: this is not a complete form.** Finish the program to get all your forms.
+ 
+  ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
+  
+  If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
+  
+  If this looks good, click **Next** if you want to continue or **Additional page** if you need to add more.
+field: preview_deposit_complaint
 buttons:
   - Additional page
   - Next
@@ -579,17 +776,33 @@ content: |
 ---
 id: more reason
 question: |
-  % if other_parties.number_gathered() > 1:
-  Why do the defendants owe you $${amount_check}?
-  % else:
-  Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check}?
-  % endif
+   Additional explanation
 subquestion: |
   % if other_parties.number_gathered() > 1:
-  Explain why the defendants owe you money. Be specific. Include dates, what happened, and if any payments were made. If there was a contract, an agreement, or a receipt, mention it here. Remember you can only sue for money in Small Claims Court.
+  Explain why the defendants owe you money. 
+  
+  Be specific. Include:
+  
+  * Dates, 
+  * What happened, 
+  * Whether any payments were made, 
+  * Whether there was a contract, an agreement, or a receipt. 
+  
+  Remember you can only sue for money in Small Claims Court.
   % else:
-  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. Be specific. Include dates, what happened, and if any payments were made. If there was a contract, an agreement, or a receipt, mention it here. Remember you can only sue for money in Small Claims Court.
+  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. 
+  
+  Be specific. Include:
+  
+  * Dates, 
+  * What happened, 
+  * Whether any payments were made, 
+  * Whether there was a contract, an agreement, or a receipt. 
+  
+  Remember you can only sue for money in Small Claims Court.
   % endif
+  
+  The form has space for about 37 lines of text, or about 2,400 characters.
   
   ${collapse_template(reason_thus_far)}
 fields:
@@ -600,20 +813,87 @@ fields:
 ---
 template: reason_thus_far
 subject: |
-  **What have I already entered?**
+  **Show me what I have already entered**
 content: |  
   ${claim_reason}
+---
+id: more deposit reason
+question: |
+  Additional reason
+subquestion: |
+  % if other_parties.number_gathered() > 1:
+  Explain why the defendants owe you money. 
+  
+  Be specific. Include:
+  
+  * Dates, 
+  * What happened, 
+  * When security deposit payments were made, and
+  * Whether there was a lease. 
+  
+  Remember you can only sue for money in Small Claims Court.
+  % else:
+  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. 
+  
+  Be specific. Include:
+  
+  * Dates, 
+  * What happened, 
+  * When security deposit payments were made, and
+  * Whether there was a lease. 
+  
+  Remember you can only sue for money in Small Claims Court.
+  % endif
+  
+  The form has space for about 37 lines of text, or about 2,400 characters.
+
+  ${collapse_template(deposit_reason_thus_far)}
+  
+fields:
+  - Explanation: more_deposit_reason
+    input type: area
+    rows: 16
+    maxlength: 2400
+---
+template: deposit_reason_thus_far
+subject: |
+  **Show me what I have already entered**
+content: |  
+  ${deposit_claim_reason}
 ---
 id: preview additional reasons
 continue button field: preview_additional_reasons
 reconsider:
+  - complaint['preview']
   - additional_reasons['preview']
 question: |
   Additional reasons preview
 subquestion: |
-  Click the below image to preview your Additional reasons form.
+  Click the below image to preview your Complaint form and your Additional reasons form.
   
   **Note: this is not a complete form.** Finish the program to get all your forms.
+  
+   ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
+ 
+  ${ pdf_concatenate(additional_reasons['preview'], filename="additional_reasons-preview.pdf").extract_pages() }
+  
+  If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
+  
+  If this looks good, click *Next*.
+---
+id: preview additional deposit reasons
+continue button field: preview_additional_deposit_reasons
+reconsider:
+  - additional_reasons['preview']
+  - complaint['preview']
+question: |
+  Additional reasons preview
+subquestion: |
+  Click the below image to preview your Complaint form and your Additional reasons form.
+  
+  **Note: this is not a complete form.** Finish the program to get all your forms.
+  
+   ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
  
   ${ pdf_concatenate(additional_reasons['preview'], filename="additional_reasons-preview.pdf").extract_pages() }
   
@@ -633,13 +913,9 @@ id: defendant agent check
 question: |
   Does ${other_parties[i].name.full(middle='full')} have a registered agent?
 subquestion: |
-  A registered agent is a someone chosen by a business to receive service if the business is sued.
+  A registered agent is someone chosen by a business to receive service if the business is sued. You may be able to find this information from the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/).
   
-  You may be able to find this information from the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/).
-  
-  If ${other_parties[i].name.full(middle='full')} has a registered agent, you must provide service to their agent.
-  
-  If ${other_parties[i].name.full(middle='full')} does not have a registered, you should include ${other_parties[i].name.full(middle='full')}'s owner as a defendant. You can add the owner by returning to the [**About the case**](${ url_action('section_case') }) section.
+  Note: If ${other_parties[i].name.full(middle='full')} does not have a registered agent, be sure to include ${other_parties[i].name.full(middle='full')}'s owner as a defendant. You can add the owner by returning to the [**About the case**](${ url_action('section_case') }) section.
 fields:
   - no label: other_parties[i].agent_check
     datatype: yesnoradio
@@ -671,12 +947,12 @@ subquestion: |
   ${other_parties[i].address.line_two()}
   
   % if other_parties[i].agent_check == True:
-  If other_parties[i].name.full(middle='full')} has listed a different address where they named ${other_parties[i].agent.name.full(middle='full')} as their registered agent on the[**Illinois Secretary of State**](www.ilsos.gov/corporatellc/) website, you must select **No** and then enter that address.
+  If ${other_parties[i].name.full(middle='full')} has listed a different address where they named ${other_parties[i].agent.name.full(middle='full')} as their registered agent on the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/) website, you must select **No** and then enter that address.
   % endif
 field: other_parties[i].same_address
 choices:
   - Yes: True
-  - No, I want to enter a different address for service: False
+  - No, I want to enter a different address for service.: False
 ---
 id: defendant service address
 question: |
@@ -703,6 +979,8 @@ question: |
   % else:
   Do you want to list an alternate address, phone number, or email for ${other_parties[i].name.full(middle='full')}?
   % endif
+subquestion: |
+  Adding this information can help make sure ${other_parties[i].name.full(middle='full')} is served.
 fields:
   - no label: other_parties[i].alt_delivery
     datatype: yesnoradio
@@ -773,17 +1051,13 @@ question: |
 subquestion: |
   In Small Claims Court, you can serve a defendant by:
 
-  * Circuit Clerk,
-  * Sheriff inside Illinois,
-  * Sheriff outside Illinois,
+  * Circuit Clerk (by certified or registered mail, only for defendants in Illinois),
+  * Sheriff,
   * Special process server, or
   * Licensed private detective
 field: other_parties[i].service_method
 choices:
-  - Circuit Clerk: clerk
-    help: |
-      A Circuit Clerk serves defendants by certified mail and can only serve defendants in Illinois.
-  - Certified or registered mail: mail
+  - Circuit Clerk (by certified or registered mail, only for defendants in Illinois): clerk
   - Sheriff: sheriff
   - Special process server: server
   - I do not know yet: unknown
@@ -801,34 +1075,75 @@ fields:
 ---
 template: signature_help
 subject: |
-  **What does it mean to sign the *Small claims complaint*?**
+  **What does it mean to sign the *Small Claims Complaint*?**
 content: |  
-  By signing your *Small claims complaint*, you are certifying that:
+  By signing your *Small Claims Complaint*, you are certifying that:
   
-  * Everything on the form is true and correct, and
-  * You understand that making a false statement on the form is perjury, which can result in criminal penalties.
-  
-  See the [**Code of Civil Procedure, 735 ILCS 5/1-109**](https://www.ilga.gov/legislation/ilcs/documents/073500050k1-109.htm), for more information.
+   * You read the form,
+  * You believe it to be true and correct, and
+  * You are not filing it for an improper purpose, such as to cause delay.
+
+  See **[Illinois Supreme Court Rule 137](https://www.illinoiscourts.gov/supreme-court-rules)** for more information.
 ---
 id: next steps
 continue button field: next_steps
 question: |
   Completing the summons
 subquestion: |
-  You will need to ask the Circuit Clerk how the defendants must respond to your Small Claims Complaint. The clerk will give you:
+  You will need to ask the Circuit Clerk how the defendants must respond to your *Small Claims Complaint*. The clerk will give you:
 
-  * A time and date for a hearing,
-  * Information on whether the hearing is in person or remote, and
-  * A date by which the defendents need to file an Appearance.
+  * A time and date for a hearing, and
+  * Information on whether the hearing is in person or remote.
 
-  After you find out, you must put this information in the Summons section 3 (on page 2). Do not send out the summons form until you add this information.
+  After you find out, put this information in Section 3 of the *Summons* on page 2. 
+
+  **Important:** the *Summons* is not ready for service until Section 3 is complete.
+---
+depends on:
+  - lease_check
+  - lease_attach_check
+  - deposit_payment_proof
+  - demand_letter_attach
+code: |
+  if lease_check == True:
+    if lease_attach_check == True and deposit_payment_proof == True and demand_letter_attach == True:
+      which_evidence = "the lease agreement, proof you paid a security deposit, and the demand letter you sent to your landlord"
+    elif lease_attach_check == True and deposit_payment_proof == True and demand_letter_attach == False:
+      which_evidence = "the lease agreement and proof you paid a security deposit"
+    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_attach == True:
+      which_evidence = "the lease agreement and the demand letter you sent to your landlord"
+    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_attach == True:
+      which_evidence = "proof you paid a security deposit and the demand letter you sent to your landlord"
+    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_attach == False:
+      which_evidence = "the lease agreement"
+    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_attach == False:
+      which_evidence = "proof you paid a security deposit"
+    elif lease_attach_check == False and deposit_payment_proof == False and demand_letter_attach == True:
+      which_evidence = "the demand letter you sent to your landlord"
+  else:      
+    if deposit_payment_proof == True and demand_letter_attach == True:
+      which_evidence = "proof you paid a security deposit and the demand letter you sent to your landlord"
+    elif deposit_payment_proof == True and demand_letter_attach == False:
+      which_evidence = "proof you paid a security deposit"
+    elif deposit_payment_proof == False and demand_letter_attach == True:
+      which_evidence = "the demand letter you sent your landlord"
+    else:
+      which_evidence = "ERROR"
 ---
 id: evidence
 continue button field: evidence
 question: |
   Evidence
 subquestion: |
+  % if landlord_check == True:
+  % if which_evidence != "ERROR":
+  You said you would attach ${which_evidence} to your complaint. Remember to include those documents when you file your claim. 
+  % else:
   You can attach evidence of your claim to your complaint. Evidence can be things like paperwork or photos that show why a defendant owes you money.
+  % endif
+  % else:
+  You can attach evidence of your claim to your complaint. Evidence can be things like paperwork or photos that show why a defendant owes you money.
+  % endif
 
   If you are e-filing, you can upload other documents as part of the e-filing process. If you are paper filing, bring copies of the documents to the clerk's office so you can attach them to the complaint.
 ---
@@ -838,13 +1153,13 @@ question: |
   About service
 subquestion: |
   % if other_parties.number_gathered() > 1:
-  The next questions will ask about how you will serve ${other_parties[0].name.full(middle='full')} with the complaint and summons
+  The next questions will ask about how you will serve ${other_parties[0].name.full(middle='full')} with the complaint and summons.
   
-  To "serve" means to officially deliver court forms to a defendant. If your Small Claims Complaint is not served correctly, your case might be dismissed.
+  To "serve" means to officially deliver court forms to a defendant. If your *Small Claims Complaint* is not served correctly, your case might be dismissed.
   % else:
   The next questions will ask about how you will serve each defendant with the complaint and summons.
   
-  To "serve" means to officially deliver court forms to a defendant. If your Small Claims Complaint is not served correctly, your case might be dismissed.
+  To "serve" means to officially deliver court forms to a defendant. If your *Small Claims Complaint* is not served correctly, your case might be dismissed.
   % endif
   
   ${collapse_template(help_business_service)}
@@ -874,16 +1189,15 @@ fields:
     datatype: yesnoradio
 ---
 id: no move out kickout
+event: no_move_kickout
 question: |
   Sorry
 subquestion: |
   Your landlord does not have to return your security deposit if you have not moved out of the property.
   
-  To learn more, read ILAO's article on [**getting back a security deposite**](https://www.illinoislegalaid.org/legal-information/getting-back-security-deposit).
+  To learn more, read ILAO's article on [**getting back a security deposit**](https://www.illinoislegalaid.org/legal-information/getting-back-security-deposit).
   
-  Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-  
-  Click **Back** or **Restart** if you reached this page by mistake.
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
   - Exit: exit
   - Restart: restart
@@ -894,6 +1208,678 @@ question: |
 fields:
   - Move-out date: move_out_date
     datatype: ThreePartsDate
+---
+id: demand letter check
+question: |
+  Have you sent a letter to your former landlord asking them to return your security deposit?
+fields:
+  - no label: demand_letter_check
+    datatype: yesnoradio
+---    
+id: no demand kickout
+event: no_demand_kickout
+question: |
+  Sorry
+subquestion: |
+  You have to send a demand letter to your former landlord before suing for your security deposit.
+
+  To make a demand letter, you can use ILAO's [**Security deposit demand letter Easy Form**](https://www.illinoislegalaid.org/legal-information/security-deposit-demand-letter).
+
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
+id: demand letter date
+question: |
+  When did you send a demand letter to your landlord?
+subquestion: |
+  You should attach a copy of the letter to your *Small Claims Complaint*.
+fields:
+  - Sent date: demand_letter_date
+    datatype: ThreePartsDate
+---    
+id: apartment city
+question: |
+  What city was the rental property in?
+subquestion: |
+  Some cities have local laws about security deposits.
+field: apartment_city
+choices:
+  - Chicago
+  - DeKalb
+  - Evanston
+  - Mount Prospect
+  - Oak Park
+  - Urbana
+  - None of the above
+---
+id: municipal law intro
+continue button field: municipal_intro
+question: |
+  % if apartment_city == "None of the above":
+  Cook County has laws that affect landlord and tenant relationships and security deposits
+  % else:
+  ${apartment_city} has laws that affect landlord and tenant relationships and security deposits
+  % endif
+subquestion: |
+  This program will help you in most situations. You may want to [**Get Legal Help**](www.illinoislegalaid.org/get-legal-help) see if there are other things you can sue for, like interest on your security deposit or attorney's fees.
+---
+id: cook county question
+question: |
+  Is the rental property in Cook County?
+fields:
+  - no label: cook_county_check
+    datatype: yesnoradio
+---
+depends on:
+  - apartment_city
+  - cook_county_check
+id: property type check
+question: |
+  Is the rental property one of the following?
+subquestion: |
+  % if apartment_city == "Chicago":
+  * A medical, educational, or relgious facility,
+  * A hotel or motel,
+  * Something you have signed a contract to buy,
+  * A place you had to rent because the landlord is your employer, and the job required you to rent there, or
+  * A co-op
+  % elif apartment_city == "DeKalb":
+  * A medical, educational, or relgious facility,
+  * A hotel or motel,
+  * Government-owned, or
+  * A rooming house
+  % elif apartment_city == "Evanston":
+  * A medical, educational, or relgious facility,
+  * A hotel or motel,
+  * A fraternity or social organization,
+  * Something you have signed a contract to buy,
+  * A co-op, or
+  * An educational institution
+  % elif apartment_city == "Mount Prospect":
+  * A medical, educational, or relgious facility,
+  * A residential care home,
+  * A hotel or motel, or
+  * Something you have signed a contract to buy
+  % elif apartment_city == "Oak Park":
+  * A hotel or motel,
+  * A medical, educational, or relgious facility,
+  * A school dormitory,
+  * A temporary or transitional shelter,
+  * A place you had to rent because the landlord is your employer, and the job required you to rent there
+  % elif apartment_city == "Urbana":
+  * A medical, educational, or relgious facility,
+  * A hotel or motel,
+  * A fraternity or social organization,
+  * Something you have signed a contract to buy, or
+  * A place you had to rent because the landlord is your employer, and the job required you to rent there
+  % elif apartment_city == "None of the above":
+  % if cook_county_check == True:
+  * A hotel or motel,
+  * A school dormitory,
+  * A shelter or a single-room-occupancy (SRO),
+  * A place you had to rent because the landlord is your employer, and the job required you to rent there, or
+  * An owner-occupied co-op
+  % endif
+  % endif
+fields:
+  - no label: property_type_check
+    datatype: yesnoradio
+---
+id: cook owner occupant check
+question: |
+  Does the owner live in one of the units on the property?
+fields:
+  - no label: cook_owner_occupant
+    datatype: yesnoradio
+---
+id: cook family check
+question: |
+  Is the property a single-family home or condominium, where
+
+  * the owner is only renting that one rental property, and
+  * the owner or an immediate family member has lived in the home within the year?
+fields:
+  - no label: cook_family_check
+    datatype: yesnoradio
+---
+id: chicago owner occupant check
+question: |
+  Does the owner live in one of the units on the property?
+fields:
+  - no label: chicago_owner_occupant
+    datatype: yesnoradio
+---
+id: rental address
+question: |
+  What is the rental property's address?
+fields:
+  - Street address: rental_address.address
+    address autocomplete: True
+  - Address line 2: rental_address.unit
+    required: False
+  - City: rental_address.city
+    default: |
+      % if apartment_city != "None of the above":
+      ${apartment_city}
+      % else:
+      
+      % endif
+  - State: rental_address.state
+    code: |
+      states_list()
+  - ZIP code: rental_address.zip
+---
+#This question is in the A2J author interview but in that interview it does not appear to affect RLTO applicability? But I think it should. Return to this after completing the initial conversion from LHI to docassemble. Update: It has to do with damages amount. 
+id: unit number illinois
+question: |
+  How many rental units are in the property?
+field: unit_number_illinois
+choices:
+  - Up to 4 units: four
+  - 5 or more units: five
+---
+id: unit number chicago cook oak park
+question: |
+  How many rental units are in the property?
+field: unit_number_chicagoland
+choices:
+  - Up to 6 units: six
+  - 7 or more units: seven
+---
+depends on:
+  - cook_county_check
+  - apartment_city
+  - property_type_check
+  - chicago_owner_occupant
+  - cook_owner_occupant
+  - cook_family_check
+  - unit_number_chicagoland
+  - unit_number_illinois
+code: |
+  if apartment_city == "None of the above": 
+    if cook_county_check == False:
+      rlto_applies = False
+    else:
+      if property_type_check == True:
+        rlto_applies = False
+      else:
+        if cook_owner_occupant == False:
+          if cook_family_check == True:
+            rlto_applies = False
+          else:
+            rlto_applies = True
+        else:
+          if unit_number_chicagoland == "six":
+            rlto_applies = False
+          else:
+            rlto_applies = True  
+  elif property_type_check == True:
+    rlto_applies = False
+  elif apartment_city == "Chicago":
+    if unit_number_chicagoland == "six" and chicago_owner_occupant == True:
+      rlto_applies = False
+    else:
+      rlto_applies = True 
+  elif apartment_city == "Oak Park":
+    if cook_owner_occupant == False:
+      if cook_family_check == True:
+        rlto_applies = False
+      else:
+        rlto_applies = True
+    else:
+      if unit_number_chicagoland == "six":
+        rlto_applies = False
+      else:
+        rlto_applies = True
+  else:
+    #This seems incorrect, double check it!
+    rlto_applies = True
+---
+id: RLTO note
+continue button field: rlto_note
+question: |
+  Local landlord-tenant law
+subquestion: |
+  % if rlto_applies == True:
+  Based on your answers about the property, a municipal or city law (also called a local landlord-tenant law) for security deposits applies.
+  % else:
+  Based on your answers about the property, a municipal or city law (also called a local landlord-tenant law) for security deposits does not apply.
+  % endif
+---
+#I implemented this the way it is set up in a2jauthor, but it seems reversed? I will have to check the statute to ensure these numbers are correct.
+depends on:
+  - apartment_city
+  - rlto_applies
+  - cook_county_check
+code: |
+  if rlto_applies == True:
+    if apartment_city == "Evanston":
+      days_to_return_deposit = 21
+      days_to_receive_letter = 21
+    elif apartment_city == "None of the above" and cook_county_check == True:
+      days_to_return_deposit = 30
+      days_to_receive_letter = 30
+    elif apartment_city == "Oak Park":
+      days_to_return_deposit = 30
+      days_to_receive_letter = 30
+    else:
+      days_to_return_deposit = 45
+      days_to_receive_letter = 30
+  else:
+    days_to_return_deposit = 45
+    days_to_receive_letter = 30
+  return_deadline = move_out_date.plus(days=days_to_return_deposit)
+  damage_deadline = move_out_date.plus(day=days_to_receive_letter)
+---
+depends on:
+  - return_deadline
+code: |
+  date_diff_reference = date_difference(starting=return_deadline, ending=today())
+---
+id: landlord time kickout
+event: landlord_time_kickout
+question: |
+  Sorry
+subquestion: |
+  The landlord has until ${return_deadline} to send you a letter describing any damage to the rental unit.
+
+  Run this program on or after ${return_deadline} to make your *Small Claims Complaint*.
+  
+  To learn more, read ILAO's gude to [**Getting or returning a security deposit**](https://www.illinoislegalaid.org/legal-information/getting-or-returning-security-deposit).
+  
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
+id: landlord deadline
+continue button field: landlord_deadline
+question: |
+  Landlord's deadline
+subquestion: |
+  The landlord had until ${return_deadline} to return your security deposit.
+
+  The next questions will help you figure out the amount you can sue for in your *Small Claims Complaint*.
+---
+id: security deposit amount
+question: |
+  % if i == 0:
+  How much did you pay for the security deposit?
+  % elif i == 1:
+  How much was the second payment?
+  % else:
+  What was the total of the remaining security deposit payments?
+  % endif
+subquestion: |
+  % if i == 0:
+  If you made multiple payments, enter the amount of your first payment.
+  % elif i == 2:
+  If you only made three payments, enter the amount of third payment. If you made more than three payments, enter the total of the remaining payments.
+  % endif
+fields:
+  - Security deposit payment: deposit_payments[i]
+    datatype: currency
+    min: 0
+---
+id: deposit pay date 
+question: |
+  % if i == 0:
+  When did you make the payment of ${currency(deposit_payments[i])}?
+  % elif i == 1:
+  When did you make the second payment of ${currency(deposit_payments[i])}?
+  % elif i == 2:
+  When did you make the final security deposit payment?
+  % endif
+fields:
+  - Payment date: deposit_dates[i]
+    datatype: ThreePartsDate
+---
+id: another payment check
+question: |
+  Did you make another security deposit payment?
+subquestion: |
+  % if i == 0:
+  So far you have told us about one payment of ${currency(deposit_payments[i])}.
+  % elif i == 1:
+  So far you have told us about a first payment of ${currency(deposit_payments[0])} and a second payment of ${currency(deposit_payments[1])}.
+  % endif
+fields:
+  - no label: another_deposit[i]
+    datatype: yesnoradio
+---
+id: partial return check
+question: |
+  Did your landlord return part of your security deposit?
+fields:
+  - no label: partial_return_check
+    datatype: yesnoradio
+---
+id: partial return amount
+question: |
+  How much did of the security deposit did your landlord give back to you?
+subquestion: |
+  If your landlord paid you back in parts, enter the total amount returned.
+fields:
+  - Amount returned: partial_return_amount
+    datatype: currency
+    min: 0
+---    
+id: partial return date
+question: |
+  When did your landlord give back part of your security deposit?
+subquestion: |
+  If your landlord paid you back in parts, enter the date of the most recent payment.
+fields:
+  - Date returned: partial_return_date
+    datatype: ThreePartsDate
+---
+depends on:
+  - deposit_payments[0]
+  - deposit_payments[1]
+  - deposit_payments[2]
+  - another_deposit[0]
+  - another_deposit[1]
+  - partial_return_check
+  - partial_return_amount
+code: |
+  deposit_balance_owed = deposit_payments[0]
+  if another_deposit[0] == True:
+    deposit_balance_owed = deposit_balance_owed + deposit_payments[1]
+    if another_deposit[1] == True:
+      deposit_balance_owed = deposit_balance_owed + deposit_payments[2]
+  total_deposit = deposit_balance_owed
+  if partial_return_check == True:
+    deposit_balance_owed = deposit_balance_owed - partial_return_amount
+---
+id: deposit balance still owed
+continue button field: deposit_still_owed
+question: |
+  Amount of security deposit owed
+subquestion: |
+  According to your answers, your landlord has not returned ${currency(deposit_balance_owed)} of your security deposit.
+---
+id: all paid error
+event: all_paid_error
+question: |
+  Sorry
+subquestion: |
+  According to your answers, your landlord had paid back your security deposit
+
+  Click **Back** or **Restart** if you reached this page by mistake.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
+id: statement of damages
+question: |
+  Did your landlord send you a letter saying you owe money for damages to the rental property?
+fields:
+  - no label: damages_check
+    datatype: yesnoradio
+---
+id: damage statement date
+question: |
+  When did you receive the statement of damages from your landlord?
+fields:
+  - Statement date: damages_date
+    datatype: ThreePartsDate
+---
+#This is code pulled from the a2jauthor interview, but I don't think it is needed?
+depends on:
+  - rlto_applies
+  - apartment_city
+  - move_out_Date
+  - damages_check
+  - damages_date
+code: |
+  if rlto_applies == True:
+    if damages_check == False:
+      landlord_timely = False
+    else:
+      if apartment_city == "Evanston":
+        damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
+        if damage_date_difference > 21:
+          landlord_time = False
+        else:
+          landlord_timely = True
+          
+      else:
+        damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
+        if damage_date_difference > 30:
+          landlord_time = False
+        else:
+          landlord_timely = True
+---
+#This is code pulled from the a2jauthor interview, but I don't think it is needed?
+depends on:
+  - landlord_timely
+  - rlto_applies
+  - apartment_city
+  - cook_county_check
+code: |
+  if rlto_applies == True:
+    if landlord_timely == False:
+      extra_damages = True
+    else:
+      extra_damages = False
+  elif apartment_city != "Chicago" and apartment_city == "Oak Park" and cook_county_check == False:
+    if landlord_timely == False:
+      extra_damages = True
+    else:
+      extra_damages = False
+  else:
+    extra_damages = False
+---
+depends on:
+  - total_deposit
+  - deposit_balance_owed
+code: |
+  deposit_with_damages = total_deposit + total_deposit + deposit_balance_owed
+---
+id: security deposit damages info
+continue button field: deposit_damages_info
+question: |
+  Damages
+subquestion: |
+  % if rlto_applies == True:
+  Because your landlord did not return your full security deposit on time, you can sue for ${currency(deposit_with_damages)}.
+  
+  This amount is ${currency(deposit_balance_owed)}, the amount of security deposit not yet returned, plus damages for violating landlord-tenant law. Damages are double the security deposit you paid (${currency(total_deposit)} x 2).
+  % else:
+  No additional damages apply, so you can only sue for ${currency(deposit_balance_owed)}.
+  % endif
+  
+  **Note:** If you win your case, the landlord can reduce the amount they owe if they prove that:
+
+  * You owe rent, or
+  * You damaged the property and the landlord provided proof of repairs or an estimate.
+---
+id: deposit claim amount update
+question: |
+  Do you want to update your claim amount from ${currency(amount_check)} to ${currency(deposit_with_damages)}?
+fields:
+  - no label: claim_amount_update
+    datatype: yesnoradio
+---
+only sets: amount_updated
+depends on:
+  - claim_amount_update
+  - deposit_with_damages
+code: |
+  if claim_amount_update == True:
+    amount_check = deposit_with_damages
+    if deposit_with_damages > 10000:
+      deposit_damages_too_big
+    amount_updated = True
+  else:
+    amount_updated = False
+---
+id: deposit damages too big kickout
+event: deposit_damages_too_big
+question: |
+  Sorry
+subquestion: |
+  You can only sue for $10,000 or less in Small Claims Court.
+  
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
+id: lease check
+question: |
+  Did you have a written lease with your landlord?
+fields:
+  - no label: lease_check
+    datatype: yesnoradio
+---
+id: lease attach check
+question: |
+  Will you attach a copy of the lease agreement to your *Small Claims Complaint*?
+subquestion: |
+  If you have a written lease, you should attach it to your *Small Claims Complaint*.
+
+  If you cannot attach the written agreement, you can explain why on the next screen.
+fields:
+  - no label: lease_attach_check
+    datatype: yesnoradio
+---
+id: no lease attachment explanation
+question: |
+   Why can you not attach a copy of your lease agreement to your *Small Claims Complaint*?
+fields:
+  - Explanation: lease_attach_explain
+    input type: area
+    rows: 2
+    maxlength: 175
+---
+id: deposit payment proof
+question: |
+  Will you attach to your *Small Claims Complaint* proof that you paid a security deposit of ${currency(total_deposit)}?
+subquestion: |
+  It will be easier to show the judge that you paid if you attach receipts or other statements.
+fields:
+  - no label: deposit_payment_proof
+    datatype: yesnoradio
+---
+id: demand letter attach
+question: |
+  Will you attach to your *Small Claims Complaint* a copy of the demand letter you sent on ${demand_letter_date}?
+subquestion: |
+  It will be easier to show the judge that you asked for payment if you attach the letter.
+fields:
+  - no label: demand_letter_attach
+    datatype: yesnoradio
+---
+reconsider: True
+depends on:
+  - rental_address
+  - other_parties
+  - apartment_city
+  - unit_number_chicagoland
+  - unit_number_illinois
+  - move_in_date
+  - total_deposit
+  - deposit_payments
+  - deposit_payment_proof
+  - move_out_date
+  - demand_letter_date
+  - demand_letter_attach
+  - partial_return_check
+  - partial_return_amount
+  - days_to_return_deposit
+  - rlto_applies
+  - cook_county_check
+  - amount_check
+code: |
+  default_deposit_claim_reason = "I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties)
+  
+  if apartment_city == "Chicago" or apartment_city == "Oak Park" or cook_county_check == True:
+    if unit_number_chicagoland == "seven":
+     default_deposit_claim_reason += " The rental property has 7 or more units." + ".\n"
+    else:
+      default_deposit_claim_reason += ".\n"
+  else:
+    if unit_number_illinois == "five":
+      default_deposit_claim_reason += " The rental property has 5 or more units." + ".\n"
+    else:
+      default_deposit_claim_reason += ".\n"  
+      
+  default_deposit_claim_reason += "I moved into the property on " + move_in_date + "."
+    
+  
+  if another_deposit[0] == False:
+    default_deposit_claim_reason += " I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " on " + deposit_dates[0] + "."
+  else:
+    default_deposit_claim_reason += " I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + ". On " + deposit_dates[0] + " I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + " I paid " + currency(deposit_payments[1]) + "."
+    if another_deposit[1] == True:
+      default_deposit_claim_reason += " On " + deposit_dates[2] + " I paid " + currency(deposit_payments[2]) + "."    
+  if deposit_payment_proof == True:
+    default_deposit_claim_reason += " Proof showing that I paid the security deposit is attached" + ".\n"
+  else:
+    default_deposit_claim_reason += ".\n"
+    
+  default_deposit_claim_reason += " I moved out of the unit on " + move_out_date + "."
+
+  default_deposit_claim_reason += " I sent a demand letter to " + comma_and_list(other_parties) + " on " + demand_letter_date + "."
+  if demand_letter_attach == True:
+    default_deposit_claim_reason += " A copy of the letter is attached."
+  
+  if partial_return_check ==  False:
+    default_deposit_claim_reason += " As of " + today() + " " + comma_and_list(other_parties) + " had returned $0 of the security deposit" + ".\n"
+  else:
+    default_deposit_claim_reason += " As of " + today() + " " + comma_and_list(other_parties) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n"
+    
+  default_deposit_claim_reason += " " + comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I moved out."
+  
+  #In the a2jauthor interview there is logic at this point regarding the damages letter. I will look into whether we should include that later; it appears to be deprecated in the old program.
+  
+  if rlto_applies == True:
+    if apartment_city == "None of the above" and cook_county_check == True:
+      default_deposit_claim_reason += " A local law in Cook County applies to my security deposit claim."
+    elif apartment_city != "None of the above":
+      default_deposit_claim_reason += " A local law in " + apartment_city + " applies to my security deposit claim."
+
+  default_deposit_claim_reason += " I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(amount_check) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
+  
+  generate_default = True
+---
+id: deposit claim reason check
+question: |
+  Do you want to add to or change this explanation?
+subquestion: |
+  Your *Small Claims Complaint* will include the following that explains why ${comma_and_list(other_parties)} owes you ${currency(amount_check)}.
+  
+  ${single_to_double_newlines(default_deposit_claim_reason)}
+fields:
+  - no label: use_deposit_default
+    datatype: yesnoradio
+---
+depends on:
+  - default_deposit_claim_reason
+  - use_deposit_default
+  - new_deposit_claim_reason
+code: |
+  if use_deposit_default == False:
+    deposit_claim_reason = default_deposit_claim_reason
+  else:
+    deposit_claim_reason = new_deposit_claim_reason
+  use_that_default = True
+---
+id: new deposit claim reason
+question: |
+  Edit the reasons why you are owed ${amount_check}.
+fields:
+  - Explanation: new_deposit_claim_reason
+    input type: area
+    rows: 20
+    maxlength: 2000
+    default: |
+      ${default_deposit_claim_reason} 
 ---
 id: get docs screen
 event: get_docs_screen
@@ -926,7 +1912,7 @@ under: |
 generic object: ALDocumentBundle
 template: x.send_email_template
 subject: |
-  Small claims complaint
+  Small Claims Complaint
 content: |
   Your forms are attached.
   
@@ -936,7 +1922,6 @@ content: |
 ---
 objects:
   - instructions: ALDocument.using(title="Instructions", filename="instructions.pdf", has_addendum=False)
-  - getting_started: ALDocument.using(title="Getting Started", filename="getting_started.pdf",  has_addendum=False)
   - complaint: ALDocument.using(title="Complaint", filename="complaint.pdf", has_addendum=False)
   - additional_defendants: ALDocument.using(title="Additional Defendants", filename="additional_defendants.pdf", has_addendum=False)
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
@@ -954,12 +1939,14 @@ objects:
   - summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, getting_started, complaint, additional_defendants, additional_reasons, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, getting_started, complaint, additional_defendants, additional_reasons, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+---
+objects:
+  - small_claims_complaint_single_pdf_bundle: ALDocumentBundle.using(elements=[complaint, additional_defendants, additional_reasons], filename="small_claims_complaint_bundle.pdf", title="Small Claims Complaint", enabled=True)
 ---
 code: |
   instructions.enabled = True
-  getting_started.enabled = True
   complaint.enabled = True
   additional_defendants.enabled = False
   additional_reasons.enabled = False
@@ -979,8 +1966,12 @@ code: |
   if other_parties.number_gathered() > 2:
     additional_defendants.enabled = True
     
-  if preview_complaint == "Additional page":
-    additional_reasons.enabled = True
+  if landlord_check == False:
+    if preview_complaint == "Additional page":
+      additional_reasons.enabled = True
+  else:
+    if preview_deposit_complaint == "Additional page":
+      additional_reasons.enabled = True
     
   for person in other_parties:
     if person.service_method == "sheriff":
@@ -992,7 +1983,7 @@ code: |
           letter_to_sheriff.enabled = True
       if person.agent_check == False:
         if person.alt_delivery == True:
-          if person.alt_address.state == "IL":
+          if person.alt_service_address.state == "IL":
             letter_to_sheriff.enabled == True
   
   if other_parties.number() > 1:
@@ -1025,16 +2016,6 @@ attachment:
       - "fake": ${ "" }   
 ---
 attachment:
-  variable name: getting_started[i]
-  name: getting_started
-  filename: getting_started
-  skip undefined: True
-  editable: False
-  pdf template file: SMC_Getting_Started.pdf
-  fields:
-      - "fake": ${ "" }   
----
-attachment:
   variable name: complaint[i]
   name: complaint
   filename: complaint
@@ -1051,13 +2032,13 @@ attachment:
     - "defendant_two_name": ${other_parties[1].name.full(middle='full')}
     - "defendant_two_address": ${other_parties[1].address.on_one_line(bare=True)}
     - "extra_defendants": ${True if other_parties.number_gathered() > 2 else False}
-    - "amount_owed": ${amount_check}
-    - "no_agreement": ${ True if agreement_check == False else False}
-    - "attached_agreement": ${ True if agreement_check == True and attach_check == True else False}
-    - "unattached_agreement": ${True if agreement_check == True and attach_check == False else False}
-    - "unattached_reason": ${ attach_explain if agreement_check == True and attach_check == False else ""}
-    - "demanded_and_failed": ${ True if demand_check == True else False}
-    - "why_owed": ${claim_reason}
+    - "amount_owed": ${currency(amount_check)}
+    - "no_agreement": ${no_agreement_logic}
+    - "attached_agreement": ${attached_agreement_logic}
+    - "unattached_agreement": ${unattached_agreement_logic}
+    - "unattached_reason": ${unattached_reason_logic}
+    - "demanded_and_failed": ${demand_letter_check if landlord_check == True else demand_check}
+    - "why_owed": ${claim_reason if landlord_check == False else deposit_claim_reason}
     - "additional_reasons": ${ True if preview_complaint == "Additional page" else False}
     - "e_signature": ${users[0].name.full(middle='full') if e_signature == True else ""}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1065,6 +2046,7 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "amount_check": ${currency(amount_check)}
+    - "preview_watermark": ${ watermark if i=='preview' else '' }
 ---
 attachment:
   variable name: additional_reasons[i]
@@ -1078,7 +2060,8 @@ attachment:
     - "filing_county": ${filing_location.county}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
     - "defendant_list": ${other_parties.short_list(4)}
-    - "further_reasons": ${more_reason}
+    - "further_reasons": ${more_reason if landlord_check == False else more_deposit_reason}
+    - "preview_watermark": ${ watermark if i=='preview' else '' }
 ---
 attachment:
   variable name: additional_defendants[i]
@@ -1151,15 +2134,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[0].name.full(middle='full')}
     - "agent_name": ${other_parties[0].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[0].address.line_one(bare=True)  if other_parties[0].same_address == True else other_parties[0].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[0].address.line_two()  if other_parties[0].same_address == True else other_parties[0].service_address.line_two()}
+    - "main_service_street": ${other_parties[0].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[0].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[0].service_phone) if other_parties[0].service_phone != "" else ""}
     - "main_service_email": ${other_parties[0].service_email}
     - "alt_service_street": ${other_parties[0].alt_service_address.line_one(bare=True)  if other_parties[0].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[0].alt_service_address.line_two()  if other_parties[0].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[0].alt_service_phone) if other_parties[0].alt_service_phone != "" and other_parties[0].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[0].alt_service_email if other_parties[0].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[0].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[0].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[0].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[0].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1184,15 +2167,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[1].name.full(middle='full')}
     - "agent_name": ${other_parties[1].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[1].address.line_one(bare=True)  if other_parties[1].same_address == True else other_parties[1].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[1].address.line_two()  if other_parties[1].same_address == True else other_parties[1].service_address.line_two()}
+    - "main_service_street": ${other_parties[1].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[1].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[1].service_phone) if other_parties[1].service_phone != "" else ""}
     - "main_service_email": ${other_parties[1].service_email}
     - "alt_service_street": ${other_parties[1].alt_service_address.line_one(bare=True)  if other_parties[1].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[1].alt_service_address.line_two()  if other_parties[1].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[1].alt_service_phone) if other_parties[1].alt_service_phone != "" and other_parties[1].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[1].alt_service_email if other_parties[1].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[1].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[1].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[1].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[1].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1217,15 +2200,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[2].name.full(middle='full')}
     - "agent_name": ${other_parties[2].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[2].address.line_one(bare=True)  if other_parties[2].same_address == True else other_parties[2].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[2].address.line_two() if other_parties[2].same_address == True else other_parties[2].service_address.line_two()}
+    - "main_service_street": ${other_parties[2].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[2].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[2].service_phone) if other_parties[2].service_phone != "" else ""}
     - "main_service_email": ${other_parties[2].service_email}
     - "alt_service_street": ${other_parties[2].alt_service_address.line_one(bare=True)  if other_parties[2].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[2].alt_service_address.line_two()  if other_parties[2].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[2].alt_service_phone) if other_parties[2].alt_service_phone != "" and other_parties[2].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[2].alt_service_email if other_parties[2].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[2].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[2].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[2].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[2].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1250,15 +2233,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[3].name.full(middle='full')}
     - "agent_name": ${other_parties[3].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[3].address.line_one(bare=True)  if other_parties[3].same_address == True else other_parties[3].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[3].address.line_two()  if other_parties[3].same_address == True else other_parties[3].service_address.line_two()}
+    - "main_service_street": ${other_parties[3].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[3].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[3].service_phone) if other_parties[3].service_phone != "" else ""}
     - "main_service_email": ${other_parties[3].service_email}
     - "alt_service_street": ${other_parties[3].alt_service_address.line_one(bare=True)  if other_parties[3].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[3].alt_service_address.line_two()  if other_parties[3].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[3].alt_service_phone) if other_parties[3].alt_service_phone != "" and other_parties[3].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[3].alt_service_email if other_parties[3].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[3].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[3].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[3].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[3].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1283,15 +2266,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[4].name.full(middle='full')}
     - "agent_name": ${other_parties[4].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[4].address.line_one(bare=True)  if other_parties[4].same_address == True else other_parties[4].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[4].address.line_two()  if other_parties[4].same_address == True else other_parties[4].service_address.line_two()}
+    - "main_service_street": ${other_parties[4].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[4].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[4].service_phone) if other_parties[4].service_phone != "" else ""}
     - "main_service_email": ${other_parties[4].service_email}
     - "alt_service_street": ${other_parties[4].alt_service_address.line_one(bare=True)  if other_parties[4].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[4].alt_service_address.line_two()  if other_parties[4].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[4].alt_service_phone) if other_parties[4].alt_service_phone != "" and other_parties[4].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[4].alt_service_email if other_parties[4].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[4].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[4].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[4].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[4].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1316,15 +2299,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[5].name.full(middle='full')}
     - "agent_name": ${other_parties[5].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[5].address.line_one(bare=True)  if other_parties[5].same_address == True else other_parties[5].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[5].address.line_two()  if other_parties[5].same_address == True else other_parties[5].service_address.line_two()}
+    - "main_service_street": ${other_parties[5].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[5].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[5].service_phone) if other_parties[5].service_phone != "" else ""}
     - "main_service_email": ${other_parties[5].service_email}
     - "alt_service_street": ${other_parties[5].alt_service_address.line_one(bare=True)  if other_parties[5].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[5].alt_service_address.line_two()  if other_parties[5].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[5].alt_service_phone) if other_parties[5].alt_service_phone != "" and other_parties[5].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[5].alt_service_email if other_parties[5].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[5].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[5].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[5].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[5].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1349,15 +2332,15 @@ attachment:
     - "defendant_list": $${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[6].name.full(middle='full')}
     - "agent_name": ${other_parties[6].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[6].address.line_one(bare=True)  if other_parties[6].same_address == True else other_parties[6].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[6].address.line_two()  if other_parties[6].same_address == True else other_parties[6].service_address.line_two()}
+    - "main_service_street": ${other_parties[6].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[6].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[6].service_phone) if other_parties[6].service_phone != "" else ""}
     - "main_service_email": ${other_parties[6].service_email}
     - "alt_service_street": ${other_parties[6].alt_service_address.line_one(bare=True)  if other_parties[6].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[6].alt_service_address.line_two()  if other_parties[6].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[6].alt_service_phone) if other_parties[6].alt_service_phone != "" and other_parties[6].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[6].alt_service_email if other_parties[6].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[6].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[6].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[6].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[6].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1382,15 +2365,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[7].name.full(middle='full')}
     - "agent_name": ${other_parties[7].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[7].address.line_one(bare=True)  if other_parties[7].same_address == True else other_parties[7].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[7].address.line_two()  if other_parties[7].same_address == True else other_parties[7].service_address.line_two()}
+    - "main_service_street": ${other_parties[7].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[7].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[7].service_phone) if other_parties[7].service_phone != "" else ""}
     - "main_service_email": ${other_parties[7].service_email}
     - "alt_service_street": ${other_parties[7].alt_service_address.line_one(bare=True)  if other_parties[7].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[7].alt_service_address.line_two()  if other_parties[7].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[7].alt_service_phone) if other_parties[7].alt_service_phone != "" and other_parties[7].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[7].alt_service_email if other_parties[7].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[7].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[7].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[7].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[7].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1415,15 +2398,15 @@ attachment:
     - "defendant_list": ${other_parties.short_list(4)}
     - "defendant_name": ${other_parties[8].name.full(middle='full')}
     - "agent_name": ${other_parties[8].agent.name.full(middle='full')}
-    - "main_service_street": ${other_parties[8].address.line_one(bare=True)  if other_parties[8].same_address == True else other_parties[8].service_address.line_one(bare=True)}
-    - "main_service_csz": ${other_parties[8].address.line_two()  if other_parties[8].same_address == True else other_parties[8].service_address.line_two()}
+    - "main_service_street": ${other_parties[8].where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${other_parties[8].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[8].service_phone) if other_parties[8].service_phone != "" else ""}
     - "main_service_email": ${other_parties[8].service_email}
     - "alt_service_street": ${other_parties[8].alt_service_address.line_one(bare=True)  if other_parties[8].alt_delivery == True else ""}
     - "alt_service_csz": ${other_parties[8].alt_service_address.line_two()  if other_parties[8].alt_delivery == True else ""}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[8].alt_service_phone) if other_parties[8].alt_service_phone != "" and other_parties[8].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[8].alt_service_email if other_parties[8].alt_delivery == True else ""}
-    - "by_mail": ${ True if other_parties[8].service_method == "mail" else False}
+    - "by_mail": ${ True if other_parties[8].service_method == "clerk" else False}
     - "by_sheriff": ${ True if other_parties[8].service_method == "sheriff" else False}
     - "by_server": ${ True if other_parties[8].service_method == "server" else False}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
@@ -1477,7 +2460,7 @@ review:
   - Edit: amount_check
     button: |
       **You are suing for:**
-      $${amount_check}  
+      ${currency(amount_check)}  
   - Edit: filing_location.county_number
     button: |
       **You are filing in:**
@@ -1493,6 +2476,252 @@ review:
     button: |
       **Are you suing your former landlord to return a security deposit?**
       ${word(yesno(landlord_check))}
+  - Edit: move_in_date
+    button: |
+      **Move in date:**
+      ${move_in_date}
+    show if: landlord_check
+  - Edit: move_out_date
+    button: |
+      **Move out date:**
+      ${move_out_date}
+    show if: landlord_check
+  - Edit: demand_letter_date
+    button: |
+      **When did you send a letter requesting your security deposit?**
+      ${demand_letter_date}
+    show if: landlord_check
+  - Edit: apartment_city
+    button: |
+      **Which city is the rental unit in?**
+      ${apartment_city}
+    show if: landlord_check
+  - Edit: cook_county_check
+    button: |
+      **Is the rental unit in Cook County?**
+      ${word(yesno(cook_county_check))}
+    show if: landlord_check == True and apartment_city == "None of the above"
+  - Edit: property_type_check
+    button: |
+      **Is the property:**
+      
+      % if apartment_city == "Chicago":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **Something you have signed a contract to buy,**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
+      * **A co-op**
+      % elif apartment_city == "DeKalb":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **Government-owned, or**
+      * **A rooming house**
+      % elif apartment_city == "Evanston":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **A fraternity or social organization,**
+      * **Something you have signed a contract to buy,**
+      * **A co-op, or**
+      * **An educational institution**
+      % elif apartment_city == "Mount Prospect":
+      * **A medical, educational, or relgious facility,**
+      * **A residential care home,**
+      * **A hotel or motel, or**
+      * **Something you have signed a contract to buy**
+      % elif apartment_city == "Oak Park":
+      * **A hotel or motel,**
+      * **A medical, educational, or relgious facility,**
+      * **A school dormitory,**
+      * **A temporary or transitional shelter,**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
+      % elif apartment_city == "Urbana":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **A fraternity or social organization,**
+      * **Something you have signed a contract to buy, or**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
+      % elif apartment_city == "None of the above":
+      % if cook_county_check == True:
+      * **A hotel or motel,**
+      * **A school dormitory,**
+      * **A shelter or a single-room-occupancy (SRO),**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
+      * **An owner-occupied co-op**
+      % endif
+      % endif
+      
+      ${word(yesno(property_type_check))}
+    show if: apartment_city != "None of the above" or cook_county_check == True
+  - Edit: chicago_owner_occupant
+    button: |
+      **Does the owner live in one of the units on the property?**
+      ${word(yesno(chicago_owner_occupant))}
+    show if: apartment_city == "Chicago" and landlord_check == True
+  - Edit: cook_owner_occupant
+    button: |
+      **Does the owner live in one of the units on the property?**
+      ${word(yesno(cook_owner_occupant))}
+    show if: apartment_city == "Oak Park" or cook_county_check == True
+  - Edit: cook_family_check
+    button: |
+      **Is the property a single-family home or condominium, where**
+
+      * **the owner is only renting that one rental property, and**
+      * **the owner or an immediate family member has lived in the home within the year?**
+      
+      ${word(yesno(cook_family_check))}
+    show if: cook_owner_occupant == False
+  - Edit: rental_address.address
+    button: |
+      **Address of rental property:**
+      ${rental_address.on_one_line(bare=True)}
+    show if: landlord_check
+  - Edit: unit_number_chicagoland
+    button: |
+      **How many rental units are in the property?**
+      % if unit_number_chicagoland == "six":
+      Up to 6 units
+      % elif unit_number_chicagoland == "seven":
+      7 or more units
+      % endif
+    show if: apartment_city == "Chicago" or apartment_city == "Oak Park" or cook_county_check == True
+  - Edit: unit_number_illinois
+    button: |
+      **How many units are in the property?**
+      % if unit_number_illinois == "four":
+      Up to 4 units
+      % elif unit_number_illinois == "five":
+      5 or more units
+      % endif
+    show if: apartment_city != "Chicago" and apartment_city != "Oak Park" and cook_county_check == False
+  - Edit: deposit_payments[0]
+    button: |
+      % if another_deposit[0] == True:
+      **First security deposit payment:**
+      % else:
+      **Security deposit payment:**
+      % endif
+      ${currency(deposit_payments[0])}
+    show if: landlord_check
+  - Edit: deposit_dates[0]
+    button: |
+      % if another_deposit[0] == True:
+      **Date of first deposit payment:**
+      % else:
+      **Date of deposit payment:**
+      % endif
+      ${deposit_dates[0]}
+    show if: landlord_check
+  - Edit: another_deposit[0]
+    button: |
+      **Did you make more than one payment?**
+      ${word(yesno(another_deposit[0]))}
+    show if: landlord_check
+  - Edit: deposit_payments[1]
+    button: |
+      **Second security deposit payment:**
+      ${currency(deposit_payments[1])}
+    show if: landlord_check == True and another_deposit[0] == True
+  - Edit: deposit_dates[1]
+    button: |
+      **Date of second deposit payment:**
+      ${deposit_dates[1]}
+    show if: landlord_check == True and another_deposit[0] == True
+  - Edit: another_deposit[1]
+    button: |
+      **Did you make more than two payments?**
+      ${word(yesno(another_deposit[1]))}
+    show if: landlord_check == True and another_deposit[0] == True
+  - Edit: deposit_payments[2]
+    button: |
+      **Total of remaining security deposit payments:**
+      ${currency(deposit_payments[2])}
+    show if: landlord_check == True and another_deposit[0] == True and another_deposit[1] == True
+  - Edit: deposit_dates[2]
+    button: |
+      **Date of final deposit payment:**
+      ${deposit_dates[2]}
+    show if: landlord_check == True and another_deposit[0] == True and another_deposit[1] == True
+  - Edit: partial_return_check
+    button: |
+      **Did your landlord return part of your security deposit?**
+      ${word(yesno(partial_return_check))}
+    show if: landlord_check
+  - Edit: partial_return_amount
+    button: |
+      **Amount returned to you:**
+      ${currency(partial_return_amount)}
+    show if: landlord_check == True and partial_return_check == True
+  - Edit: partial_return_date
+    button: |
+      **Date partial amount returned to you:**
+      ${partial_return_date}
+    show if: landlord_check == True and partial_return_check == True
+  - Edit: lease_check
+    button: |
+      **Did you have a written lease?**
+      ${word(yesno(lease_check))}
+    show if: landlord_check
+  - Edit: lease_attach_check
+    button: |
+      **Will you attach a copy of the lease?**
+      ${word(yesno(lease_attach_check))}
+    show if: landlord_check == True and lease_check == True
+  - Edit: lease_attach_explain
+    button: |
+      **Why can you not attach a copy of your lease?**
+      ${lease_attach_explain}
+    show if: landlord_check == True and lease_check == True and lease_attach_check == False
+  - Edit: deposit_payment_proof
+    button: |
+      **Will you attach proof you paid a security deposit?**
+      ${word(yesno(deposit_payment_proof))}
+    show if: landlord_check
+  - Edit: demand_letter_attach
+    button: |
+      **Will you attach a copy of the demand letter you sent?**
+      ${word(yesno(demand_letter_attach))}
+    show if: landlord_check
+  - label: Edit
+    fields:
+      - use_deposit_default
+      - recompute:
+        - default_deposit_claim_reason
+        - use_that_default
+        - deposit_claim_reason
+    button: |
+      **Why does your landlord owe you ${currency(amount_check)}?**
+      
+      ${deposit_claim_reason}
+    show if: landlord_check == True and use_deposit_default == True
+  - label: Edit
+    fields:
+      - use_deposit_default
+      - new_deposit_claim_reason
+      - recompute:
+        - default_deposit_claim_reason
+        - use_that_default
+        - deposit_claim_reason 
+    button: |
+      **Why does your landlord owe you ${currency(amount_check)}?**
+      
+      ${deposit_claim_reason}
+    show if: landlord_check == True and use_deposit_default == False
+  - Edit: preview_deposit_complaint
+    button: |
+      **Do you need a second page to explain why your landlord owes you ${currency(amount_check)}?**
+      % if preview_deposit_complaint == "Additional page":
+      Yes
+      % else:
+      No
+      % endif
+    show if: landlord_check
+  - Edit: more_deposit_reason
+    button: |
+      **Why does your landlord owe you ${currency(amount_check)} (second page)?**
+      
+      ${more_deposit_reason}
+    show if: landlord_check == True and preview_deposit_complaint == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -1501,54 +2730,68 @@ review:
       **Do you have a written agreement with ${other_parties[0].name.full(middle='full')}?**
       % endif
       ${word(yesno(agreement_check))}
+    show if: landlord_check == False
   - Edit: attach_check
     button: |
       **Will you attach your written agreement?**
       ${word(yesno(attach_check))}
-    show if: agreement_check
+    show if: agreement_check == True and landlord_check == False
   - Edit: attach_explain
     button: |
       **Why can you not attach a copy of your written agreement?**
       ${attach_explain}
-    show if: agreement_check == True and attach_check == False
+    show if: agreement_check == True and attach_check == False and landlord_check == False
   - Edit: demand_check
     button: |
-      % if other_parties.number_gathered() > 1:
-      **Have you demanded payment of $${amount_check} and have the defendants failed to pay you the full amount?**
-      % else:
-      **Have you demanded payment of $${amount_check} and has ${other_parties[0].name.full(middle='full')} failed to pay you the full amount?**
-      % endif
+      **Have you demanded payment of ${currency(amount_check)}?**
       ${word(yesno(demand_check))}
+    show if: landlord_check == False
+  - Edit: demand_answer_check
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Have the defendants paid you any amount?**
+      % else:
+      **Has ${other_parties[0].name.full(middle='full')} paid you any amount?**
+      % endif
+      % if demand_answer_check == "not_paid":
+      No
+      % else:
+      Yes, they have paid me ${currency(partial_payment_amount)}.
+      % endif
+    show if: landlord_check == False and demand_check == True
   - Edit: claim_reason
     button: |
       % if other_parties.number_gathered() > 1:
-      **Why do the defendants owe you $${amount_check}?**
+      **Why do the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check}?**
+      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)}?**
       % endif
       
       ${claim_reason}
+    show if: landlord_check == False
   - Edit: preview_complaint
     button: |
       % if other_parties.number_gathered() > 1:
-      **Do you need a second page to explain why the defendants owe you $${amount_check}?**
+      **Do you need a second page to explain why the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Do you need a second page to explain why ${other_parties[0].name.full(middle='full')} owes you $${amount_check}?**
+      **Do you need a second page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?**
       % endif
       % if preview_complaint == "Additional page":
       Yes
       % else:
       No
       % endif
+    show if: landlord_check == False
   - Edit: more_reason
     button: |
       % if other_parties.number_gathered() > 1:
-      **Why do the defendants owe you $${amount_check} (second page)?**
+      **Why do the defendants owe you ${currency(amount_check)} (second page)?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check} (second page)?**
+      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)} (second page)?**
       % endif
       
       ${more_reason}
+    show if: landlord_check == False
   - Edit: users[0].name.first
     button: |
       **Your name:**
@@ -1714,7 +2957,7 @@ review:
   - Edit: amount_check
     button: |
       **You are suing for:**
-      $${amount_check}  
+      ${currency(amount_check)}  
   - Edit: filing_location.county_number
     button: |
       **You are filing in:**
@@ -1723,6 +2966,252 @@ review:
     button: |
       **Are you suing your former landlord to return a security deposit?**
       ${word(yesno(landlord_check))}
+  - Edit: move_in_date
+    button: |
+      **Move in date:**
+      ${move_in_date}
+    show if: landlord_check
+  - Edit: move_out_date
+    button: |
+      **Move out date:**
+      ${move_out_date}
+    show if: landlord_check
+  - Edit: demand_letter_date
+    button: |
+      **When did you send a letter requesting your security deposit?**
+      ${demand_letter_date}
+    show if: landlord_check
+  - Edit: apartment_city
+    button: |
+      **Which city is the rental unit in?**
+      ${apartment_city}
+    show if: landlord_check
+  - Edit: cook_county_check
+    button: |
+      **Is the rental unit in Cook County?**
+      ${word(yesno(cook_county_check))}
+    show if: landlord_check == True and apartment_city == "None of the above"
+  - Edit: property_type_check
+    button: |
+      **Is the property:**
+      
+      % if apartment_city == "Chicago":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **Something you have signed a contract to buy,**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
+      * **A co-op**
+      % elif apartment_city == "DeKalb":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **Government-owned, or**
+      * **A rooming house**
+      % elif apartment_city == "Evanston":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **A fraternity or social organization,**
+      * **Something you have signed a contract to buy,**
+      * **A co-op, or**
+      * **An educational institution**
+      % elif apartment_city == "Mount Prospect":
+      * **A medical, educational, or relgious facility,**
+      * **A residential care home,**
+      * **A hotel or motel, or**
+      * **Something you have signed a contract to buy**
+      % elif apartment_city == "Oak Park":
+      * **A hotel or motel,**
+      * **A medical, educational, or relgious facility,**
+      * **A school dormitory,**
+      * **A temporary or transitional shelter,**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
+      % elif apartment_city == "Urbana":
+      * **A medical, educational, or relgious facility,**
+      * **A hotel or motel,**
+      * **A fraternity or social organization,**
+      * **Something you have signed a contract to buy, or**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
+      % elif apartment_city == "None of the above":
+      % if cook_county_check == True:
+      * **A hotel or motel,**
+      * **A school dormitory,**
+      * **A shelter or a single-room-occupancy (SRO),**
+      * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
+      * **An owner-occupied co-op**
+      % endif
+      % endif
+      
+      ${word(yesno(property_type_check))}
+    show if: apartment_city != "None of the above" or cook_county_check == True
+  - Edit: chicago_owner_occupant
+    button: |
+      **Does the owner live in one of the units on the property?**
+      ${word(yesno(chicago_owner_occupant))}
+    show if: apartment_city == "Chicago" and landlord_check == True
+  - Edit: cook_owner_occupant
+    button: |
+      **Does the owner live in one of the units on the property?**
+      ${word(yesno(cook_owner_occupant))}
+    show if: apartment_city == "Oak Park" or cook_county_check == True
+  - Edit: cook_family_check
+    button: |
+      **Is the property a single-family home or condominium, where**
+
+      * **the owner is only renting that one rental property, and**
+      * **the owner or an immediate family member has lived in the home within the year?**
+      
+      ${word(yesno(cook_family_check))}
+    show if: cook_owner_occupant == False
+  - Edit: rental_address.address
+    button: |
+      **Address of rental property:**
+      ${rental_address.on_one_line(bare=True)}
+    show if: landlord_check
+  - Edit: unit_number_chicagoland
+    button: |
+      **How many rental units are in the property?**
+      % if unit_number_chicagoland == "six":
+      Up to 6 units
+      % elif unit_number_chicagoland == "seven":
+      7 or more units
+      % endif
+    show if: apartment_city == "Chicago" or apartment_city == "Oak Park" or cook_county_check == True
+  - Edit: unit_number_illinois
+    button: |
+      **How many units are in the property?**
+      % if unit_number_illinois == "four":
+      Up to 4 units
+      % elif unit_number_illinois == "five":
+      5 or more units
+      % endif
+    show if: apartment_city != "Chicago" and apartment_city != "Oak Park" and cook_county_check == False
+  - Edit: deposit_payments[0]
+    button: |
+      % if another_deposit[0] == True:
+      **First security deposit payment:**
+      % else:
+      **Security deposit payment:**
+      % endif
+      ${currency(deposit_payments[0])}
+    show if: landlord_check
+  - Edit: deposit_dates[0]
+    button: |
+      % if another_deposit[0] == True:
+      **Date of first deposit payment:**
+      % else:
+      **Date of deposit payment:**
+      % endif
+      ${deposit_dates[0]}
+    show if: landlord_check
+  - Edit: another_deposit[0]
+    button: |
+      **Did you make more than one payment?**
+      ${word(yesno(another_deposit[0]))}
+    show if: landlord_check
+  - Edit: deposit_payments[1]
+    button: |
+      **Second security deposit payment:**
+      ${currency(deposit_payments[1])}
+    show if: landlord_check == True and another_deposit[0] == True
+  - Edit: deposit_dates[1]
+    button: |
+      **Date of second deposit payment:**
+      ${deposit_dates[1]}
+    show if: landlord_check == True and another_deposit[0] == True
+  - Edit: another_deposit[1]
+    button: |
+      **Did you make more than two payments?**
+      ${word(yesno(another_deposit[1]))}
+    show if: landlord_check == True and another_deposit[0] == True
+  - Edit: deposit_payments[2]
+    button: |
+      **Total of remaining security deposit payments:**
+      ${currency(deposit_payments[2])}
+    show if: landlord_check == True and another_deposit[0] == True and another_deposit[1] == True
+  - Edit: deposit_dates[2]
+    button: |
+      **Date of final deposit payment:**
+      ${deposit_dates[2]}
+    show if: landlord_check == True and another_deposit[0] == True and another_deposit[1] == True
+  - Edit: partial_return_check
+    button: |
+      **Did your landlord return part of your security deposit?**
+      ${word(yesno(partial_return_check))}
+    show if: landlord_check
+  - Edit: partial_return_amount
+    button: |
+      **Amount returned to you:**
+      ${currency(partial_return_amount)}
+    show if: landlord_check == True and partial_return_check == True
+  - Edit: partial_return_date
+    button: |
+      **Date partial amount returned to you:**
+      ${partial_return_date}
+    show if: landlord_check == True and partial_return_check == True
+  - Edit: lease_check
+    button: |
+      **Did you have a written lease?**
+      ${word(yesno(lease_check))}
+    show if: landlord_check
+  - Edit: lease_attach_check
+    button: |
+      **Will you attach a copy of the lease?**
+      ${word(yesno(lease_attach_check))}
+    show if: landlord_check == True and lease_check == True
+  - Edit: lease_attach_explain
+    button: |
+      **Why can you not attach a copy of your lease?**
+      ${lease_attach_explain}
+    show if: landlord_check == True and lease_check == True and lease_attach_check == False
+  - Edit: deposit_payment_proof
+    button: |
+      **Will you attach proof you paid a security deposit?**
+      ${word(yesno(deposit_payment_proof))}
+    show if: landlord_check
+  - Edit: demand_letter_attach
+    button: |
+      **Will you attach a copy of the demand letter you sent?**
+      ${word(yesno(demand_letter_attach))}
+    show if: landlord_check
+  - label: Edit
+    fields:
+      - use_deposit_default
+      - recompute:
+        - default_deposit_claim_reason
+        - use_that_default
+        - deposit_claim_reason
+    button: |
+      **Why does your landlord owe you ${currency(amount_check)}?**
+      
+      ${deposit_claim_reason}
+    show if: landlord_check == True and use_deposit_default == True
+  - label: Edit
+    fields:
+      - use_deposit_default
+      - new_deposit_claim_reason
+      - recompute:
+        - default_deposit_claim_reason
+        - use_that_default
+        - deposit_claim_reason 
+    button: |
+      **Why does your landlord owe you ${currency(amount_check)}?**
+      
+      ${deposit_claim_reason}
+    show if: landlord_check == True and use_deposit_default == False
+  - Edit: preview_deposit_complaint
+    button: |
+      **Do you need a second page to explain why your landlord owes you $${amount_check}?**
+      % if preview_deposit_complaint == "Additional page":
+      Yes
+      % else:
+      No
+      % endif
+    show if: landlord_check
+  - Edit: more_deposit_reason
+    button: |
+      **Why does your landlord owe you ${currency(amount_check)} (second page)?**
+      
+      ${more_deposit_reason}
+    show if: landlord_check == True and preview_deposit_complaint == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -1731,54 +3220,68 @@ review:
       **Do you have a written agreement with ${other_parties[0].name.full(middle='full')}?**
       % endif
       ${word(yesno(agreement_check))}
+    show if: landlord_check == False
   - Edit: attach_check
     button: |
       **Will you attach your written agreement?**
       ${word(yesno(attach_check))}
-    show if: agreement_check
+    show if: agreement_check == True and landlord_check == False
   - Edit: attach_explain
     button: |
       **Why can you not attach a copy of your written agreement?**
       ${attach_explain}
-    show if: agreement_check == True and attach_check == False
+    show if: agreement_check == True and attach_check == False and landlord_check == False
   - Edit: demand_check
     button: |
-      % if other_parties.number_gathered() > 1:
-      **Have you demanded payment of $${amount_check} and have the defendants failed to pay you the full amount?**
-      % else:
-      **Have you demanded payment of $${amount_check} and has ${other_parties[0].name.full(middle='full')} failed to pay you the full amount?**
-      % endif
+      **Have you demanded payment of ${currency(amount_check)}?**
       ${word(yesno(demand_check))}
+    show if: landlord_check == False
+  - Edit: demand_answer_check
+    button: |
+      % if other_parties.number_gathered() > 1:
+      **Have the defendants paid you any amount?**
+      % else:
+      **Has ${other_parties[0].name.full(middle='full')} paid you any amount?**
+      % endif
+      % if demand_answer_check == "not_paid":
+      No
+      % else:
+      Yes, they have paid me ${currency(partial_payment_amount)}.
+      % endif
+    show if: landlord_check == False and demand_check == True
   - Edit: claim_reason
     button: |
       % if other_parties.number_gathered() > 1:
-      **Why do the defendants owe you $${amount_check}?**
+      **Why do the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check}?**
+      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)}?**
       % endif
       
       ${claim_reason}
+    show if: landlord_check == False
   - Edit: preview_complaint
     button: |
       % if other_parties.number_gathered() > 1:
-      **Do you need a second page to explain why the defendants owe you $${amount_check}?**
+      **Do you need a second page to explain why the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Do you need a second page to explain why ${other_parties[0].name.full(middle='full')} owes you $${amount_check}?**
+      **Do you need a second page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?**
       % endif
       % if preview_complaint == "Additional page":
       Yes
       % else:
       No
       % endif
+    show if: landlord_check == False
   - Edit: more_reason
     button: |
       % if other_parties.number_gathered() > 1:
-      **Why do the defendants owe you $${amount_check} (second page)?**
+      **Why do the defendants owe you ${currency(amount_check)} (second page)?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you $${amount_check} (second page)?**
+      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)} (second page)?**
       % endif
       
       ${more_reason}
+    show if: landlord_check == False
   - Edit: other_parties.revisit
     button: |
       **Defendants: (Edit to change names, addresses, and other information)**
@@ -1829,3 +3332,61 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name.full(middle="full") }
       % endfor
+---
+#code block for creating variables used only in attachment blocks. Why oh why docassemble won't let me just put this code by the corresponding fields is beyond me.
+reconsider: True
+code: |
+
+  if landlord_check == False:
+    if agreement_check == False:
+      no_agreement_logic = True
+    else:
+      no_agreement_logic = False
+  else:
+    if lease_check == False:
+      no_agreement_logic = True
+    else:
+      no_agreement_logic = False
+  
+  if landlord_check == False:
+    if agreement_check == True and attach_check == True:
+      attached_agreement_logic = True
+    else:
+      attached_agreement_logic = False
+  else:
+    if lease_check == True and lease_attach_check == True:
+      attached_agreement_logic = True
+    else:
+      attached_agreement_logic = False
+
+  if landlord_check == False:
+    if agreement_check == True and attach_check == False:
+      unattached_agreement_logic = True
+    else:
+      unattached_agreement_logic = False
+  else:
+    if lease_check == True and lease_attach_check == False:
+      unattached_agreement_logic = True
+    else:
+      unattached_agreement_logic = False
+
+  if landlord_check == False:
+    if agreement_check == True and attach_check == False:
+      unattached_reason_logic = attach_explain
+    else:
+      unattached_reason_logic = ""
+  else:
+    if lease_check == True and lease_attach_check == False:
+      unattached_reason_logic = lease_attach_explain
+    else:
+      unattached_reason_logic = ""
+      
+  for person in other_parties:
+    if person.agent_check == True:
+      person.where_to_serve = other_parties[0].service_address
+    elif person.same_address == False:
+      person.where_to_serve = other_parties[0].service_address
+    else:
+      person.where_to_serve = other_parties[0].address
+      
+  attachment_logic = True
