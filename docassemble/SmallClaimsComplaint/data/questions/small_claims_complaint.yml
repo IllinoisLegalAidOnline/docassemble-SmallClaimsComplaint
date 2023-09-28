@@ -128,7 +128,9 @@ code: |
     deposit_damages_info
     set_progress(60)
     if deposit_with_damages != amount_check:
-      if claim_amount_update == True:
+      if deposit_with_damages > 10000:
+        deposit_damages_too_big
+      elif claim_amount_update == True:
         amount_updated
     if lease_check == True:
       if lease_attach_check == False:
@@ -1961,9 +1963,9 @@ code: |
 id: deposit damages too big kickout
 event: deposit_damages_too_big
 question: |
-  Sorry
+  Claim amount too big with damages
 subquestion: |
-  You can only sue for $10,000 or less in Small Claims Court.
+  With damages, your claim amount is ${deposit_with_damages}. You can only sue for $10,000 or less in Small Claims Court.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
