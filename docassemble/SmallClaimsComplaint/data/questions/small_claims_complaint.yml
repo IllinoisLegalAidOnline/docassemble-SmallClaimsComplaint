@@ -139,7 +139,8 @@ code: |
     use_that_default
     chop_off_county
     if use_deposit_default == True:
-      if preview_deposit_complaint == "Additional page":
+      preview_deposit_complaint
+      if add_second_deposit_page == True:
         more_deposit_reason
         preview_additional_deposit_reasons
          
@@ -160,8 +161,10 @@ code: |
     set_progress(40)
     claim_reason
     chop_off_county
-    if preview_complaint == "Additional page":
-      set_progress(60)
+    set_progress(60)
+    preview_complaint
+    if add_second_page == True:
+      
       more_reason
       preview_additional_reasons
   nav.set_section('section_service')
@@ -386,7 +389,7 @@ buttons:
 ---
 id: money only check
 question: |
-  Are you suing for anything else besides money?
+  Are you suing for anything besides money?
 subquestion: |
   Small Claims judges can order a judgment only for money.
 
@@ -419,6 +422,12 @@ subquestion: |
   Do not include court costs in this amount.
 
   If you are suing your landlord to return a security deposit, there will be more questions to figure out what you can claim. For now, enter the amount of security deposit your landlord owes you.
+  
+  % if defined('amount_updated'):
+  % if amount_updated == True:
+  You already changed this amount during the interview based on information about your security deposit.
+  % endif
+  % endif
 fields:
   - Amount owed: amount_check
     datatype: number
@@ -925,13 +934,19 @@ subquestion: |
  
   ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
   
-  If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
-  
-  If this looks good, click **Next** if you want to continue or **Additional page** if you need to add more.
-field: preview_complaint
-buttons:
-  - Additional page
-  - Next
+  If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section. If you do not want to make changes or you need more space, click **Next**.
+continue button field: preview_complaint
+---
+id: second page check generic
+question: |
+  % if other_parties.number_gathered() > 1:
+  Do you want to add an additional page to explain why defendants owe you ${currency(amount_check)}?
+  % else:
+  Do you want to add an additional page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?
+  % endif
+fields:
+  - no label: add_second_page
+    datatype: yesnoradio
 ---
 id: preview deposit complaint
 reconsider:
@@ -947,11 +962,8 @@ subquestion: |
   
   If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
   
-  If this looks good, click **Next** if you want to continue or **Additional page** if you need to add more.
-field: preview_deposit_complaint
-buttons:
-  - Additional page
-  - Next
+  If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section. If you do not want to make changes or you need more space, click **Next**.
+continue button field: preview_deposit_complaint
 ---
 template: help_reason
 subject: |
@@ -960,6 +972,17 @@ content: |
   "On April 21, 2023, I agreed to sell my couch to my neighbor Fred Washington for $100. We agreed that Fred would pay me $100 within a week after receiving the couch. We wrote down the agreement. A copy of the agreement is attached. I gave Fred the couch on May 22, 2020. He paid me $25 on June 1, 2020. I asked him to pay the remaining $75 every week since then. He has not paid me the $75."
 
   "On June 3, 2023, Julia Smith's dog bit me. I went to the emergency room to get treatment. The bill was for $568.90. I gave Julia a copy of the bill on August 3, 2023. A copy of the bill is attached. I have asked Julia to pay me back for the hospital bill. She has not paid me."
+---
+id: second page check security deposit
+question: |
+  % if other_parties.number_gathered() > 1:
+  Do you want to add an additional page to explain why defendants owe you ${currency(amount_check)}?
+  % else:
+  Do you want to add an additional page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?
+  % endif
+fields:
+  - no label: add_second_deposit_page
+    datatype: yesnoradio
 ---
 id: more reason
 question: |
@@ -1076,15 +1099,13 @@ id: preview additional deposit reasons
 continue button field: preview_additional_deposit_reasons
 reconsider:
   - additional_reasons['preview']
-  - complaint['preview']
+  #- complaint['preview']
 question: |
   Additional reasons preview
 subquestion: |
   Click the below image to preview your Complaint form and your Additional reasons form.
   
   **Note: this is not a complete form.** Finish the program to get all your forms.
-  
-   ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
  
   ${ pdf_concatenate(additional_reasons['preview'], filename="additional_reasons-preview.pdf").extract_pages() }
   
@@ -1609,7 +1630,7 @@ depends on:
   - unit_number_illinois
 code: |
   if rental_address.city != "Chicago" and rental_address.city != "DeKalb" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect" and rental_address.city != "Oak Park" and rental_address.city != "Urbana":
-    if end_in_county(rental_address.county) == "Cook County":
+    if end_in_county(rental_address.county) != "Cook County":
       rlto_applies = False
     else:
       if property_type_check == True:
@@ -1858,15 +1879,15 @@ code: |
     else:
       if rental_address.city == "Evanston":
         damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
-        if damage_date_difference > 21:
-          landlord_time = False
+        if damage_date_difference.days > 21:
+          landlord_timely = False
         else:
           landlord_timely = True
           
       else:
         damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
-        if damage_date_difference > 30:
-          landlord_time = False
+        if damage_date_difference.days > 30:
+          landlord_timely = False
         else:
           landlord_timely = True
 ---
@@ -1894,7 +1915,10 @@ depends on:
   - total_deposit
   - deposit_balance_owed
 code: |
-  deposit_with_damages = total_deposit + total_deposit + deposit_balance_owed
+  if extra_damages == True:
+    deposit_with_damages = total_deposit + total_deposit + deposit_balance_owed
+  else:
+    deposit_with_damages = deposit_balance_owed
 ---
 id: security deposit damages info
 continue button field: deposit_damages_info
@@ -2185,11 +2209,11 @@ code: |
     additional_defendants.enabled = True
     
   if landlord_check == False:
-    if preview_complaint == "Additional page":
+    if add_second_page == True:
       additional_reasons.enabled = True
   else:
     if use_deposit_default == True:
-      if preview_deposit_complaint == "Additional page":
+      if add_second_deposit_page == True:
         additional_reasons.enabled = True
     
   for person in other_parties:
@@ -2261,7 +2285,7 @@ attachment:
     - "unattached_reason": ${unattached_reason_logic}
     - "demanded_and_failed": ${demand_letter_check if landlord_check == True else have_demanded_field}
     - "why_owed": ${claim_reason if landlord_check == False else deposit_claim_reason}
-    - "additional_reasons": ${ True if preview_complaint == "Additional page" else False}
+    - "additional_reasons": ${reasons_attach}
     - "e_signature": ${users[0].name.full(middle='full') if e_signature == True else ""}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
     - "plaintiff_city_state_zip": ${users[0].address.line_two()}
@@ -2907,21 +2931,21 @@ review:
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
-  - Edit: preview_deposit_complaint
+  - Edit: add_second_deposit_page
     button: |
       **Do you need a second page to explain why your landlord owes you ${currency(amount_check)}?**
-      % if preview_deposit_complaint == "Additional page":
-      Yes
-      % else:
-      No
-      % endif
+      ${word(yesno(add_second_deposit_page))}
     show if: landlord_check == True and use_deposit_default == False
   - Edit: more_deposit_reason
     button: |
       **Why does your landlord owe you ${currency(amount_check)} (second page)?**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == False and preview_deposit_complaint == True
+    show if: landlord_check == True and use_deposit_default == False and add_second_deposit_page == True
+  - Edit: add_second_deposit_page
+    button: |
+      Does this appear?
+    show if: landlord_check == True and use_deposit_default == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -2965,18 +2989,14 @@ review:
       
       ${claim_reason}
     show if: landlord_check == False
-  - Edit: preview_complaint
+  - Edit: add_second_page
     button: |
       % if other_parties.number_gathered() > 1:
       **Do you need a second page to explain why the defendants owe you ${currency(amount_check)}?**
       % else:
       **Do you need a second page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?**
       % endif
-      % if preview_complaint == "Additional page":
-      Yes
-      % else:
-      No
-      % endif
+      ${add_second_page}
     show if: landlord_check == False
   - Edit: more_reason
     button: |
@@ -3386,21 +3406,17 @@ review:
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
-  - Edit: preview_deposit_complaint
+  - Edit: add_second_deposit_page
     button: |
       **Do you need a second page to explain why your landlord owes you $${amount_check}?**
-      % if preview_deposit_complaint == "Additional page":
-      Yes
-      % else:
-      No
-      % endif
+      ${word(yesno(add_second_deposit_page))}
     show if: landlord_check == True and use_deposit_default == False
   - Edit: more_deposit_reason
     button: |
       **Why does your landlord owe you ${currency(amount_check)} (second page)?**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == False and preview_deposit_complaint == True
+    show if: landlord_check == True and use_deposit_default == False and add_second_deposit_page == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -3547,7 +3563,10 @@ code: |
       
       
   else:
-
+    if add_second_page == True:
+      reasons_attach = True
+    else:
+      reasons_attach = False
     if agreement_check == False:
       no_agreement_logic = True
     else:
