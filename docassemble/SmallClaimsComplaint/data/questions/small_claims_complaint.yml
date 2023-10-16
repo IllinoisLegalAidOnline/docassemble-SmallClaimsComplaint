@@ -77,23 +77,28 @@ code: |
   if landlord_check == True:
     rental_address.address
     rental_address.county_correct
-    if rental_address.city == "Chicago" or rental_address.city == "DeKalb" or rental_address.city == "Evanston" or rental_address.city == "Mount Prospect" or rental_address.city == "Oak Park" or rental_address.city == "Urbana" or end_in_county(rental_address.county) == "Cook County":
+    if rental_address.city == "Chicago" or rental_address.city == "Evanston" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
       municipal_intro
       if property_type_check == False:
         if rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
-          unit_number_chicagoland
+          if rental_address.city != "Oak Park" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
+            unit_number_chicagoland
+          elif rental_address.city == "Oak Park":
+            unit_number_illinois
         else:
           unit_number_illinois
         
-        if rental_address.city == "Chicago":
+        if rental_address.city == "Chicago" and unit_number_chicagoland == "six":
           chicago_owner_occupant
         elif rental_address.city == "Oak Park":
-          if cook_owner_occupant == False:
-            cook_family_check
-        elif end_in_county(rental_address.county) == "Cook County":
-          if cook_owner_occupant == False:
-            cook_family_check
-      
+          if unit_number_illinois == "four":
+            cook_owner_occupant
+        elif end_in_county(rental_address.county) == "Cook County" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
+          if unit_number_chicagoland == "six":
+            if cook_owner_occupant == False:
+              cook_family_check
+    else:
+      property_type_code
     rlto_note
     move_in_date
     if moved_out == False:
@@ -103,7 +108,7 @@ code: |
       no_demand_kickout
     demand_letter_date
     set_progress(40)
-    if date_diff_reference.days < 0:
+    if return_date_diff_reference.days < 0 or damage_date_diff_reference.days < 0:
       landlord_time_kickout
     
     landlord_deadline
@@ -122,9 +127,8 @@ code: |
       deposit_still_owed
     else:
       all_paid_error
-    #if rlto_applies == True:
-      #if damages_check == True:
-        #damages_date
+    if damages_check == True:
+      damages_date
     deposit_damages_info
     set_progress(60)
     if deposit_with_damages != amount_check:
@@ -141,10 +145,10 @@ code: |
     use_that_default
     chop_off_county
     if use_deposit_default == True:
-      preview_deposit_complaint
-      if add_second_deposit_page == True:
+      preview_complaint
+      if add_second_page == True:
         more_deposit_reason
-        preview_additional_deposit_reasons
+        preview_additional_reasons
          
 
   else:
@@ -169,6 +173,8 @@ code: |
       
       more_reason
       preview_additional_reasons
+  evidence
+  
   nav.set_section('section_service')
   service_intro
   set_progress(80)
@@ -188,14 +194,15 @@ code: |
         person.alt_service_phone
         person.alt_service_email
     person.service_method
+  next_steps
+  
   nav.set_section('section_about_you')
   set_progress(90)
   users[0].name.first
   users[0].address.address
   users[0].has_email_address
   e_signature
-  next_steps
-  evidence
+  
   nav.set_section('section_download')
   attachment_logic
   
@@ -345,7 +352,7 @@ template: contact_info_help
 subject: |
   **Why do I need to include this?**
 content: |  
-  The court must be able to reach you. So you have to give them some way to do this.
+  The court must be able to reach you, so you need to include some contact information.
 ---
 id: age check
 question: |
@@ -393,7 +400,7 @@ id: money only check
 question: |
   Are you suing for anything besides money?
 subquestion: |
-  Small Claims judges can order a judgment only for money.
+  Small Claims Court judges can order a judgment only for money.
 
   The judge cannot require a person or business to do something or stop doing something, or to return property.
 fields:
@@ -407,7 +414,7 @@ question: |
 subquestion: |
   You can only sue for money in Small Claims Court.
 
-  The Small Claims judge cannot require a person or business to do something or stop doing something, or to return property.
+  The Small Claims Court judge cannot require a person or business to do something or stop doing something, or to return property.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
@@ -887,17 +894,9 @@ question: |
 subquestion: |
   % if other_parties.number_gathered() > 1:
   Explain why the defendants owe you money. 
-  
-  Be specific. Include:
-  
-  * Dates, 
-  * What happened, 
-  * Whether any payments were made, 
-  * Whether there was a contract, an agreement, or a receipt. 
-  
-  Remember you can only sue for money in Small Claims Court.
   % else:
   Explain why the ${other_parties[0].name.full(middle='full')} owes you money. 
+  % endif
   
   Be specific. Include:
   
@@ -907,7 +906,6 @@ subquestion: |
   * Whether there was a contract, an agreement, or a receipt. 
   
   Remember you can only sue for money in Small Claims Court.
-  % endif
   
   The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen
 
@@ -922,7 +920,7 @@ fields:
     field: claim_reason
     input type: area
     rows: 16
-    maxlength: 1900
+    maxlength: 1800
 ---
 id: preview complaint
 reconsider:
@@ -950,23 +948,6 @@ fields:
   - no label: add_second_page
     datatype: yesnoradio
 ---
-id: preview deposit complaint
-reconsider:
-  - complaint['preview']
-question: |
-  Complaint preview
-subquestion: |
-  Click the below image to preview page 2 of your *Small Claims Complaint*.
-  
-  **Note: this is not a complete form.** Finish the program to get all your forms.
- 
-  ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
-  
-  If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
-  
-  If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section. If you do not want to make changes or you need more space, click **Next**.
-continue button field: preview_deposit_complaint
----
 template: help_reason
 subject: |
   **Can I see some examples?**
@@ -975,23 +956,12 @@ content: |
 
   "On June 3, 2023, Julia Smith's dog bit me. I went to the emergency room to get treatment. The bill was for $568.90. I gave Julia a copy of the bill on August 3, 2023. A copy of the bill is attached. I have asked Julia to pay me back for the hospital bill. She has not paid me."
 ---
-id: second page check security deposit
-question: |
-  % if other_parties.number_gathered() > 1:
-  Do you want to add an additional page to explain why defendants owe you ${currency(amount_check)}?
-  % else:
-  Do you want to add an additional page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?
-  % endif
-fields:
-  - no label: add_second_deposit_page
-    datatype: yesnoradio
----
 id: more reason
 question: |
    Additional explanation
 subquestion: |
   % if other_parties.number_gathered() > 1:
-  Explain why the defendants owe you money. 
+  Explain why the defendants owe you ${currency(amount_check)}. 
   
   Be specific. Include:
   
@@ -1002,7 +972,7 @@ subquestion: |
   
   Remember you can only sue for money in Small Claims Court.
   % else:
-  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. 
+  Explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}. 
   
   Be specific. Include:
   
@@ -1014,7 +984,7 @@ subquestion: |
   Remember you can only sue for money in Small Claims Court.
   % endif
   
-  The form has space for about 38 lines of text, or about 2,500 characters.
+  The form has space for about 36 lines of text, or about 2,600 characters.
   
   ${collapse_template(reason_thus_far)}
 fields:
@@ -1031,31 +1001,15 @@ content: |
 ---
 id: more deposit reason
 question: |
-  Additional reason
+  Additional explanation
 subquestion: |
   % if other_parties.number_gathered() > 1:
-  Explain why the defendants owe you money. 
-  
-  Be specific. Include:
-  
-  * Dates, 
-  * What happened, 
-  * When security deposit payments were made, and
-  * Whether there was a lease. 
-  
-  Remember you can only sue for money in Small Claims Court.
+  Add more reasons why the defendants owe you ${currency(amount_check)} below. 
   % else:
-  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. 
-  
-  Be specific. Include:
-  
-  * Dates, 
-  * What happened, 
-  * When security deposit payments were made, and
-  * Whether there was a lease. 
+  Add more reasons why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)} below.
+  % endif
   
   Remember you can only sue for money in Small Claims Court.
-  % endif
   
   The form has space for about 37 lines of text, or about 2,400 characters.
 
@@ -1075,22 +1029,24 @@ fields:
 ---
 template: deposit_reason_thus_far
 subject: |
-  **Show me what I have already entered**
+  **Show me what I have already entered.**
 content: |  
   ${deposit_claim_reason}
 ---
 id: preview additional reasons
 continue button field: preview_additional_reasons
 reconsider:
-  #- complaint['preview']
+  - complaint['preview']
   - additional_reasons['preview']
 question: |
   Additional reasons preview
 subquestion: |
-  Click the below image to preview your Additional reasons form.
+  Click the below images to preview your Complaint form and your Additional reasons form.
   
-  **Note: this is not a complete form.** Finish the program to get all your forms.
- 
+  **Note: these are not complete forms.** Finish the program to get all your forms.
+  
+  ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
+  
   ${ pdf_concatenate(additional_reasons['preview'], filename="additional_reasons-preview.pdf").extract_pages() }
   
   If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
@@ -1101,13 +1057,15 @@ id: preview additional deposit reasons
 continue button field: preview_additional_deposit_reasons
 reconsider:
   - additional_reasons['preview']
-  #- complaint['preview']
+  - complaint['preview']
 question: |
   Additional reasons preview
 subquestion: |
-  Click the below image to preview your Complaint form and your Additional reasons form.
+  Click the below images to preview your Complaint form and your Additional reasons form.
   
-  **Note: this is not a complete form.** Finish the program to get all your forms.
+  **Note: these are not complete forms.** Finish the program to get all your forms.
+  
+  ${ pdf_concatenate(complaint['preview'], filename="complaint-preview.pdf").extract_pages(first=2, last=2) }
  
   ${ pdf_concatenate(additional_reasons['preview'], filename="additional_reasons-preview.pdf").extract_pages() }
   
@@ -1136,7 +1094,7 @@ fields:
 ---
 id: defendant agent name
 question: |
-  What is the name of ${other_parties[i].name.full(middle='full')}'s registered agent?
+  Who is ${other_parties[i].name.full(middle='full')}'s registered agent?
 subquestion: |
   You may be able to find this information from the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/).
 fields:
@@ -1158,7 +1116,6 @@ subquestion: |
   ${other_parties[i].name.full(middle='full')}'s address is:
   
   ${other_parties[i].address.line_one(bare=True)}
-  
   ${other_parties[i].address.line_two()}
   
   % if other_parties[i].agent_check == True:
@@ -1293,9 +1250,10 @@ subquestion: |
   The program will put “/s/ ${users[0].name.full(middle='full')}” where you would sign your name so you do not have to sign the forms. The court will accept this as your signature.
 
   ${collapse_template(signature_help)}
-fields:
-  - "Add electronic signature?": e_signature
-    datatype: yesnoradio
+field: e_signature
+choices:
+  - Yes: True
+  - No, I will sign my forms later.: False
 ---
 template: signature_help
 subject: |
@@ -1320,8 +1278,10 @@ subquestion: |
   * Information on whether the hearing is in person or remote.
 
   After you find out, put this information in Section 3 of the *Summons* on page 2. 
+  
+  [FILE summons_snip.png, 100%, Summons hearing information]
 
-  **Important:** the *Summons* is not ready for service until Section 3 is complete.
+  **Important:** The *Summons* is not ready for service until Section 3 is complete.
 ---
 depends on:
   - lease_check
@@ -1557,28 +1517,43 @@ fields:
   - no label: property_type_check
     datatype: yesnoradio
 ---
+depends on:
+  - rental_address.city
+  - rental_address.county
+code: |
+  if rental_address.city != "Chicago" and rental_address.city != "DeKalb" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect" and rental_address.city != "Oak Park" and rental_address.city != "Urbana" and end_in_county(rental_address.county) != "Cook County":
+    property_type_check = False
+  else:
+    property_type_check
+  property_type_code = True
+---
+#used for both Cook County and Oak Park. However, Oak Park has a different unit number threshold. If this variable is acting wonky in template assembly, the differing thresholds may be the cause.
 id: cook owner occupant check
 question: |
-  Does the owner live in one of the units on the property?
+  Does the landlord live in one of the units on the property?
+subquestion: |
+  This only applies to a landlord who owns the property. If a property manager lives in one of the units but not the property's owner, you should click **No**.
 fields:
   - no label: cook_owner_occupant
     datatype: yesnoradio
 ---
 id: cook family check
 question: |
-  Owner question
+  Landlord question
 subquestion: |
-  Is the property a single-family home or condominium where
+  Is the property a single-family home or condominium where:
   
-  * the owner is only renting that one rental property, and
-  * the owner or an immediate family member has lived in the home within the year?
+  * The landlord is only renting that one rental property, and
+  * The landlord or an immediate family member has lived in the home within the year?
 fields:
   - no label: cook_family_check
     datatype: yesnoradio
 ---
 id: chicago owner occupant check
 question: |
-  Does the owner live in one of the units on the property?
+  Does the landlord live in one of the units on the property?
+subquestion: |
+  This only applies to a landlord who owns the property. If a property manager lives in one of the units but not the property's owner, you should click **No**.
 fields:
   - no label: chicago_owner_occupant
     datatype: yesnoradio
@@ -1621,6 +1596,7 @@ choices:
   - Up to 6 units: six
   - 7 or more units: seven
 ---
+#this is the code block deposit damages info's comment refers to
 depends on:
   - rental_address.county
   - rental_address.city
@@ -1631,44 +1607,88 @@ depends on:
   - unit_number_chicagoland
   - unit_number_illinois
 code: |
-  if rental_address.city != "Chicago" and rental_address.city != "DeKalb" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect" and rental_address.city != "Oak Park" and rental_address.city != "Urbana":
-    if end_in_county(rental_address.county) != "Cook County":
-      rlto_applies = False
-    else:
-      if property_type_check == True:
-        rlto_applies = False
-      else:
-        if cook_owner_occupant == False:
-          if cook_family_check == True:
-            rlto_applies = False
-          else:
-            rlto_applies = True
-        else:
-          if unit_number_chicagoland == "six":
-            rlto_applies = False
-          else:
-            rlto_applies = True  
+  if rental_address.city == "Urbana" or rental_address.city == "DeKalb" or rental_address.city == "Mount Prospect":
+    rlto_applies = False
   elif property_type_check == True:
     rlto_applies = False
   elif rental_address.city == "Chicago":
-    if unit_number_chicagoland == "six" and chicago_owner_occupant == True:
-      rlto_applies = False
+    if unit_number_chicagoland == "six":
+      if chicago_owner_occupant == True:
+        rlto_applies = False
+      else:
+        rlto_applies = True 
+        which_rlto = "Chicago"
     else:
-      rlto_applies = True 
+      rlto_applies = True
+      which_rlto = "Chicago"
   elif rental_address.city == "Oak Park":
-    if cook_owner_occupant == False:
-      if cook_family_check == True:
+    if unit_number_illinois == "four":
+      if cook_owner_occupant == True:
         rlto_applies = False
       else:
         rlto_applies = True
+        which_rlto = "Oak Park"
     else:
-      if unit_number_chicagoland == "six":
+      rlto_applies = True
+      which_rlto = "Oak Park"
+  elif rental_address.city == "Evanston":
+    rlto_applies = True
+    which_rlto = "Evanston"
+  elif end_in_county(rental_address.county) == "Cook County":
+    if unit_number_chicagoland == "six":
+      if cook_owner_occupant == True:
         rlto_applies = False
       else:
-        rlto_applies = True
+        if cook_family_check == True:
+          rlto_applies = False
+        else:
+          rlto_applies = True
+          which_rlto = "Cook County"
+    else:
+      rlto_applies = True
+      which_rlto = "Cook County"
   else:
-    #This seems incorrect, double check it!
     rlto_applies = True
+    which_rlto = "Illinois"
+    
+  #if rental_address.city != "Chicago" and rental_address.city != "Evanston" and rental_address.city != "Oak Park" and rental_address.city != "Urbana":
+  #  if end_in_county(rental_address.county) != "Cook County":
+  #    rlto_applies = False
+  #  else:
+  #    if property_type_check == True:
+  #      rlto_applies = False
+  #    else:
+  #      if cook_owner_occupant == False:
+  #        if cook_family_check == True:
+  #          rlto_applies = False
+  #        else:
+  #          rlto_applies = True
+  #      else:
+  #        if unit_number_chicagoland == "six":
+  #          rlto_applies = False
+  #        else:
+  #          rlto_applies = True  
+  #elif property_type_check == True:
+  #  rlto_applies = False
+  #elif rental_address.city == "Chicago":
+  #  if unit_number_chicagoland == "six" and chicago_owner_occupant == True:
+  #    rlto_applies = False
+  #  else:
+  #    rlto_applies = True 
+  #elif rental_address.city == "Oak Park":
+  #  if cook_owner_occupant == False:
+  #    if cook_family_check == True:
+  #      rlto_applies = False
+  #    else:
+  #      rlto_applies = True
+  #  else:
+  #    if unit_number_chicagoland == "six":
+  #      rlto_applies = False
+  #    else:
+  #      rlto_applies = True
+  #else:
+  #  #This seems incorrect, double check it!
+  #  rlto_applies = True
 ---
 id: RLTO note
 continue button field: rlto_note
@@ -1676,9 +1696,19 @@ question: |
   Local landlord-tenant law
 subquestion: |
   % if rlto_applies == True:
-  Based on your answers about the property, a municipal or city law (also called a local landlord-tenant law) for security deposits applies.
+  % if which_rlto == "Evanston":
+  Based on your answers, the City of Evanston’s Residential Landlord and Tenant Ordinance applies to the rental property.
+  % elif which_rlto == "Chicago":
+  Based on your answers, the City of Chicago’s Residential Landlord Tenant Ordinance applies to the rental property.
+  % elif which_rlto == "Oak Park":
+  Based on your answers, Oak Park's Residential Tenant and Landlord Ordinance applies to the rental property.
+  % elif which_rlto == "Cook County":
+  Based on your answers, Cook County’s Residential Tenant Landlord Ordinance applies to the rental property.
+  % elif which_rlto == "Illinois":
+  Based on your answers, Illinois's Security Deposit Return Act applies to the rental property.
+  % endif
   % else:
-  Based on your answers about the property, a municipal or city law (also called a local landlord-tenant law) for security deposits does not apply.
+  Based on your answers, there is not a municipal or city law that applies for your case.
   % endif
 ---
 #I implemented this the way it is set up in a2jauthor, but it seems reversed? I will have to check the statute to ensure these numbers are correct.
@@ -1692,9 +1722,21 @@ code: |
     if rental_address.city == "Evanston":
       days_to_return_deposit = 21
       days_to_receive_letter = 21
-    
+      
     elif rental_address.city == "Oak Park":
       days_to_return_deposit = 30
+      days_to_receive_letter = 30
+    elif rental_address.city == "Mount Prospect":
+      days_to_return_deposit = 30
+      days_to_receive_letter = 45
+    elif rental_address.city == "DeKalb":
+      days_to_return_deposit = 30
+      days_to_receive_letter = 45
+    elif rental_address.city == "Chicago":
+      days_to_return_deposit = 45
+      days_to_receive_letter = 30
+    elif rental_address.city == "Urbana":
+      days_to_return_deposit = 45
       days_to_receive_letter = 30
     elif end_in_county(rental_address.county) == "Cook County":
       days_to_return_deposit = 30
@@ -1706,19 +1748,30 @@ code: |
     days_to_return_deposit = 45
     days_to_receive_letter = 30
   return_deadline = move_out_date.plus(days=days_to_return_deposit)
-  damage_deadline = move_out_date.plus(day=days_to_receive_letter)
+  damage_deadline = move_out_date.plus(days=days_to_receive_letter)
 ---
 depends on:
   - return_deadline
 code: |
-  date_diff_reference = date_difference(starting=return_deadline, ending=today())
+  return_date_diff_reference = date_difference(starting=return_deadline, ending=today())
+  damage_date_diff_reference = date_difference(starting=damage_deadline, ending=today())
 ---
 id: landlord time kickout
 event: landlord_time_kickout
 question: |
   Sorry
 subquestion: |
-  The landlord has until ${return_deadline} to send you a letter describing any damage to the rental unit.
+  % if return_date_diff_reference.days < 0 and damage_date_diff_reference.days < 0:
+  % if damage_deadline != return_deadline:
+  Your landlord has until ${return_deadline} to return your security deposit or until ${damage_deadline} to send you a letter describing any damage to the rental unit.
+  % else:
+  Your landlord has until ${return_deadline} to return your security deposit or to send you a letter describing any damage to the rental unit.
+  % endif
+  % elif return_date_diff_reference.days < 0:
+  Your landlord has until ${return_deadline} to return your security deposit.
+  % elif damage_date_diff_reference.days < 0:
+  Your landlord has until ${damage_deadline} to send you a letter describing any damage to the rental unit.
+  % endif
 
   Run this program on or after ${return_deadline} to make your *Small Claims Complaint*.
   
@@ -1734,7 +1787,7 @@ continue button field: landlord_deadline
 question: |
   Landlord's deadline
 subquestion: |
-  The landlord had until ${return_deadline} to return your security deposit.
+  The landlord had until ${return_deadline} to return your security deposit.
 
   The next questions will help you figure out the amount you can sue for in your *Small Claims Complaint*.
 ---
@@ -1812,16 +1865,17 @@ fields:
   - Date returned: partial_return_date
     datatype: ThreePartsDate
     alMax: ${ today().format("yyyy-MM-dd") }
-    alMin: ${move_out_date.minus(months=3)}
+    alMin: ${move_in_date.minus(months=12)}
 ---
-depends on:
-  - deposit_payments[0]
-  - deposit_payments[1]
-  - deposit_payments[2]
-  - another_deposit[0]
-  - another_deposit[1]
-  - partial_return_check
-  - partial_return_amount
+reconsider: True
+#depends on:
+#  - deposit_payments[0]
+#  - deposit_payments[1]
+#  - deposit_payments[2]
+#  - another_deposit[0]
+#  - another_deposit[1]
+#  - partial_return_check
+#  - partial_return_amount
 code: |
   deposit_balance_owed = deposit_payments[0]
   if another_deposit[0] == True:
@@ -1853,7 +1907,7 @@ buttons:
 ---
 id: statement of damages
 question: |
-  Did your landlord send you a letter saying you owe money for damages to the rental property?
+  Did your landlord send you a letter saying they need money from your security deposit to make repairs?
 fields:
   - no label: damages_check
     datatype: yesnoradio
@@ -1875,25 +1929,28 @@ depends on:
   - damages_check
   - damages_date
 code: |
+  damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
   if rlto_applies == True:
     if damages_check == False:
       landlord_timely = False
     else:
       if rental_address.city == "Evanston":
-        damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
+        
         if damage_date_difference.days > 21:
           landlord_timely = False
         else:
           landlord_timely = True
-          
+      elif rental_address.city == "Mount Prospect" or rental_address.city == "DeKalb":
+        if damage_date_difference.days > 45:
+          landlord_timely = False
+        else:
+          landlord_timely = True
       else:
-        damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
         if damage_date_difference.days > 30:
           landlord_timely = False
         else:
           landlord_timely = True
 ---
-#This is code pulled from the a2jauthor interview, but I don't think it is needed?
 depends on:
   - landlord_timely
   - rlto_applies
@@ -1901,15 +1958,7 @@ depends on:
   - rental_address.county
 code: |
   if rlto_applies == True:
-    if landlord_timely == False:
-      extra_damages = True
-    else:
-      extra_damages = False
-  elif rental_address.city != "Chicago" and rental_address.city == "Oak Park":
-    if landlord_timely == False:
-      extra_damages = True
-    else:
-      extra_damages = False
+    extra_damages = True
   else:
     extra_damages = False
 ---
@@ -1922,6 +1971,7 @@ code: |
   else:
     deposit_with_damages = deposit_balance_owed
 ---
+#code blocks will calculate damages based on the rental property's city, county, whether a landlord--or their family in Cook County--in most jurisdictions, the number of units (jurisdiction dependent), whether the rental property is a type of property excluded from the relevant ordinance, the amount and number of deposit payments made by the user, the amount of deposit returned to the user, and whether the landlord has timely paid back the deposit.
 id: security deposit damages info
 continue button field: deposit_damages_info
 question: |
@@ -2040,18 +2090,18 @@ depends on:
   - rental_address.county
   - amount_check
 code: |
-  default_deposit_claim_reason = "I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties) + " "
+  default_deposit_claim_reason = "I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties) + ". "
   
-  if rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
-    if unit_number_chicagoland == "seven":
-     default_deposit_claim_reason += "The rental property has 7 or more units." + ".\n" + "\n"
-    else:
-      default_deposit_claim_reason += ".\n" + "\n"
-  else:
-    if unit_number_illinois == "five":
-      default_deposit_claim_reason += "The rental property has 5 or more units." + ".\n" + "\n"
-    else:
-      default_deposit_claim_reason += ".\n" + "\n"
+  if rental_address.city == "Chicago" or end_in_county(rental_address.county) == "Cook County":
+    if rental_address.city == "Oak Park":
+      if unit_number_illinois == "five":
+        default_deposit_claim_reason += "The rental property has 5 or more units."
+    elif rental_address.city != "Mount Prospect" and rental_address.city != "Evanston":
+      if unit_number_chicagoland == "seven":
+        default_deposit_claim_reason += "The rental property has 7 or more units." 
+      
+  
+  default_deposit_claim_reason += "\n" + "\n"
       
   default_deposit_claim_reason += "I moved into the property on " + move_in_date + ". "
     
@@ -2059,9 +2109,9 @@ code: |
   if another_deposit[0] == False:
     default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " on " + deposit_dates[0] + ". "
   else:
-    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + ". On " + deposit_dates[0] + " I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + " I paid " + currency(deposit_payments[1]) + ". "
+    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + ". On " + deposit_dates[0] + ", I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + " I paid " + currency(deposit_payments[1]) + ". "
     if another_deposit[1] == True:
-      default_deposit_claim_reason += "On " + deposit_dates[2] + " I paid " + currency(deposit_payments[2]) + ". "    
+      default_deposit_claim_reason += "On " + deposit_dates[2] + ", I paid " + currency(deposit_payments[2]) + ". "    
   if deposit_payment_proof == True:
     default_deposit_claim_reason += "Proof showing that I paid the security deposit is attached" + ".\n" + "\n"
   else:
@@ -2077,8 +2127,20 @@ code: |
     default_deposit_claim_reason += "As of " + today() + " " + comma_and_list(other_parties) + " had returned $0 of the security deposit" + ".\n" + "\n"
   else:
     default_deposit_claim_reason += "As of " + today() + " " + comma_and_list(other_parties) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n" + "\n"
+
+  if damages_check == False:
+    default_deposit_claim_reason += "As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " stating they would use my security deposit to make repairs to the rental unit."
+  else:
+    if landlord_timely == False:
+      default_deposit_claim_reason += "I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
+      if rental_address.city == "Evanston":
+        default_deposit_claim_reason += "21 days of vacating the property."
+      elif rental_address.city == "Mount Prospect" or rental_address.city == "DeKalb":
+        default_deposit_claim_reason += "45 days of vacating the property."
+      else:
+        default_deposit_claim_reason += "30 days of vacating the property."
     
-  default_deposit_claim_reason +=  comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I moved out. "
+  default_deposit_claim_reason +=  comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
   
   #In the a2jauthor interview there is logic at this point regarding the damages letter. I will look into whether we should include that later; it appears to be deprecated in the old program.
   
@@ -2098,7 +2160,11 @@ question: |
 subquestion: |
   Your *Small Claims Complaint* will include the following explanation of why ${comma_and_list(other_parties)} owes you ${currency(amount_check)}.
   
+  ---
+  
   ${single_to_double_newlines(default_deposit_claim_reason)}
+  
+  ---
 fields:
   - no label: use_deposit_default
     datatype: yesnoradio
@@ -2116,12 +2182,14 @@ code: |
 ---
 id: new deposit claim reason
 question: |
-  Edit the reasons why you are owed ${amount_check}.
+  Edit the reasons why you are owed ${currency(amount_check)}.
+subquestion: |
+  The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen
 fields:
   - Explanation: new_deposit_claim_reason
     input type: area
-    rows: 20
-    maxlength: 2000
+    rows: 16
+    maxlength: 1800
     default: |
       ${default_deposit_claim_reason} 
 ---
@@ -2169,7 +2237,7 @@ objects:
   - complaint: ALDocument.using(title="Complaint", filename="complaint.pdf", has_addendum=False)
   - additional_defendants: ALDocument.using(title="Additional Defendants", filename="additional_defendants.pdf", has_addendum=False)
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
-  - letter_to_sheriff: ALDocument.using(title="Letter to sheriff (optional)", filename="letter_to_sheriff.pdf", has_addendum=False)
+  - letter_to_sheriff: ALDocument.using(title="Letter to sheriff", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
   - summons_one: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
   - summons_two: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
@@ -2215,7 +2283,7 @@ code: |
       additional_reasons.enabled = True
   else:
     if use_deposit_default == True:
-      if add_second_deposit_page == True:
+      if add_second_page == True:
         additional_reasons.enabled = True
     
   for person in other_parties:
@@ -2785,20 +2853,20 @@ review:
     show if: rental_address.city == "Chicago" or rental_address.city == "DeKalb" or rental_address.city == "Evanston" or rental_address.city == "Mount Prospect" or rental_address.city == "Oak Park" or rental_address.city == "Urbana" or end_in_county(rental_address.county) == "Cook County"
   - Edit: chicago_owner_occupant
     button: |
-      **Does the owner live in one of the units on the property?**
+      **Does the landlord live in one of the units on the property?**
       ${word(yesno(chicago_owner_occupant))}
     show if: rental_address.city == "Chicago" and landlord_check == True
   - Edit: cook_owner_occupant
     button: |
-      **Does the owner live in one of the units on the property?**
+      **Does the landlord live in one of the units on the property?**
       ${word(yesno(cook_owner_occupant))}
     show if: rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County"
   - Edit: cook_family_check
     button: |
       **Is the property a single-family home or condominium, where**
 
-      * **the owner is only renting that one rental property, and**
-      * **the owner or an immediate family member has lived in the home within the year?**
+      * **the landlord is only renting that one rental property, and**
+      * **the landlord or an immediate family member has lived in the home within the year?**
       
       ${word(yesno(cook_family_check))}
     show if: cook_owner_occupant == False
@@ -2933,18 +3001,18 @@ review:
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
-  - Edit: add_second_deposit_page
+  - Edit: add_second_page
     button: |
       **Do you need a second page to explain why your landlord owes you ${currency(amount_check)}?**
-      ${word(yesno(add_second_deposit_page))}
+      ${word(yesno(add_second_page))}
     show if: landlord_check == True and use_deposit_default == False
   - Edit: more_deposit_reason
     button: |
       **Why does your landlord owe you ${currency(amount_check)} (second page)?**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == False and add_second_deposit_page == True
-  - Edit: add_second_deposit_page
+    show if: landlord_check == True and use_deposit_default == False and add_second_page == True
+  - Edit: add_second_page
     button: |
       Does this appear?
     show if: landlord_check == True and use_deposit_default == True
@@ -3068,8 +3136,8 @@ review:
       % endif
   - Edit: x.address.address
     button: |
-      **Defendant address:**
-      ${x.address.on_one_linw(bare=True)}
+      **${x.name.full(middle='full')}'s address:**
+      ${x.address.on_one_line(bare=True)}
   - Edit: x.agent_check
     button: |
       **Does ${x.name.full(middle='full')} have a registered agent?**
@@ -3260,20 +3328,20 @@ review:
     show if: rental_address.city == "Chicago" or rental_address.city == "DeKalb" or rental_address.city == "Evanston" or rental_address.city == "Mount Prospect" or rental_address.city == "Oak Park" or rental_address.city == "Urbana" or end_in_county(rental_address.county) == "Cook County"
   - Edit: chicago_owner_occupant
     button: |
-      **Does the owner live in one of the units on the property?**
+      **Does the landlord live in one of the units on the property?**
       ${word(yesno(chicago_owner_occupant))}
     show if: rental_address.city == "Chicago" and landlord_check == True
   - Edit: cook_owner_occupant
     button: |
-      **Does the owner live in one of the units on the property?**
+      **Does the landlord live in one of the units on the property?**
       ${word(yesno(cook_owner_occupant))}
     show if: rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County"
   - Edit: cook_family_check
     button: |
       **Is the property a single-family home or condominium, where**
 
-      * **the owner is only renting that one rental property, and**
-      * **the owner or an immediate family member has lived in the home within the year?**
+      * **the landlord is only renting that one rental property, and**
+      * **the landlord or an immediate family member has lived in the home within the year?**
       
       ${word(yesno(cook_family_check))}
     show if: cook_owner_occupant == False
@@ -3408,17 +3476,17 @@ review:
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
-  - Edit: add_second_deposit_page
+  - Edit: add_second_page
     button: |
       **Do you need a second page to explain why your landlord owes you $${amount_check}?**
-      ${word(yesno(add_second_deposit_page))}
+      ${word(yesno(add_second_page))}
     show if: landlord_check == True and use_deposit_default == False
   - Edit: more_deposit_reason
     button: |
       **Why does your landlord owe you ${currency(amount_check)} (second page)?**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == False and add_second_deposit_page == True
+    show if: landlord_check == True and use_deposit_default == False and add_second_page == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -3539,9 +3607,15 @@ review:
       % endfor
 ---
 #code block for creating variables used only in attachment blocks. Why oh why docassemble won't let me just put this code by the corresponding fields is beyond me.
+#service_address is the baseline service address, alt_service_address is used for the question paths that still ask for a second service address. The where_to_serve variable is the potentially redundant one; it is used to determine whether opposing_parties[i].address or opposing_parties[i].service_address is used in the form based on the value of opposing_parties[i].same_address.
 reconsider: True
-code: |
+code: | 
   if landlord_check == True:
+    if use_deposit_default == True:
+      if add_second_page == True:
+        reasons_attach = True
+      else:
+        reasons_attach = False
   
     if lease_check == False:
       no_agreement_logic = True
@@ -3569,6 +3643,7 @@ code: |
       reasons_attach = True
     else:
       reasons_attach = False
+    
     if agreement_check == False:
       no_agreement_logic = True
     else:
@@ -3595,12 +3670,12 @@ code: |
       have_demanded_field = demand_check
     
       
-    for person in other_parties:
-      if person.agent_check == True:
-        person.where_to_serve = other_parties[0].service_address
-      elif person.same_address == False:
-        person.where_to_serve = other_parties[0].service_address
-      else:
-        person.where_to_serve = other_parties[0].address
+  for person in other_parties:
+    if person.agent_check == True:
+      person.where_to_serve = other_parties[0].service_address
+    elif person.same_address == False:
+      person.where_to_serve = other_parties[0].service_address
+    else:
+      person.where_to_serve = other_parties[0].address
      
   attachment_logic = True
