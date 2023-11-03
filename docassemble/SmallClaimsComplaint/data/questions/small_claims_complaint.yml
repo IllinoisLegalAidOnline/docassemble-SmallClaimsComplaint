@@ -80,21 +80,22 @@ code: |
     if rental_address.city == "Chicago" or rental_address.city == "Evanston" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
       municipal_intro
       if property_type_check == False:
-        if rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
-          if rental_address.city != "Oak Park" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
-            unit_number_chicagoland
-          elif rental_address.city == "Oak Park":
-            unit_number_illinois
-        else:
-          unit_number_illinois
+        unit_number_general
+        #if rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
+        #  if rental_address.city != "Oak Park" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
+        #    unit_number_chicagoland
+        #  elif rental_address.city == "Oak Park":
+        #    unit_number_illinois
+        #else:
+        #  unit_number_illinois
         
-        if rental_address.city == "Chicago" and unit_number_chicagoland == "six":
+        if rental_address.city == "Chicago" and unit_number_general != "enough_anywhere" and unit_number_general != "dont_know":
           chicago_owner_occupant
         elif rental_address.city == "Oak Park":
-          if unit_number_illinois == "four":
+          if unit_number_general == "too_few_for_illinois":
             cook_owner_occupant
         elif end_in_county(rental_address.county) == "Cook County" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
-          if unit_number_chicagoland == "six":
+          if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
             if cook_owner_occupant == False:
               cook_family_check
     else:
@@ -1596,6 +1597,16 @@ choices:
   - Up to 6 units: six
   - 7 or more units: seven
 ---
+id: merged unit number
+question: |
+  How many rental units does your landlord own?
+field: unit_number_general
+choices:
+  - 4 or fewer units: too_few_for_illinois
+  - 5 or 6 units: depends_on_area
+  - 7 or more units: enough_anywhere
+  - I do not know.: dont_know
+---
 #this is the code block deposit damages info's comment refers to
 depends on:
   - rental_address.county
@@ -1604,15 +1615,14 @@ depends on:
   - chicago_owner_occupant
   - cook_owner_occupant
   - cook_family_check
-  - unit_number_chicagoland
-  - unit_number_illinois
+  - unit_number_general
 code: |
   if rental_address.city == "Urbana" or rental_address.city == "DeKalb" or rental_address.city == "Mount Prospect":
     rlto_applies = False
   elif property_type_check == True:
     rlto_applies = False
   elif rental_address.city == "Chicago":
-    if unit_number_chicagoland == "six":
+    if unit_number_general == "too_few_for_illinois" or unit_number_general == "depends_on_area":
       if chicago_owner_occupant == True:
         rlto_applies = False
       else:
@@ -1622,7 +1632,7 @@ code: |
       rlto_applies = True
       which_rlto = "Chicago"
   elif rental_address.city == "Oak Park":
-    if unit_number_illinois == "four":
+    if unit_number_general == "too_few_for_illinois":
       if cook_owner_occupant == True:
         rlto_applies = False
       else:
@@ -1635,7 +1645,7 @@ code: |
     rlto_applies = True
     which_rlto = "Evanston"
   elif end_in_county(rental_address.county) == "Cook County":
-    if unit_number_chicagoland == "six":
+    if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
       if cook_owner_occupant == True:
         rlto_applies = False
       else:
@@ -2074,8 +2084,6 @@ depends on:
   - rental_address
   - other_parties
   - rental_address.city
-  - unit_number_chicagoland
-  - unit_number_illinois
   - move_in_date
   - total_deposit
   - deposit_payments
@@ -2091,15 +2099,6 @@ depends on:
   - amount_check
 code: |
   default_deposit_claim_reason = "I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties) + ". "
-  
-  if rental_address.city == "Chicago" or end_in_county(rental_address.county) == "Cook County":
-    if rental_address.city == "Oak Park":
-      if unit_number_illinois == "five":
-        default_deposit_claim_reason += "The rental property has 5 or more units."
-    elif rental_address.city != "Mount Prospect" and rental_address.city != "Evanston":
-      if unit_number_chicagoland == "seven":
-        default_deposit_claim_reason += "The rental property has 7 or more units." 
-      
   
   default_deposit_claim_reason += "\n" + "\n"
       
@@ -2870,24 +2869,17 @@ review:
       
       ${word(yesno(cook_family_check))}
     show if: cook_owner_occupant == False
-  - Edit: unit_number_chicagoland
+  - Edit: unit_number_general
     button: |
-      **How many rental units are in the property?**
-      % if unit_number_chicagoland == "six":
-      Up to 6 units
-      % elif unit_number_chicagoland == "seven":
-      7 or more units
+      **How many rental units does your landlord own?**
+      % if unit_number_general == "too_few_for_illinois":
+      4 or fewer
+      % elif unit_number_general == "depends_on_area":
+      5 or 6 units
+      % elif unit_number_general == "enough_anywhere":
+      7 or more
+      % elif unit_number_general == "dont_know":
       % endif
-    show if: rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County"
-  - Edit: unit_number_illinois
-    button: |
-      **How many units are in the property?**
-      % if unit_number_illinois == "four":
-      Up to 4 units
-      % elif unit_number_illinois == "five":
-      5 or more units
-      % endif
-    show if: rental_address.city != "Chicago" and rental_address.city != "Oak Park" and end_in_county(rental_address.county) != "Cook County"
   - Edit: deposit_payments[0]
     button: |
       % if another_deposit[0] == True:
@@ -3345,24 +3337,17 @@ review:
       
       ${word(yesno(cook_family_check))}
     show if: cook_owner_occupant == False
-  - Edit: unit_number_chicagoland
+  - Edit: unit_number_general
     button: |
-      **How many rental units are in the property?**
-      % if unit_number_chicagoland == "six":
-      Up to 6 units
-      % elif unit_number_chicagoland == "seven":
-      7 or more units
+      **How many rental units does your landlord own?**
+      % if unit_number_general == "too_few_for_illinois":
+      4 or fewer
+      % elif unit_number_general == "depends_on_area":
+      5 or 6 units
+      % elif unit_number_general == "enough_anywhere":
+      7 or more
+      % elif unit_number_general == "dont_know":
       % endif
-    show if: rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County"
-  - Edit: unit_number_illinois
-    button: |
-      **How many units are in the property?**
-      % if unit_number_illinois == "four":
-      Up to 4 units
-      % elif unit_number_illinois == "five":
-      5 or more units
-      % endif
-    show if: rental_address.city != "Chicago" and rental_address.city != "Oak Park" and end_in_county(rental_address.county) != "Cook County"
   - Edit: deposit_payments[0]
     button: |
       % if another_deposit[0] == True:
