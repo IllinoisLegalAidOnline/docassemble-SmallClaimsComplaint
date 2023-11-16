@@ -64,6 +64,7 @@ code: |
     money_kickout
   if amount_check > 10000:
     amount_kickout
+  show_amount_check
   filing_location.county_number
   filing_location.get_county
   if filing_location.county_number == -1:
@@ -77,7 +78,7 @@ code: |
   if landlord_check == True:
     rental_address.address
     rental_address.county_correct
-    if rental_address.city == "Chicago" or rental_address.city == "Evanston" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
+    if capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(end_in_county(rental_address.county)) == "Cook County":
       municipal_intro
       if property_type_check == False:
         unit_number_general
@@ -89,12 +90,12 @@ code: |
         #else:
         #  unit_number_illinois
         
-        if rental_address.city == "Chicago" and unit_number_general != "enough_anywhere" and unit_number_general != "dont_know":
+        if capitalize(rental_address.city) == "Chicago" and unit_number_general != "enough_anywhere" and unit_number_general != "dont_know":
           chicago_owner_occupant
-        elif rental_address.city == "Oak Park":
+        elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
           if unit_number_general == "too_few_for_illinois":
             cook_owner_occupant
-        elif end_in_county(rental_address.county) == "Cook County" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
+        elif capitalize(end_in_county(rental_address.county)) == "Cook County" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect":
           if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
             if cook_owner_occupant == False:
               cook_family_check
@@ -225,9 +226,9 @@ code: |
 ---
 id: welcome
 question: |
-  Small Claims Complaint
+  Small claims complaint
 subquestion: |
-  Welcome to Illinois Legal Aid Online's **Small Claims Complaint** Easy Form.
+  Welcome to Illinois Legal Aid Online's **Small claims complaint** Easy Form.
 
   This program makes the forms to sue a person or business for up to $10,000. It can be used to sue a landlord for a security deposit.
   
@@ -807,7 +808,7 @@ fields:
 ---
 id: no attachment explanation
 question: |
-   Why can you not attach a copy of your written agreement to your *Small Claims Complaint*?
+   Why can't you attach a copy of your written agreement to your *Small Claims Complaint*?
 fields:
   - Explanation: attach_explain
     input type: area
@@ -908,7 +909,7 @@ subquestion: |
   
   Remember you can only sue for money in Small Claims Court.
   
-  The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen
+  The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen.
 
   ${collapse_template(help_reason)}
 fields:
@@ -963,17 +964,9 @@ question: |
 subquestion: |
   % if other_parties.number_gathered() > 1:
   Explain why the defendants owe you ${currency(amount_check)}. 
-  
-  Be specific. Include:
-  
-  * Dates, 
-  * What happened, 
-  * Whether any payments were made, 
-  * Whether there was a contract, an agreement, or a receipt. 
-  
-  Remember you can only sue for money in Small Claims Court.
   % else:
   Explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}. 
+  % endif
   
   Be specific. Include:
   
@@ -983,9 +976,8 @@ subquestion: |
   * Whether there was a contract, an agreement, or a receipt. 
   
   Remember you can only sue for money in Small Claims Court.
-  % endif
   
-  The form has space for about 36 lines of text, or about 2,600 characters.
+  The form has space for about 36 lines of text, or about 2,600 characters. You can preview how your answer looks on the form on the next screen.
   
   ${collapse_template(reason_thus_far)}
 fields:
@@ -1236,7 +1228,7 @@ subquestion: |
 
   * Circuit Clerk (by certified or registered mail, only for defendants in Illinois),
   * Sheriff, or
-  * Special process server
+  * Special process server.
 field: other_parties[i].service_method
 choices:
   - Circuit Clerk (by certified or registered mail, only for defendants in Illinois): clerk
@@ -1244,25 +1236,13 @@ choices:
   - Special process server: server
   - I do not know yet.: unknown
 ---
-id: signature
-question: |
-  Do you want to add your electronic signature to your forms?
-subquestion: |
-  The program will put “/s/ ${users[0].name.full(middle='full')}” where you would sign your name so you do not have to sign the forms. The court will accept this as your signature.
-
-  ${collapse_template(signature_help)}
-field: e_signature
-choices:
-  - Yes: True
-  - No, I will sign my forms later.: False
----
 template: signature_help
 subject: |
   **What does it mean to sign the *Small Claims Complaint*?**
 content: |  
   By signing your *Small Claims Complaint*, you are certifying that:
   
-   * You read the form,
+  * You read the form,
   * You believe it to be true and correct, and
   * You are not filing it for an improper purpose, such as to cause delay.
 
@@ -1450,7 +1430,7 @@ continue button field: municipal_intro
 question: |
   Local landlord-tenant law
 subquestion: |
-  % if rental_address.city != "Chicago" and rental_address.city != "DeKalb" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect" and rental_address.city != "Oak Park" and rental_address.city != "Urbana":
+  % if capitalize(rental_address.city) != "Chicago" and capitalize(rental_address.city) != "DeKalb" and capitalize(rental_address.city) != "Dekalb" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect" and capitalize(rental_address.city) != "Oak Park" and capitalize(rental_address.city) != "Oak park" and capitalize(rental_address.city) != "Urbana":
   Cook County has laws that affect landlord and tenant relationships and security deposits.
   % else:
   ${rental_address.city} has laws that affect landlord and tenant relationships and security deposits.
@@ -1472,42 +1452,42 @@ id: property type check
 question: |
   Is the rental property one of the following?
 subquestion: |
-  % if rental_address.city == "Chicago":
+  % if capitalize(rental_address.city) == "Chicago":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * Something you have signed a contract to buy,
   * A place you had to rent because the landlord is your employer, and the job required you to rent there, or
   * A co-op
-  % elif rental_address.city == "DeKalb":
+  % elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * Government-owned, or
   * A rooming house
-  % elif rental_address.city == "Evanston":
+  % elif capitalize(rental_address.city) == "Evanston":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * A fraternity or social organization,
   * Something you have signed a contract to buy,
   * A co-op, or
   * An educational institution
-  % elif rental_address.city == "Mount Prospect":
+  % elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
   * A medical, educational, or relgious facility,
   * A residential care home,
   * A hotel or motel, or
   * Something you have signed a contract to buy
-  % elif rental_address.city == "Oak Park":
+  % elif capitalize(rental_address.city) == "Oak Park":
   * A hotel or motel,
   * A medical, educational, or relgious facility,
   * A school dormitory,
   * A temporary or transitional shelter,
   * A place you had to rent because the landlord is your employer, and the job required you to rent there
-  % elif rental_address.city == "Urbana":
+  % elif capitalize(rental_address.city) == "Urbana":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * A fraternity or social organization,
   * Something you have signed a contract to buy, or
   * A place you had to rent because the landlord is your employer, and the job required you to rent there
-  % elif end_in_county(rental_address.county) == "Cook County":
+  % elif capitalize(end_in_county(rental_address.county)) == "Cook County":
   * A hotel or motel,
   * A school dormitory,
   * A shelter or a single-room-occupancy (SRO),
@@ -1522,7 +1502,7 @@ depends on:
   - rental_address.city
   - rental_address.county
 code: |
-  if rental_address.city != "Chicago" and rental_address.city != "DeKalb" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect" and rental_address.city != "Oak Park" and rental_address.city != "Urbana" and end_in_county(rental_address.county) != "Cook County":
+  if capitalize(rental_address.city) != "Chicago" and capitalize(rental_address.city) != "DeKalb" and capitalize(rental_address.city) != "Dekalb" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect" and capitalize(rental_address.city) != "Oak Park" and capitalize(rental_address.city) != "Oak park" and capitalize(rental_address.city) != "Urbana" and capitalize(end_in_county(rental_address.county)) != "Cook County":
     property_type_check = False
   else:
     property_type_check
@@ -1597,7 +1577,7 @@ choices:
   - Up to 6 units: six
   - 7 or more units: seven
 ---
-id: merged unit number
+id: merged unit number general
 question: |
   How many rental units does your landlord own?
 field: unit_number_general
@@ -1607,7 +1587,7 @@ choices:
   - 7 or more units: enough_anywhere
   - I do not know.: dont_know
 ---
-#this is the code block deposit damages info's comment refers to
+#these code blocks will calculate damages based on the rental property's city, county, whether a landlord--or their family in Cook County--in most jurisdictions, the number of units (jurisdiction dependent), whether the rental property is a type of property excluded from the relevant ordinance, the amount and number of deposit payments made by the user, the amount of deposit returned to the user, and whether the landlord has timely paid back the deposit.
 depends on:
   - rental_address.county
   - rental_address.city
@@ -1617,11 +1597,11 @@ depends on:
   - cook_family_check
   - unit_number_general
 code: |
-  if rental_address.city == "Urbana" or rental_address.city == "DeKalb" or rental_address.city == "Mount Prospect":
+  if capitalize(rental_address.city) == "Urbana" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
     rlto_applies = False
   elif property_type_check == True:
     rlto_applies = False
-  elif rental_address.city == "Chicago":
+  elif capitalize(rental_address.city) == "Chicago":
     if unit_number_general == "too_few_for_illinois" or unit_number_general == "depends_on_area":
       if chicago_owner_occupant == True:
         rlto_applies = False
@@ -1631,7 +1611,7 @@ code: |
     else:
       rlto_applies = True
       which_rlto = "Chicago"
-  elif rental_address.city == "Oak Park":
+  elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
     if unit_number_general == "too_few_for_illinois":
       if cook_owner_occupant == True:
         rlto_applies = False
@@ -1641,10 +1621,10 @@ code: |
     else:
       rlto_applies = True
       which_rlto = "Oak Park"
-  elif rental_address.city == "Evanston":
+  elif capitalize(rental_address.city) == "Evanston":
     rlto_applies = True
     which_rlto = "Evanston"
-  elif end_in_county(rental_address.county) == "Cook County":
+  elif capitalize(end_in_county(rental_address.county)) == "Cook County":
     if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
       if cook_owner_occupant == True:
         rlto_applies = False
@@ -1707,18 +1687,18 @@ question: |
 subquestion: |
   % if rlto_applies == True:
   % if which_rlto == "Evanston":
-  Based on your answers, the City of Evanston’s Residential Landlord and Tenant Ordinance applies to the rental property.
+  Based on your answers, the City of Evanston's Residential Landlord and Tenant Ordinance applies to the rental property.
   % elif which_rlto == "Chicago":
-  Based on your answers, the City of Chicago’s Residential Landlord Tenant Ordinance applies to the rental property.
+  Based on your answers, the City of Chicago's Residential Landlord Tenant Ordinance applies to the rental property.
   % elif which_rlto == "Oak Park":
   Based on your answers, Oak Park's Residential Tenant and Landlord Ordinance applies to the rental property.
   % elif which_rlto == "Cook County":
-  Based on your answers, Cook County’s Residential Tenant Landlord Ordinance applies to the rental property.
+  Based on your answers, Cook County's Residential Tenant Landlord Ordinance applies to the rental property.
   % elif which_rlto == "Illinois":
   Based on your answers, Illinois's Security Deposit Return Act applies to the rental property.
   % endif
   % else:
-  Based on your answers, there is not a municipal or city law that applies for your case.
+  Based on your answers, Illinois state law applies to your case.
   % endif
 ---
 #I implemented this the way it is set up in a2jauthor, but it seems reversed? I will have to check the statute to ensure these numbers are correct.
@@ -1729,26 +1709,26 @@ depends on:
   - move_out_date
 code: |
   if rlto_applies == True:
-    if rental_address.city == "Evanston":
+    if capitalize(rental_address.city) == "Evanston":
       days_to_return_deposit = 21
       days_to_receive_letter = 21
       
-    elif rental_address.city == "Oak Park":
+    elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
       days_to_return_deposit = 30
       days_to_receive_letter = 30
-    elif rental_address.city == "Mount Prospect":
-      days_to_return_deposit = 30
-      days_to_receive_letter = 45
-    elif rental_address.city == "DeKalb":
+    elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
       days_to_return_deposit = 30
       days_to_receive_letter = 45
-    elif rental_address.city == "Chicago":
+    elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+      days_to_return_deposit = 30
+      days_to_receive_letter = 45
+    elif capitalize(rental_address.city) == "Chicago":
       days_to_return_deposit = 45
       days_to_receive_letter = 30
-    elif rental_address.city == "Urbana":
+    elif capitalize(rental_address.city) == "Urbana":
       days_to_return_deposit = 45
       days_to_receive_letter = 30
-    elif end_in_county(rental_address.county) == "Cook County":
+    elif capitalize(end_in_county(rental_address.county)) == "Cook County":
       days_to_return_deposit = 30
       days_to_receive_letter = 30
     else:
@@ -1834,7 +1814,7 @@ fields:
   - Payment date: deposit_dates[i]
     datatype: ThreePartsDate
     alMax: ${ today().format("yyyy-MM-dd") }
-    alMin: ${move_in_date.minus(years=1)}
+    alMin: ${move_in_date.minus(months=12)}
 ---
 id: another payment check
 question: |
@@ -1875,17 +1855,17 @@ fields:
   - Date returned: partial_return_date
     datatype: ThreePartsDate
     alMax: ${ today().format("yyyy-MM-dd") }
-    alMin: ${move_in_date.minus(months=12)}
+    alMin: ${deposit_dates[0]}
 ---
 reconsider: True
-#depends on:
-#  - deposit_payments[0]
-#  - deposit_payments[1]
-#  - deposit_payments[2]
-#  - another_deposit[0]
-#  - another_deposit[1]
-#  - partial_return_check
-#  - partial_return_amount
+depends on:
+  - deposit_payments[0]
+  - deposit_payments[1]
+  - deposit_payments[2]
+  - another_deposit[0]
+  - another_deposit[1]
+  - partial_return_check
+  - partial_return_amount
 code: |
   deposit_balance_owed = deposit_payments[0]
   if another_deposit[0] == True:
@@ -1931,6 +1911,7 @@ fields:
     alMax: ${ today().format("yyyy-MM-dd") }
     alMin: ${move_out_date}
 ---
+
 #This is code pulled from the a2jauthor interview, but I don't think it is needed?
 depends on:
   - rlto_applies
@@ -1944,13 +1925,13 @@ code: |
     if damages_check == False:
       landlord_timely = False
     else:
-      if rental_address.city == "Evanston":
+      if capitalize(rental_address.city) == "Evanston":
         
         if damage_date_difference.days > 21:
           landlord_timely = False
         else:
           landlord_timely = True
-      elif rental_address.city == "Mount Prospect" or rental_address.city == "DeKalb":
+      elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
         if damage_date_difference.days > 45:
           landlord_timely = False
         else:
@@ -1972,16 +1953,22 @@ code: |
   else:
     extra_damages = False
 ---
+#jump to
+reconsider: True
 depends on:
   - total_deposit
   - deposit_balance_owed
+  - deposit_payments[0]
+  - deposit_payments[1]
+  - deposit_payments[2]
+  - another_deposit[0]
+  - another_deposit[1]
 code: |
   if extra_damages == True:
     deposit_with_damages = total_deposit + total_deposit + deposit_balance_owed
   else:
     deposit_with_damages = deposit_balance_owed
 ---
-#code blocks will calculate damages based on the rental property's city, county, whether a landlord--or their family in Cook County--in most jurisdictions, the number of units (jurisdiction dependent), whether the rental property is a type of property excluded from the relevant ordinance, the amount and number of deposit payments made by the user, the amount of deposit returned to the user, and whether the landlord has timely paid back the deposit.
 id: security deposit damages info
 continue button field: deposit_damages_info
 question: |
@@ -2007,17 +1994,28 @@ fields:
   - no label: claim_amount_update
     datatype: yesnoradio
 ---
-only sets: amount_updated
+reconsider: True
+only sets: 
+  - amount_updated
+  - calculated_deposit_claim
 depends on:
   - claim_amount_update
   - deposit_with_damages
+  - deposit_balance_owed
+  - extra_damages
+  - total_deposit
+  - deposit_payments[0]
+  - deposit_payments[1]
+  - deposit_payments[2]
+  - amount_check
 code: |
   if claim_amount_update == True:
-    amount_check = deposit_with_damages
+    calculated_deposit_claim = deposit_with_damages
     if deposit_with_damages > 10000:
       deposit_damages_too_big
     amount_updated = True
   else:
+    calculated_deposit_claim = amount_check
     amount_updated = False
 ---
 id: deposit damages too big kickout
@@ -2054,7 +2052,7 @@ fields:
 ---
 id: no lease attachment explanation
 question: |
-   Why can you not attach a copy of your lease agreement to your *Small Claims Complaint*?
+   Why can't you attach a copy of your lease agreement to your *Small Claims Complaint*?
 fields:
   - Explanation: lease_attach_explain
     input type: area
@@ -2079,6 +2077,7 @@ fields:
   - no label: demand_letter_attach
     datatype: yesnoradio
 ---
+#jump to
 reconsider: True
 depends on:
   - rental_address
@@ -2097,6 +2096,14 @@ depends on:
   - rlto_applies
   - rental_address.county
   - amount_check
+  - deposit_payments[0]
+  - deposit_payments[1]
+  - deposit_payments[2]
+  - deposit_dates[0]
+  - deposit_dates[1]
+  - deposit_dates[2]
+  - another_deposit[0]
+  - another_deposit[1]
 code: |
   default_deposit_claim_reason = "I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties) + ". "
   
@@ -2108,7 +2115,7 @@ code: |
   if another_deposit[0] == False:
     default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " on " + deposit_dates[0] + ". "
   else:
-    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + ". On " + deposit_dates[0] + ", I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + " I paid " + currency(deposit_payments[1]) + ". "
+    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + ". On " + deposit_dates[0] + ", I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + ", I paid " + currency(deposit_payments[1]) + ". "
     if another_deposit[1] == True:
       default_deposit_claim_reason += "On " + deposit_dates[2] + ", I paid " + currency(deposit_payments[2]) + ". "    
   if deposit_payment_proof == True:
@@ -2132,24 +2139,24 @@ code: |
   else:
     if landlord_timely == False:
       default_deposit_claim_reason += "I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
-      if rental_address.city == "Evanston":
-        default_deposit_claim_reason += "21 days of vacating the property."
-      elif rental_address.city == "Mount Prospect" or rental_address.city == "DeKalb":
-        default_deposit_claim_reason += "45 days of vacating the property."
+      if capitalize(rental_address.city) == "Evanston":
+        default_deposit_claim_reason += "21 days of vacating the property. "
+      elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+        default_deposit_claim_reason += "45 days of vacating the property. "
       else:
-        default_deposit_claim_reason += "30 days of vacating the property."
+        default_deposit_claim_reason += "30 days of vacating the property. "
     
   default_deposit_claim_reason +=  comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
   
   #In the a2jauthor interview there is logic at this point regarding the damages letter. I will look into whether we should include that later; it appears to be deprecated in the old program.
   
   if rlto_applies == True:
-    if rental_address.city != "Chicago" and rental_address.city != "DeKalb" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect" and rental_address.city != "Oak Park" and rental_address.city != "Urbana" and end_in_county(rental_address.county) == "Cook County":
+    if capitalize(rental_address.city) != "Chicago" and capitalize(rental_address.city) != "DeKalb" and capitalize(rental_address.city) != "Dekalb" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect" and capitalize(rental_address.city) != "Oak Park" and capitalize(rental_address.city) != "Oak park" and capitalize(rental_address.city) != "Urbana" and capitalize(end_in_county(rental_address.county)) == "Cook County":
       default_deposit_claim_reason += "A local law in Cook County applies to my security deposit claim. "
-    elif rental_address.city == "Chicago" or rental_address.city == "DeKalb" or rental_address.city == "Evanston" or rental_address.city == "Mount Prospect" or rental_address.city == "Oak Park" or rental_address.city == "Urbana":
+    elif capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(rental_address.city) == "Urbana":
       default_deposit_claim_reason += "A local law in " + rental_address.city + " applies to my security deposit claim. "
 
-  default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(amount_check) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
+  default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
   
   generate_default = True
 ---
@@ -2236,7 +2243,7 @@ objects:
   - complaint: ALDocument.using(title="Complaint", filename="complaint.pdf", has_addendum=False)
   - additional_defendants: ALDocument.using(title="Additional Defendants", filename="additional_defendants.pdf", has_addendum=False)
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
-  - letter_to_sheriff: ALDocument.using(title="Letter to sheriff", filename="letter_to_sheriff.pdf", has_addendum=False)
+  - letter_to_sheriff: ALDocument.using(title="Letter to sheriff (complete for each out-of-state defendant)", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
   - summons_one: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
   - summons_two: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
@@ -2419,7 +2426,6 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "e_signature": ${users[0].name.full(middle='full') if e_signature == True else ""}
-    - "defendant_list": ${other_parties.comma_and_list()}
     - "short_defendant_list": ${other_parties.short_list(1)}
 ---
 attachment:
@@ -2761,7 +2767,8 @@ review:
   - Edit: amount_check
     button: |
       **You are suing for:**
-      ${currency(amount_check)}  
+      ${currency(amount_check)} 
+    show if: show_amount_check
   - Edit: filing_location.county_number
     button: |
       **You are filing in:**
@@ -2805,42 +2812,42 @@ review:
     button: |
       **Is the property:**
       
-      % if rental_address.city == "Chicago":
+      % if capitalize(rental_address.city) == "Chicago":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Something you have signed a contract to buy,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
       * **A co-op**
-      % elif rental_address.city == "DeKalb":
+      % elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Government-owned, or**
       * **A rooming house**
-      % elif rental_address.city == "Evanston":
+      % elif capitalize(rental_address.city) == "Evanston":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy,**
       * **A co-op, or**
       * **An educational institution**
-      % elif rental_address.city == "Mount Prospect":
+      % elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
       * **A medical, educational, or relgious facility,**
       * **A residential care home,**
       * **A hotel or motel, or**
       * **Something you have signed a contract to buy**
-      % elif rental_address.city == "Oak Park":
+      % elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
       * **A hotel or motel,**
       * **A medical, educational, or relgious facility,**
       * **A school dormitory,**
       * **A temporary or transitional shelter,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif rental_address.city == "Urbana":
+      % elif capitalize(rental_address.city) == "Urbana":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy, or**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif end_in_county(rental_address.county) == "Cook County":
+      % elif capitalize(end_in_county(rental_address.county)) == "Cook County":
       * **A hotel or motel,**
       * **A school dormitory,**
       * **A shelter or a single-room-occupancy (SRO),**
@@ -2849,17 +2856,17 @@ review:
       % endif
       
       ${word(yesno(property_type_check))}
-    show if: rental_address.city == "Chicago" or rental_address.city == "DeKalb" or rental_address.city == "Evanston" or rental_address.city == "Mount Prospect" or rental_address.city == "Oak Park" or rental_address.city == "Urbana" or end_in_county(rental_address.county) == "Cook County"
+    show if: capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(rental_address.city) == "Urbana" or capitalize(end_in_county(rental_address.county)) == "Cook County"
   - Edit: chicago_owner_occupant
     button: |
       **Does the landlord live in one of the units on the property?**
       ${word(yesno(chicago_owner_occupant))}
-    show if: rental_address.city == "Chicago" and landlord_check == True
+    show if: capitalize(rental_address.city) == "Chicago" and landlord_check == True
   - Edit: cook_owner_occupant
     button: |
       **Does the landlord live in one of the units on the property?**
       ${word(yesno(cook_owner_occupant))}
-    show if: rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County"
+    show if: capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(end_in_county(rental_address.county)) == "Cook County"
   - Edit: cook_family_check
     button: |
       **Is the property a single-family home or condominium, where**
@@ -2879,6 +2886,7 @@ review:
       % elif unit_number_general == "enough_anywhere":
       7 or more
       % elif unit_number_general == "dont_know":
+      I don't know.
       % endif
   - Edit: deposit_payments[0]
     button: |
@@ -2955,7 +2963,7 @@ review:
     show if: landlord_check == True and lease_check == True
   - Edit: lease_attach_explain
     button: |
-      **Why can you not attach a copy of your lease?**
+      **Why can't you attach a copy of your lease?**
       ${lease_attach_explain}
     show if: landlord_check == True and lease_check == True and lease_attach_check == False
   - Edit: deposit_payment_proof
@@ -2979,7 +2987,7 @@ review:
       **Why does your landlord owe you ${currency(amount_check)}?**
       
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == True
+    show if: landlord_check == True and use_deposit_default == False
   - label: Edit
     fields:
       - use_deposit_default
@@ -2992,22 +3000,19 @@ review:
       **Why does your landlord owe you ${currency(amount_check)}?**
       
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == False
+    show if: landlord_check == True and use_deposit_default == True
+    #jump to
   - Edit: add_second_page
     button: |
       **Do you need a second page to explain why your landlord owes you ${currency(amount_check)}?**
       ${word(yesno(add_second_page))}
-    show if: landlord_check == True and use_deposit_default == False
+    show if: landlord_check == True and use_deposit_default == True
   - Edit: more_deposit_reason
     button: |
       **Why does your landlord owe you ${currency(amount_check)} (second page)?**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == False and add_second_page == True
-  - Edit: add_second_page
-    button: |
-      Does this appear?
-    show if: landlord_check == True and use_deposit_default == True
+    show if: landlord_check == True and use_deposit_default == True and add_second_page == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -3024,7 +3029,7 @@ review:
     show if: agreement_check == True and landlord_check == False
   - Edit: attach_explain
     button: |
-      **Why can you not attach a copy of your written agreement?**
+      **Why can't you attach a copy of your written agreement?**
       ${attach_explain}
     show if: agreement_check == True and attach_check == False and landlord_check == False
   - Edit: demand_check
@@ -3090,6 +3095,23 @@ review:
     button: |
       **Do you want to add your electronic signature to your forms?**
       ${word(yesno(e_signature))}
+---
+#logic to determine whether amount_check variable is displayed in review screens
+recompute: True
+code: |
+  if defined('landlord_check'):
+    if landlord_check == False:
+      show_amount_check = True
+    else:
+      if defined('claim_amount_update'):
+        if claim_amount_update == True:
+          show_amount_check = False
+        else:
+          show_amount_check = True
+      else:
+        show_amount_check = True
+  else:
+    show_amount_check = True
 ---
 continue button field: other_parties.revisit
 question: |
@@ -3237,6 +3259,7 @@ review:
     button: |
       **You are suing for:**
       ${currency(amount_check)}  
+    show if: show_amount_check
   - Edit: filing_location.county_number
     button: |
       **You are filing in:**
@@ -3273,42 +3296,42 @@ review:
     button: |
       **Is the property:**
       
-      % if rental_address.city == "Chicago":
+      % if capitalize(rental_address.city) == "Chicago":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Something you have signed a contract to buy,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
       * **A co-op**
-      % elif rental_address.city == "DeKalb":
+      % elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Government-owned, or**
       * **A rooming house**
-      % elif rental_address.city == "Evanston":
+      % elif capitalize(rental_address.city) == "Evanston":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy,**
       * **A co-op, or**
       * **An educational institution**
-      % elif rental_address.city == "Mount Prospect":
+      % elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
       * **A medical, educational, or relgious facility,**
       * **A residential care home,**
       * **A hotel or motel, or**
       * **Something you have signed a contract to buy**
-      % elif rental_address.city == "Oak Park":
+      % elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
       * **A hotel or motel,**
       * **A medical, educational, or relgious facility,**
       * **A school dormitory,**
       * **A temporary or transitional shelter,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif rental_address.city == "Urbana":
+      % elif capitalize(rental_address.city) == "Urbana":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy, or**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif end_in_county(rental_address.county) == "Cook County":
+      % elif capitalize(end_in_county(rental_address.county)) == "Cook County":
       * **A hotel or motel,**
       * **A school dormitory,**
       * **A shelter or a single-room-occupancy (SRO),**
@@ -3317,17 +3340,17 @@ review:
       % endif
       
       ${word(yesno(property_type_check))}
-    show if: rental_address.city == "Chicago" or rental_address.city == "DeKalb" or rental_address.city == "Evanston" or rental_address.city == "Mount Prospect" or rental_address.city == "Oak Park" or rental_address.city == "Urbana" or end_in_county(rental_address.county) == "Cook County"
+    show if: capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(rental_address.city) == "Urbana" or capitalize(end_in_county(rental_address.county)) == "Cook County"
   - Edit: chicago_owner_occupant
     button: |
       **Does the landlord live in one of the units on the property?**
       ${word(yesno(chicago_owner_occupant))}
-    show if: rental_address.city == "Chicago" and landlord_check == True
+    show if: capitalize(rental_address.city) == "Chicago" and landlord_check == True
   - Edit: cook_owner_occupant
     button: |
       **Does the landlord live in one of the units on the property?**
       ${word(yesno(cook_owner_occupant))}
-    show if: rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County"
+    show if: capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(end_in_county(rental_address.county)) == "Cook County"
   - Edit: cook_family_check
     button: |
       **Is the property a single-family home or condominium, where**
@@ -3347,6 +3370,7 @@ review:
       % elif unit_number_general == "enough_anywhere":
       7 or more
       % elif unit_number_general == "dont_know":
+      I don't know
       % endif
   - Edit: deposit_payments[0]
     button: |
@@ -3423,7 +3447,7 @@ review:
     show if: landlord_check == True and lease_check == True
   - Edit: lease_attach_explain
     button: |
-      **Why can you not attach a copy of your lease?**
+      **Why can't you attach a copy of your lease?**
       ${lease_attach_explain}
     show if: landlord_check == True and lease_check == True and lease_attach_check == False
   - Edit: deposit_payment_proof
@@ -3447,7 +3471,7 @@ review:
       **Why does your landlord owe you ${currency(amount_check)}?**
       
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == True
+    show if: landlord_check == True and use_deposit_default == False
   - label: Edit
     fields:
       - use_deposit_default
@@ -3460,18 +3484,18 @@ review:
       **Why does your landlord owe you ${currency(amount_check)}?**
       
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == False
+    show if: landlord_check == True and use_deposit_default == True
   - Edit: add_second_page
     button: |
       **Do you need a second page to explain why your landlord owes you $${amount_check}?**
       ${word(yesno(add_second_page))}
-    show if: landlord_check == True and use_deposit_default == False
+    show if: landlord_check == True and use_deposit_default == True
   - Edit: more_deposit_reason
     button: |
       **Why does your landlord owe you ${currency(amount_check)} (second page)?**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == False and add_second_page == True
+    show if: landlord_check == True and use_deposit_default == True and add_second_page == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -3488,7 +3512,7 @@ review:
     show if: agreement_check == True and landlord_check == False
   - Edit: attach_explain
     button: |
-      **Why can you not attach a copy of your written agreement?**
+      **Why can't you attach a copy of your written agreement?**
       ${attach_explain}
     show if: agreement_check == True and attach_check == False and landlord_check == False
   - Edit: demand_check
