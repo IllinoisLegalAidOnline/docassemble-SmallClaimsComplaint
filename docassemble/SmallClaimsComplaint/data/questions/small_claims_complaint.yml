@@ -62,13 +62,19 @@ code: |
     corporation_kickout
   if money_check == True:
     money_kickout
-  if amount_check > 10000:
-    amount_kickout
-  show_amount_check
+  if landlord_check == False:
+    if amount_check > 10000:
+      amount_kickout
+  else:
+    note_about_amount_limit
   filing_location.county_number
   filing_location.get_county
   if filing_location.county_number == -1:
-    if amount_check < 3000.01:
+    if landlord_check == False:
+      if amount_check < 3000.01:
+        if cook_district == "15":
+          daley_center_note
+    else:
       if cook_district == "15":
         daley_center_note
   other_parties.gather()
@@ -126,18 +132,19 @@ code: |
       partial_return_amount
       partial_return_date
     if deposit_balance_owed > 0:
-      deposit_still_owed
+      if deposit_balance_owed < 10000:
+        deposit_still_owed
+      else:
+        too_much_owed
     else:
       all_paid_error
     if damages_check == True:
       damages_date
+    #deposit_debug
+    if deposit_with_damages > 10000:
+      deposit_damages_too_big
     deposit_damages_info
     set_progress(60)
-    if deposit_with_damages != amount_check:
-      if deposit_with_damages > 10000:
-        deposit_damages_too_big
-      elif claim_amount_update == True:
-        amount_updated
     if lease_check == True:
       if lease_attach_check == False:
         lease_attach_explain
@@ -431,14 +438,6 @@ question: |
   How much money are you suing for?
 subquestion: |
   Do not include court costs in this amount.
-
-  If you are suing your landlord to return a security deposit, there will be more questions to figure out what you can claim. For now, enter the amount of security deposit your landlord owes you.
-  
-  % if defined('amount_updated'):
-  % if amount_updated == True:
-  You already changed this amount during the interview based on information about your security deposit.
-  % endif
-  % endif
 fields:
   - Amount owed: amount_check
     datatype: number
@@ -458,16 +457,31 @@ buttons:
   - Exit: exit
   - Restart: restart
 ---
+id: note about amount limit
+continue button field: note_about_amount_limit
+question: |
+  About claim limits
+subquestion: |
+  You can only sue for $10,000.00 or less in Small Claims Court.
+  
+  If you paid more than $10,000.00 for your security deposit, you can not use this program to make a small claims complaint.
+  
+  Depending on where your rental unit is, you may be able to sue for damages in addition to the amount of your security deposit your landlord has not returned. However, these damages may make your claim too big for Small Claims Court.
+  
+  This program will calculate how much you can sue for. If your claim is too big for Small Claims Court, this program will let you know.
+---
 id: filing county
 question: |
   In which county are you filing your complaint?
 subquestion: |
+  % if landlord_check == True:
   If you are suing a former landlord to return your security deposit, you should file in the county:
 
   * Where the apartment is,
   * Where the landlord lives, or
   * Where the landlord has an office.
-
+  
+  % endif
   ${ collapse_template(county_lookup_help) }
 fields:
   - County: filing_location.county_number
@@ -685,7 +699,7 @@ continue button field: daley_center_note
 question: |
   Free help at the Daley Center
 subquestion: |
-  Since you are filing in Chicago for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Filing Desk**](https://www.cookcountycourt.org/FOR-PEOPLE-WITHOUT-LAWYERS/Help-Desks-in-the-Courthouse/cid/222/smid/2897/tmid/2803).
+  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Filing Desk**](https://www.cookcountycourt.org/FOR-PEOPLE-WITHOUT-LAWYERS/Help-Desks-in-the-Courthouse/cid/222/smid/2897/tmid/2803).
   
   While it may be easier to get help at the Daley Center, you can still continue to make forms with this program.
 ---
@@ -1969,6 +1983,23 @@ code: |
   else:
     deposit_with_damages = deposit_balance_owed
 ---
+id: deposit debug screen
+continue button field: deposit_debug
+question: |
+  Deposit debug
+subquestion: |
+  rlto_applies value is ${rlto_applies}
+  
+  the total deposit paid is ${total_deposit}
+  
+  deposit balance owed is ${deposit_balance_owed}
+  
+  the extra_damages check is ${extra_damages}
+  
+  deposit with damages (which should only include total deposit x 2 plus balance owed if extra_damages is true) is ${deposit_with_damages}
+  
+  calculated_deposit_claim is the variable used in the templates. It is ${calculated_deposit_claim}
+---
 id: security deposit damages info
 continue button field: deposit_damages_info
 question: |
@@ -2009,21 +2040,35 @@ depends on:
   - deposit_payments[2]
   - amount_check
 code: |
-  if claim_amount_update == True:
-    calculated_deposit_claim = deposit_with_damages
-    if deposit_with_damages > 10000:
-      deposit_damages_too_big
-    amount_updated = True
-  else:
-    calculated_deposit_claim = amount_check
-    amount_updated = False
+  #if claim_amount_update == True:
+  calculated_deposit_claim = deposit_with_damages
+  if deposit_with_damages > 10000:
+    deposit_damages_too_big
+  amount_updated = True
+  #else:
+    #calculated_deposit_claim = amount_check
+    #amount_updated = False
+---
+id: deposit too big
+event: too_much_owed
+question: |
+  Amount owed too big
+subquestion: |
+  Your claim amount is at least ${currency(deposit_balance_owed)}. You can only sue for $10,000 or less in Small Claims Court.
+  
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
 ---
 id: deposit damages too big kickout
 event: deposit_damages_too_big
 question: |
   Claim amount too big with damages
 subquestion: |
-  With damages, your claim amount is ${deposit_with_damages}. You can only sue for $10,000 or less in Small Claims Court.
+  With damages, your claim amount is ${currency(deposit_with_damages)}. You can only sue for $10,000 or less in Small Claims Court.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
@@ -2164,7 +2209,7 @@ id: deposit claim reason check
 question: |
   Do you want to add to or change this explanation?
 subquestion: |
-  Your *Small Claims Complaint* will include the following explanation of why ${comma_and_list(other_parties)} owes you ${currency(amount_check)}.
+  Your *Small Claims Complaint* will include the following explanation of why ${comma_and_list(other_parties)} owes you ${currency(calculated_deposit_claim)}.
   
   ---
   
@@ -2354,7 +2399,8 @@ attachment:
     - "defendant_two_name": ${other_parties[1].name.full(middle='full')}
     - "defendant_two_address": ${other_parties[1].address.on_one_line(bare=True)}
     - "extra_defendants": ${True if other_parties.number_gathered() > 2 else False}
-    - "amount_owed": ${currency(amount_check)}
+    - "amount_owed": ${currency(amount_check) if landlord_check == False else currency(calculated_deposit_claim)}
+    - "amount_owed_no_symbol": ${amount_check if landlord_check == False else calculated_deposit_claim}
     - "no_agreement": ${no_agreement_logic}
     - "attached_agreement": ${attached_agreement_logic}
     - "unattached_agreement": ${unattached_agreement_logic}
@@ -2367,7 +2413,7 @@ attachment:
     - "plaintiff_city_state_zip": ${users[0].address.line_two()}
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
-    - "amount_check": ${currency(amount_check)}
+    - "amount_check": ${currency(amount_check) if landlord_check == False else calculated_deposit_claim}
     - "preview_watermark": ${ watermark if i=='preview' else '' }
 ---
 attachment:
@@ -2768,7 +2814,7 @@ review:
     button: |
       **You are suing for:**
       ${currency(amount_check)} 
-    show if: show_amount_check
+    show if: landlord_check == False
   - Edit: filing_location.county_number
     button: |
       **You are filing in:**
@@ -3096,22 +3142,22 @@ review:
       **Do you want to add your electronic signature to your forms?**
       ${word(yesno(e_signature))}
 ---
-#logic to determine whether amount_check variable is displayed in review screens
-recompute: True
-code: |
-  if defined('landlord_check'):
-    if landlord_check == False:
-      show_amount_check = True
-    else:
-      if defined('claim_amount_update'):
-        if claim_amount_update == True:
-          show_amount_check = False
-        else:
-          show_amount_check = True
-      else:
-        show_amount_check = True
-  else:
-    show_amount_check = True
+##logic to determine whether amount_check variable is displayed in review screens. No longer used, if you are reading this after 2023, you can delete this code block.
+#recompute: True
+#code: |
+#  if defined('landlord_check'):
+#    if landlord_check == False:
+#      show_amount_check = True
+#    else:
+#      if defined('claim_amount_update'):
+#        if claim_amount_update == True:
+#          show_amount_check = False
+#        else:
+#          show_amount_check = True
+#      else:
+#        show_amount_check = True
+#  else:
+#    show_amount_check = True
 ---
 continue button field: other_parties.revisit
 question: |
@@ -3259,7 +3305,7 @@ review:
     button: |
       **You are suing for:**
       ${currency(amount_check)}  
-    show if: show_amount_check
+    show if: landlord_check == False
   - Edit: filing_location.county_number
     button: |
       **You are filing in:**
