@@ -84,10 +84,11 @@ code: |
   if landlord_check == True:
     rental_address.address
     rental_address.county_correct
-    if capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(end_in_county(rental_address.county)) == "Cook County":
+    if rental_address.city.lower() == "chicago" or rental_address.city.lower() == "evanston" or rental_address.city.lower() == "oak park" or end_in_county(rental_address.county).lower() == "cook county":
       municipal_intro
       if property_type_check == False:
-        unit_number_general
+        if owner_occupant == True:
+          unit_number_general
         #if rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
         #  if rental_address.city != "Oak Park" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
         #    unit_number_chicagoland
@@ -96,14 +97,13 @@ code: |
         #else:
         #  unit_number_illinois
         
-        if capitalize(rental_address.city) == "Chicago" and unit_number_general != "enough_anywhere" and unit_number_general != "dont_know":
-          chicago_owner_occupant
-        elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
-          if unit_number_general == "too_few_for_illinois":
-            cook_owner_occupant
-        elif capitalize(end_in_county(rental_address.county)) == "Cook County" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect":
-          if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
-            if cook_owner_occupant == False:
+          if rental_address.city.lower() == "chicago" and unit_number_general != "enough_anywhere" and unit_number_general != "dont_know":
+            owner_occupant
+          elif rental_address.city.lower() == "oak park":
+            if unit_number_general == "too_few_for_illinois":
+              owner_occupant
+        elif end_in_county(rental_address.county).lower() == "cook county" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect":
+            if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
               cook_family_check
     else:
       property_type_code
@@ -721,6 +721,8 @@ subquestion: |
 fields:
   - code: |
       other_parties[i].name_fields(person_or_business='unsure')
+  #- First: other_parties[i].name.first
+  #- Last: other_parties[i].name.last
 ---
 template: help_suing_business
 subject: |
@@ -955,10 +957,18 @@ continue button field: preview_complaint
 ---
 id: second page check generic
 question: |
+  % if landlord_check == False:
   % if other_parties.number_gathered() > 1:
   Do you want to add an additional page to explain why defendants owe you ${currency(amount_check)}?
   % else:
   Do you want to add an additional page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?
+  % endif
+  % else:
+  % if other_parties.number_gathered() > 1:
+  Do you want to add an additional page to explain why defendants owe you ${currency(calculated_deposit_claim)}?
+  % else:
+  Do you want to add an additional page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(calculated_deposit_claim)}?
+  % endif
   % endif
 fields:
   - no label: add_second_page
@@ -1010,24 +1020,40 @@ id: more deposit reason
 question: |
   Additional explanation
 subquestion: |
+  % if landlord_check == False:
   % if other_parties.number_gathered() > 1:
   Add more reasons why the defendants owe you ${currency(amount_check)} below. 
   % else:
   Add more reasons why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)} below.
   % endif
+  % else:
+  % if other_parties.number_gathered() > 1:
+  Add more reasons why the defendants owe you ${currency(calculated_deposit_claim)} below. 
+  % else:
+  Add more reasons why ${other_parties[0].name.full(middle='full')} owes you ${currency(calculated_deposit_claim)} below.
+  % endif
+  % endif
   
   Remember you can only sue for money in Small Claims Court.
   
-  The form has space for about 37 lines of text, or about 2,400 characters.
+  The form has space for about 37 lines of text, or about 2,400 characters. You can preview how your answer looks on the form on the next screen.
 
   ${collapse_template(deposit_reason_thus_far)}
   
 fields:
   - label: |
+      % if landlord_check == False:
       % if other_parties.number_gathered() > 1:
       Continue explaining why defendants owe you ${currency(amount_check)}:
       % else:
       Continue explaining why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}:
+      % endif
+      % else:
+      % if other_parties.number_gathered() > 1:
+      Continue explaining why defendants owe you ${currency(calculated_deposit_claim)}:
+      % else:
+      Continue explaining why ${other_parties[0].name.full(middle='full')} owes you ${currency(calculated_deposit_claim)}:
+      % endif
       % endif
     field: more_deposit_reason
     input type: area
@@ -1168,7 +1194,7 @@ fields:
   - no label: other_parties[i].alt_delivery
     datatype: yesnoradio
 ---
-id: defendant service address
+id: defendant alt service address alt address
 question: |
   % if other_parties[i].agent_check == True:
   What is the alternate address for ${other_parties[i].agent.name.full(middle='full')}?
@@ -1184,9 +1210,9 @@ fields:
   - City: other_parties[i].alt_service_address.city
     required: False
   - State: other_parties[i].alt_service_address.state
+    required: False
     code: |
       states_list()
-    required: False
   - ZIP code: other_parties[i].alt_service_address.zip
     required: False
 ---
@@ -1444,7 +1470,7 @@ continue button field: municipal_intro
 question: |
   Local landlord-tenant law
 subquestion: |
-  % if capitalize(rental_address.city) != "Chicago" and capitalize(rental_address.city) != "DeKalb" and capitalize(rental_address.city) != "Dekalb" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect" and capitalize(rental_address.city) != "Oak Park" and capitalize(rental_address.city) != "Oak park" and capitalize(rental_address.city) != "Urbana":
+  % if rental_address.city.lower() != "chicago" and rental_address.city.lower() != "dekalb" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect" and rental_address.city.lower() != "oak park" and rental_address.city.lower() != "urbana":
   Cook County has laws that affect landlord and tenant relationships and security deposits.
   % else:
   ${rental_address.city} has laws that affect landlord and tenant relationships and security deposits.
@@ -1466,42 +1492,42 @@ id: property type check
 question: |
   Is the rental property one of the following?
 subquestion: |
-  % if capitalize(rental_address.city) == "Chicago":
+  % if rental_address.city.lower() == "chicago":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * Something you have signed a contract to buy,
   * A place you had to rent because the landlord is your employer, and the job required you to rent there, or
   * A co-op
-  % elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+  % elif rental_address.city.lower() == "dekalb":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * Government-owned, or
   * A rooming house
-  % elif capitalize(rental_address.city) == "Evanston":
+  % elif rental_address.city.lower() == "evanston":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * A fraternity or social organization,
   * Something you have signed a contract to buy,
   * A co-op, or
   * An educational institution
-  % elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
+  % elif rental_address.city.lower() == "mount prospect":
   * A medical, educational, or relgious facility,
   * A residential care home,
   * A hotel or motel, or
   * Something you have signed a contract to buy
-  % elif capitalize(rental_address.city) == "Oak Park":
+  % elif rental_address.city.lower() == "oak park":
   * A hotel or motel,
   * A medical, educational, or relgious facility,
   * A school dormitory,
   * A temporary or transitional shelter,
   * A place you had to rent because the landlord is your employer, and the job required you to rent there
-  % elif capitalize(rental_address.city) == "Urbana":
+  % elif rental_address.city.lower() == "urbana":
   * A medical, educational, or relgious facility,
   * A hotel or motel,
   * A fraternity or social organization,
   * Something you have signed a contract to buy, or
   * A place you had to rent because the landlord is your employer, and the job required you to rent there
-  % elif capitalize(end_in_county(rental_address.county)) == "Cook County":
+  % elif end_in_county(rental_address.county).lower() == "cook county":
   * A hotel or motel,
   * A school dormitory,
   * A shelter or a single-room-occupancy (SRO),
@@ -1516,20 +1542,19 @@ depends on:
   - rental_address.city
   - rental_address.county
 code: |
-  if capitalize(rental_address.city) != "Chicago" and capitalize(rental_address.city) != "DeKalb" and capitalize(rental_address.city) != "Dekalb" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect" and capitalize(rental_address.city) != "Oak Park" and capitalize(rental_address.city) != "Oak park" and capitalize(rental_address.city) != "Urbana" and capitalize(end_in_county(rental_address.county)) != "Cook County":
+  if rental_address.city.lower() != "chicago" and rental_address.city.lower() != "dekalb" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect" and rental_address.city.lower() != "oak park" and rental_address.city.lower() != "urbana" and end_in_county(rental_address.county).lower() != "cook county":
     property_type_check = False
   else:
     property_type_check
   property_type_code = True
 ---
-#used for both Cook County and Oak Park. However, Oak Park has a different unit number threshold. If this variable is acting wonky in template assembly, the differing thresholds may be the cause.
-id: cook owner occupant check
+id: owner occupant check
 question: |
   Does the landlord live in one of the units on the property?
 subquestion: |
   This only applies to a landlord who owns the property. If a property manager lives in one of the units but not the property's owner, you should click **No**.
 fields:
-  - no label: cook_owner_occupant
+  - no label: owner_occupant
     datatype: yesnoradio
 ---
 id: cook family check
@@ -1544,14 +1569,14 @@ fields:
   - no label: cook_family_check
     datatype: yesnoradio
 ---
-id: chicago owner occupant check
-question: |
-  Does the landlord live in one of the units on the property?
-subquestion: |
-  This only applies to a landlord who owns the property. If a property manager lives in one of the units but not the property's owner, you should click **No**.
-fields:
-  - no label: chicago_owner_occupant
-    datatype: yesnoradio
+#id: chicago owner occupant check
+#question: |
+#  Does the landlord live in one of the units on the property?
+#subquestion: |
+#  This only applies to a landlord who owns the property. If a property manager lives in one of the units but not the property's owner, you should click **No**.
+#fields:
+#  - no label: chicago_owner_occupant
+#    datatype: yesnoradio
 ---
 id: rental address
 question: |
@@ -1593,7 +1618,7 @@ choices:
 ---
 id: merged unit number general
 question: |
-  How many rental units does your landlord own?
+  How many units are in the property?
 field: unit_number_general
 choices:
   - 4 or fewer units: too_few_for_illinois
@@ -1606,18 +1631,17 @@ depends on:
   - rental_address.county
   - rental_address.city
   - property_type_check
-  - chicago_owner_occupant
-  - cook_owner_occupant
+  - owner_occupant
   - cook_family_check
   - unit_number_general
 code: |
-  if capitalize(rental_address.city) == "Urbana" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
+  if rental_address.city.lower() == "urbana" or rental_address.city.lower() == "mount prospect":
     rlto_applies = False
   elif property_type_check == True:
     rlto_applies = False
-  elif capitalize(rental_address.city) == "Chicago":
+  elif rental_address.city.lower() == "chicago":
     if unit_number_general == "too_few_for_illinois" or unit_number_general == "depends_on_area":
-      if chicago_owner_occupant == True:
+      if owner_occupant == True:
         rlto_applies = False
       else:
         rlto_applies = True 
@@ -1625,9 +1649,9 @@ code: |
     else:
       rlto_applies = True
       which_rlto = "Chicago"
-  elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
+  elif rental_address.city.lower() == "oak park":
     if unit_number_general == "too_few_for_illinois":
-      if cook_owner_occupant == True:
+      if owner_occupant == True:
         rlto_applies = False
       else:
         rlto_applies = True
@@ -1635,12 +1659,12 @@ code: |
     else:
       rlto_applies = True
       which_rlto = "Oak Park"
-  elif capitalize(rental_address.city) == "Evanston":
+  elif rental_address.city.lower() == "evanston":
     rlto_applies = True
     which_rlto = "Evanston"
-  elif capitalize(end_in_county(rental_address.county)) == "Cook County":
+  elif end_in_county(rental_address.county).lower() == "cook county":
     if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
-      if cook_owner_occupant == True:
+      if owner_occupant == True:
         rlto_applies = False
       else:
         if cook_family_check == True:
@@ -1652,8 +1676,11 @@ code: |
       rlto_applies = True
       which_rlto = "Cook County"
   else:
-    rlto_applies = True
-    which_rlto = "Illinois"
+    if unit_number_general != "too_few_for_illinois":
+      rlto_applies = True
+      which_rlto = "Illinois"
+    else:
+      rlto_applies = False
     
   #if rental_address.city != "Chicago" and rental_address.city != "Evanston" and rental_address.city != "Oak Park" and rental_address.city != "Urbana":
   #  if end_in_county(rental_address.county) != "Cook County":
@@ -1706,13 +1733,27 @@ subquestion: |
   Based on your answers, the City of Chicago's Residential Landlord Tenant Ordinance applies to the rental property.
   % elif which_rlto == "Oak Park":
   Based on your answers, Oak Park's Residential Tenant and Landlord Ordinance applies to the rental property.
+  % elif which_rlto == "DeKalb":
+  Based on your answers, DeKalb's Landlord-Tenant Regulations applies to the rental property.
   % elif which_rlto == "Cook County":
   Based on your answers, Cook County's Residential Tenant Landlord Ordinance applies to the rental property.
   % elif which_rlto == "Illinois":
   Based on your answers, Illinois's Security Deposit Return Act applies to the rental property.
   % endif
   % else:
+  % if which_rlto == "Chicago":
+  The City of Chicago's Residential Landlord Tenant Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  % elif which_rlto == "Evanston":
+  The City of Evanston's Residential Landlord and Tenant Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  % elif which_rlto == "Oak Park":
+  Oak Park's Residential Tenant and Landlord Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  % elif which_rlto == "DeKalb":
+  DeKalb's Landlord-Tenant Regulations applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  % elif which_rlto == "Cook County":
+  Cook County's Residential Tenant Landlord Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  % else:
   Based on your answers, Illinois state law applies to your case.
+  % endif
   % endif
 ---
 #I implemented this the way it is set up in a2jauthor, but it seems reversed? I will have to check the statute to ensure these numbers are correct.
@@ -1723,26 +1764,26 @@ depends on:
   - move_out_date
 code: |
   if rlto_applies == True:
-    if capitalize(rental_address.city) == "Evanston":
+    if rental_address.city.lower() == "evanston":
       days_to_return_deposit = 21
       days_to_receive_letter = 21
       
-    elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
+    elif rental_address.city.lower() == "oak park":
       days_to_return_deposit = 30
       days_to_receive_letter = 30
-    elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
-      days_to_return_deposit = 30
-      days_to_receive_letter = 45
-    elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+    elif rental_address.city.lower() == "mount prospect":
       days_to_return_deposit = 30
       days_to_receive_letter = 45
-    elif capitalize(rental_address.city) == "Chicago":
+    elif rental_address.city.lower() == "dekalb":
+      days_to_return_deposit = 30
+      days_to_receive_letter = 45
+    elif rental_address.city.lower() == "chicago":
       days_to_return_deposit = 45
       days_to_receive_letter = 30
-    elif capitalize(rental_address.city) == "Urbana":
+    elif rental_address.city.lower() == "urbana":
       days_to_return_deposit = 45
       days_to_receive_letter = 30
-    elif capitalize(end_in_county(rental_address.county)) == "Cook County":
+    elif end_in_county(rental_address.county).lower() == "cook county":
       days_to_return_deposit = 30
       days_to_receive_letter = 30
     else:
@@ -1939,13 +1980,13 @@ code: |
     if damages_check == False:
       landlord_timely = False
     else:
-      if capitalize(rental_address.city) == "Evanston":
+      if rental_address.city.lower() == "evanston":
         
         if damage_date_difference.days > 21:
           landlord_timely = False
         else:
           landlord_timely = True
-      elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+      elif rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "dekalb":
         if damage_date_difference.days > 45:
           landlord_timely = False
         else:
@@ -1979,7 +2020,7 @@ depends on:
   - another_deposit[1]
 code: |
   if extra_damages == True:
-    deposit_with_damages = total_deposit + total_deposit + deposit_balance_owed
+    deposit_with_damages = deposit_balance_owed + deposit_balance_owed
   else:
     deposit_with_damages = deposit_balance_owed
 ---
@@ -2184,9 +2225,9 @@ code: |
   else:
     if landlord_timely == False:
       default_deposit_claim_reason += "I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
-      if capitalize(rental_address.city) == "Evanston":
+      if rental_address.city.lower() == "evanston":
         default_deposit_claim_reason += "21 days of vacating the property. "
-      elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+      elif rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "dekalb":
         default_deposit_claim_reason += "45 days of vacating the property. "
       else:
         default_deposit_claim_reason += "30 days of vacating the property. "
@@ -2196,10 +2237,22 @@ code: |
   #In the a2jauthor interview there is logic at this point regarding the damages letter. I will look into whether we should include that later; it appears to be deprecated in the old program.
   
   if rlto_applies == True:
-    if capitalize(rental_address.city) != "Chicago" and capitalize(rental_address.city) != "DeKalb" and capitalize(rental_address.city) != "Dekalb" and capitalize(rental_address.city) != "Evanston" and capitalize(rental_address.city) != "Mount Prospect" and capitalize(rental_address.city) != "Mount prospect" and capitalize(rental_address.city) != "Oak Park" and capitalize(rental_address.city) != "Oak park" and capitalize(rental_address.city) != "Urbana" and capitalize(end_in_county(rental_address.county)) == "Cook County":
-      default_deposit_claim_reason += "A local law in Cook County applies to my security deposit claim. "
-    elif capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(rental_address.city) == "Urbana":
-      default_deposit_claim_reason += "A local law in " + rental_address.city + " applies to my security deposit claim. "
+    if rental_address.city.lower() != "chicago" and rental_address.city.lower() != "dekalb" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect" and rental_address.city.lower() != "oak park" and rental_address.city.lower() != "urbana" and end_in_county(rental_address.county).lower() == "cook county":
+      default_deposit_claim_reason += "Per Sec. 42-111(m) of the Cook County code of ordinances, I can be awarded damages in an amount equal to two times the security deposit. "
+    
+    elif rental_address.city.lower() == "chicago":
+      default_deposit_claim_reason += "Per Sec. 5-12-080(f) of the municipal code of Chicago, I can be awarded damages in an amount equal to two times the security deposit plus interest. "
+    elif rental_address.city.lower() == "dekalb":
+      default_deposit_claim_reason += "Per Sec. 10.14(a) of the municipal code of DeKalb, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+    elif rental_address.city.lower() == "evanston":
+      default_deposit_claim_reason += "Per Sec. 5-3-5-1(F) of Evanston's code of ordinances, I may recover damages in an amount equal to twice the amount wrongfully withheld. "
+    elif rental_address.city.lower() == "mount prospect":
+      default_deposit_claim_reason += "Per Sec. 23.1806(A)(5) of Mount Prospect's code of ordinances, I may recover the money due. "
+    elif rental_address.city.lower() == "oak park":
+      default_deposit_claim_reason += "Per Sec. 12-4-1 of Oak Park's code of ordinances, " + comma_and_list(other_parties) + "can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+    elif rental_address.city.lower() == "urbana":
+      default_deposit_claim_reason += "Per Sec. 12.5-20(b) of Urbana's code of ordinances, " + comma_and_list(other_parties) + "can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      
 
   default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
   
@@ -2216,6 +2269,7 @@ subquestion: |
   ${single_to_double_newlines(default_deposit_claim_reason)}
   
   ---
+  This Easy Form can update the above text if you change your previous answers. If you add to or edit the text, this program won't be able to automatically update it
 fields:
   - no label: use_deposit_default
     datatype: yesnoradio
@@ -2233,9 +2287,11 @@ code: |
 ---
 id: new deposit claim reason
 question: |
-  Edit the reasons why you are owed ${currency(amount_check)}.
+  Edit the reasons why you are owed ${currency(calculated_deposit_claim)}.
 subquestion: |
-  The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen
+  The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen.
+  
+  If you change your earlier answers, this Easy Form won't be able to update this text to match the changes. You would have to edit the text yourself.
 fields:
   - Explanation: new_deposit_claim_reason
     input type: area
@@ -2400,7 +2456,7 @@ attachment:
     - "defendant_two_address": ${other_parties[1].address.on_one_line(bare=True)}
     - "extra_defendants": ${True if other_parties.number_gathered() > 2 else False}
     - "amount_owed": ${currency(amount_check) if landlord_check == False else currency(calculated_deposit_claim)}
-    - "amount_owed_no_symbol": ${amount_check if landlord_check == False else calculated_deposit_claim}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "no_agreement": ${no_agreement_logic}
     - "attached_agreement": ${attached_agreement_logic}
     - "unattached_agreement": ${unattached_agreement_logic}
@@ -2858,42 +2914,42 @@ review:
     button: |
       **Is the property:**
       
-      % if capitalize(rental_address.city) == "Chicago":
+      % if rental_address.city.lower() == "chicago":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Something you have signed a contract to buy,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
       * **A co-op**
-      % elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+      % elif rental_address.city.lower() == "dekalb":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Government-owned, or**
       * **A rooming house**
-      % elif capitalize(rental_address.city) == "Evanston":
+      % elif rental_address.city.lower() == "evanston":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy,**
       * **A co-op, or**
       * **An educational institution**
-      % elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
+      % elif rental_address.city.lower() == "mount prospect":
       * **A medical, educational, or relgious facility,**
       * **A residential care home,**
       * **A hotel or motel, or**
       * **Something you have signed a contract to buy**
-      % elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
+      % elif rental_address.city.lower() == "oak park":
       * **A hotel or motel,**
       * **A medical, educational, or relgious facility,**
       * **A school dormitory,**
       * **A temporary or transitional shelter,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif capitalize(rental_address.city) == "Urbana":
+      % elif rental_address.city.lower() == "urbana":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy, or**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif capitalize(end_in_county(rental_address.county)) == "Cook County":
+      % elif end_in_county(rental_address.county).lower() == "cook county":
       * **A hotel or motel,**
       * **A school dormitory,**
       * **A shelter or a single-room-occupancy (SRO),**
@@ -2902,17 +2958,12 @@ review:
       % endif
       
       ${word(yesno(property_type_check))}
-    show if: capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(rental_address.city) == "Urbana" or capitalize(end_in_county(rental_address.county)) == "Cook County"
-  - Edit: chicago_owner_occupant
+    show if: rental_address.city.lower() == "chicago" or rental_address.city.lower() == "dekalb" or rental_address.city.lower() == "evanston" or rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "oak park" or rental_address.city.lower() == "urbana" or end_in_county(rental_address.county).lower() == "cook county"
+  - Edit: owner_occupant
     button: |
       **Does the landlord live in one of the units on the property?**
-      ${word(yesno(chicago_owner_occupant))}
-    show if: capitalize(rental_address.city) == "Chicago" and landlord_check == True
-  - Edit: cook_owner_occupant
-    button: |
-      **Does the landlord live in one of the units on the property?**
-      ${word(yesno(cook_owner_occupant))}
-    show if: capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(end_in_county(rental_address.county)) == "Cook County"
+      ${word(yesno(owner_occupant))}
+    show if: landlord_check == True
   - Edit: cook_family_check
     button: |
       **Is the property a single-family home or condominium, where**
@@ -2921,10 +2972,10 @@ review:
       * **the landlord or an immediate family member has lived in the home within the year?**
       
       ${word(yesno(cook_family_check))}
-    show if: cook_owner_occupant == False
+    show if: owner_occupant == False and end_in_county(rental_address.county).lower() == "cook county" and rental_address.city.lower() != "chicago" and rental_address.city.lower() != "oak park" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect"
   - Edit: unit_number_general
     button: |
-      **How many rental units does your landlord own?**
+      **How many units are in the property?**
       % if unit_number_general == "too_few_for_illinois":
       4 or fewer
       % elif unit_number_general == "depends_on_area":
@@ -3256,7 +3307,7 @@ review:
       % else:
       **What is ${x.name.full(middle='full')}'s alternate service address?**
       % endif
-      ${x.service_address.on_one_line(bare=True)}
+      ${x.alt_service_address.on_one_line(bare=True)}
     show if: x.alt_delivery
   - Edit: x.alt_service_phone
     button: |
@@ -3342,42 +3393,42 @@ review:
     button: |
       **Is the property:**
       
-      % if capitalize(rental_address.city) == "Chicago":
+      % if rental_address.city.lower() == "chicago":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Something you have signed a contract to buy,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
       * **A co-op**
-      % elif capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb":
+      % elif rental_address.city.lower() == "dekalb":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **Government-owned, or**
       * **A rooming house**
-      % elif capitalize(rental_address.city) == "Evanston":
+      % elif rental_address.city.lower() == "evanston":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy,**
       * **A co-op, or**
       * **An educational institution**
-      % elif capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect":
+      % elif rental_address.city.lower() == "mount prospect":
       * **A medical, educational, or relgious facility,**
       * **A residential care home,**
       * **A hotel or motel, or**
       * **Something you have signed a contract to buy**
-      % elif capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park":
+      % elif rental_address.city.lower() == "oak park":
       * **A hotel or motel,**
       * **A medical, educational, or relgious facility,**
       * **A school dormitory,**
       * **A temporary or transitional shelter,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif capitalize(rental_address.city) == "Urbana":
+      % elif rental_address.city.lower() == "urbana":
       * **A medical, educational, or relgious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy, or**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
-      % elif capitalize(end_in_county(rental_address.county)) == "Cook County":
+      % elif end_in_county(rental_address.county).lower() == "cook county":
       * **A hotel or motel,**
       * **A school dormitory,**
       * **A shelter or a single-room-occupancy (SRO),**
@@ -3386,17 +3437,12 @@ review:
       % endif
       
       ${word(yesno(property_type_check))}
-    show if: capitalize(rental_address.city) == "Chicago" or capitalize(rental_address.city) == "DeKalb" or capitalize(rental_address.city) == "Dekalb" or capitalize(rental_address.city) == "Evanston" or capitalize(rental_address.city) == "Mount Prospect" or capitalize(rental_address.city) == "Mount prospect" or capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(rental_address.city) == "Urbana" or capitalize(end_in_county(rental_address.county)) == "Cook County"
-  - Edit: chicago_owner_occupant
+    show if: rental_address.city.lower() == "chicago" or rental_address.city.lower() == "dekalb" or rental_address.city.lower() == "evanston" or rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "oak park" or rental_address.city.lower() == "urbana" or end_in_county(rental_address.county).lower() == "cook county"
+  - Edit: owner_occupant
     button: |
       **Does the landlord live in one of the units on the property?**
-      ${word(yesno(chicago_owner_occupant))}
-    show if: capitalize(rental_address.city) == "Chicago" and landlord_check == True
-  - Edit: cook_owner_occupant
-    button: |
-      **Does the landlord live in one of the units on the property?**
-      ${word(yesno(cook_owner_occupant))}
-    show if: capitalize(rental_address.city) == "Oak Park" or capitalize(rental_address.city) == "Oak park" or capitalize(end_in_county(rental_address.county)) == "Cook County"
+      ${word(yesno(owner_occupant))}
+    show if: landlord_check == True
   - Edit: cook_family_check
     button: |
       **Is the property a single-family home or condominium, where**
@@ -3405,10 +3451,10 @@ review:
       * **the landlord or an immediate family member has lived in the home within the year?**
       
       ${word(yesno(cook_family_check))}
-    show if: cook_owner_occupant == False
+    show if: owner_occupant == False and end_in_county(rental_address.county).lower() == "cook county" and rental_address.city.lower() != "chicago" and rental_address.city.lower() != "oak park" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect"
   - Edit: unit_number_general
     button: |
-      **How many rental units does your landlord own?**
+      **How many units are in the property?**
       % if unit_number_general == "too_few_for_illinois":
       4 or fewer
       % elif unit_number_general == "depends_on_area":
@@ -3727,10 +3773,10 @@ code: |
       
   for person in other_parties:
     if person.agent_check == True:
-      person.where_to_serve = other_parties[0].service_address
+      person.where_to_serve = person.service_address
     elif person.same_address == False:
-      person.where_to_serve = other_parties[0].service_address
+      person.where_to_serve = person.service_address
     else:
-      person.where_to_serve = other_parties[0].address
+      person.where_to_serve = person.address
      
   attachment_logic = True
