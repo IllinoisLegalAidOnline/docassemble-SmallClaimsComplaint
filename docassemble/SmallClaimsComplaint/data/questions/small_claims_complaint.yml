@@ -62,6 +62,7 @@ code: |
     corporation_kickout
   if money_check == True:
     money_kickout
+  #landlord_check is an important variable. The program differs substantially based on its value; if True, the program goes into the detailed security deposit claim path.
   if landlord_check == False:
     if amount_check > 10000:
       amount_kickout
@@ -81,30 +82,25 @@ code: |
   if other_parties.number_gathered() == 9:
     blank_summons_check
   set_progress(20)
+  #Here lies the security deposit path
   if landlord_check == True:
     rental_address.address
     rental_address.county_correct
-    if rental_address.city.lower() == "chicago" or rental_address.city.lower() == "evanston" or rental_address.city.lower() == "oak park" or end_in_county(rental_address.county).lower() == "cook county":
+    #The unique ordinances the program need to consider are, as of March 2024, those in Chicago, Evanston, Oak Park, Urbana, Mount Prospect, DeKalb (city, not the county), and Cook County.
+    if rental_address.city.lower() == "chicago" or rental_address.city.lower() == "evanston" or rental_address.city.lower() == "oak park" or rental_address.city.lower() == "urbana" or rental_address.city.lower() ==  "mount prospect" or rental_address.city.lower() == "dekalb" or end_in_county(rental_address.county).lower() == "cook county":
       municipal_intro
+      if rental_address.city.lower() == "chicago":
+        #The chicago fire page is included because someone who moved out due to a fire or natural disaster is entitled to their security deposit more quickly, and also because complications can arise.
+        chicago_fire
+      #some types of properties are not covered by the revelvant municipal/county ordinances. What those types are can vary from ordinance to ordinance.
       if property_type_check == False:
+        #municipal/county ordinances generally do not apply for units in owner-occupied properties containing few enough units. The unit number limits vary a bit.
         if owner_occupant == True:
           unit_number_general
-        #if rental_address.city == "Chicago" or rental_address.city == "Oak Park" or end_in_county(rental_address.county) == "Cook County":
-        #  if rental_address.city != "Oak Park" and rental_address.city != "Evanston" and rental_address.city != "Mount Prospect":
-        #    unit_number_chicagoland
-        #  elif rental_address.city == "Oak Park":
-        #    unit_number_illinois
-        #else:
-        #  unit_number_illinois
-        
-          if rental_address.city.lower() == "chicago" and unit_number_general != "enough_anywhere" and unit_number_general != "dont_know":
-            owner_occupant
-          elif rental_address.city.lower() == "oak park":
-            if unit_number_general == "too_few_for_illinois":
-              owner_occupant
-        elif end_in_county(rental_address.county).lower() == "cook county" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect":
-            if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
-              cook_family_check
+           
+          #if a rental unit is covered by the cook county ordinance, there is another condition that can impact whether the property is covered. If it is the only residential unit leased by the owner and the The owner or immediate family member has actually resided at the property for at least one (1) month in the 12 months prior to marketing the property, then the Cook County ordinance does not cover it. This is a fairly specific situation,, to be sure.
+        elif end_in_county(rental_address.county).lower() == "cook county" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect" and rental_address.city.lower() != "chicago" and rental_address.city.lower() != "oak park":
+          cook_family_check
     else:
       property_type_code
     rlto_note
@@ -138,6 +134,7 @@ code: |
         too_much_owed
     else:
       all_paid_error
+    
     if damages_check == True:
       damages_date
     #deposit_debug
@@ -217,6 +214,7 @@ code: |
   
   get_docs_screen
 ---
+#Gathers defendants
 code: |
   other_parties[i].name.first
   #other_parties[i].address.address
@@ -876,32 +874,6 @@ buttons:
   - Exit: exit
   - Restart: restart
 ---
-#reconsider: True
-#code: |
-#  remaining_total_storage = amount_check - partial_payment_amount
-#---
-#only sets:
-#  - generic_amount_updated
-#depends on:
-#  - remaining_total_storage
-#code: |
-#  if  generic_amount_update == True:
-#    amount_check =  remaining_total_storage
-#  generic_amount_updated = True
----
-#id: generic claim amount update
-#question: |
-#  Do you want to update your claim amount from ${currency(amount_check)} to ${currency(remaining_total_storage)}?
-#subquestion: |
-#  % if other_parties.number_gathered() > 1: 
-#  Since the defendants paid you ${currency(partial_payment_amount)} out of ${currency(amount_check)}, they still owe you ${currency(remaining_total_storage)}.
-#  % else:
-#  Since the ${other_parties[0].name.full(middle='full')} paid you ${currency(partial_payment_amount)} out of ${currency(amount_check)}, they still owe you ${currency(remaining_total_storage)}.
-#  % endif
-#fields:
-#  - no label: generic_amount_update
-#    datatype: yesnoradio
----
 id: claim reason
 question: |
   % if other_parties.number_gathered() > 1:
@@ -1236,10 +1208,6 @@ fields:
   - Email: other_parties[i].service_email
     datatype: email
     required: False
-#validation code: |
-#  if (not showifdef('other_parties[i].service_phone') and \
-#      (not showifdef('other_parties[i].service_email'))):
-#    validation_error(word("You need to provide at least one contact method."), field="other_parties[i].service_email")
 ---
 id: defendant alt contact
 question: |
@@ -1304,6 +1272,7 @@ subquestion: |
 
   **Important:** The *Summons* is not ready for service until Section 3 is complete.
 ---
+#This code block keeps track of the evidence a uswer said they would attach to their security deposit-related complaint. It creates a string used near the end of the interview to remind the user of each document to include.
 depends on:
   - lease_check
   - lease_attach_check
@@ -1538,6 +1507,7 @@ fields:
   - no label: property_type_check
     datatype: yesnoradio
 ---
+#This sets property_type_check to False if the applicable law Illinois' Security Deposit Return Act. This is done in a code block so that if the user changes the rental address's location and a different statute applies the property_type_check value will be wiped and the actual property_type_check question will be asked instead.
 depends on:
   - rental_address.city
   - rental_address.county
@@ -1599,23 +1569,6 @@ fields:
   - ZIP code: rental_address.zip
   - County: rental_address.county
 ---
-#This question is in the A2J author interview but in that interview it does not appear to affect RLTO applicability? But I think it should. Return to this after completing the initial conversion from LHI to docassemble. Update: It has to do with damages amount. 
-id: unit number illinois
-question: |
-  How many rental units are in the property?
-field: unit_number_illinois
-choices:
-  - Up to 4 units: four
-  - 5 or more units: five
----
-id: unit number chicago cook oak park
-question: |
-  How many rental units are in the property?
-field: unit_number_chicagoland
-choices:
-  - Up to 6 units: six
-  - 7 or more units: seven
----
 id: merged unit number general
 question: |
   How many units are in the property?
@@ -1626,7 +1579,8 @@ choices:
   - 7 or more units: enough_anywhere
   - I do not know.: dont_know
 ---
-#these code blocks will calculate damages based on the rental property's city, county, whether a landlord--or their family in Cook County--in most jurisdictions, the number of units (jurisdiction dependent), whether the rental property is a type of property excluded from the relevant ordinance, the amount and number of deposit payments made by the user, the amount of deposit returned to the user, and whether the landlord has timely paid back the deposit.
+#This code determines which ordinance would apply to a given rental property and whether that property falls under any of the ordinance's exclusions. What rental units are covered vary between jurisdictions. All jurisdictions--save Illinois writ large--exclude certain types of property, whereas some jurisdictions exclude units in a property occupied by the owner with fewer than X units. Cook County has an additional quirk documented in the interview code block.
+#It is worth noting that this code alone does not determine whether the user can get "bonus" damages. That also can depend on other code dealing with the landlord's post move out actions. (Although as of March 2024 prior to SME review, I suspect that the landlord action code will become more influential. Currently it doesn't have much impact on the "bonus" damages calculation.)
 depends on:
   - rental_address.county
   - rental_address.city
@@ -1635,100 +1589,83 @@ depends on:
   - cook_family_check
   - unit_number_general
 code: |
-  if rental_address.city.lower() == "urbana" or rental_address.city.lower() == "mount prospect":
-    rlto_applies = False
-  elif property_type_check == True:
+  if rental_address.city.lower() == "urbana": 
+    if property_type_check == True:
+      rlto_applies = False
+    else:
+      rlto_applies = True
+    which_rlto = "Urbana"
+  elif rental_address.city.lower() == "mount prospect":
+    if property_type_check == True:
+      rlto_applies = False
+    else:
+      rlto_applies = True
+    which_rlto = "Mount Prospect"
     rlto_applies = False
   elif rental_address.city.lower() == "chicago":
-    if unit_number_general == "too_few_for_illinois" or unit_number_general == "depends_on_area":
-      if owner_occupant == True:
-        rlto_applies = False
-      else:
-        rlto_applies = True 
-        which_rlto = "Chicago"
+    which_rlto = "Chicago"
+    if property_type_check == True:
+      rlto_applies = False
     else:
-      rlto_applies = True
-      which_rlto = "Chicago"
-  elif rental_address.city.lower() == "oak park":
-    if unit_number_general == "too_few_for_illinois":
       if owner_occupant == True:
-        rlto_applies = False
+        if unit_number_general == "too_few_for_illinois" or unit_number_general == "depends_on_area":
+          rlto_applies = False
+        else:
+          rlto_applies = True         
       else:
         rlto_applies = True
-        which_rlto = "Oak Park"
+  elif rental_address.city.lower() == "oak park":
+    which_rlto = "Oak Park"
+    if property_type_check == True:
+      rlto_applies = False
     else:
-      rlto_applies = True
-      which_rlto = "Oak Park"
-  elif rental_address.city.lower() == "evanston":
-    rlto_applies = True
-    which_rlto = "Evanston"
-  elif end_in_county(rental_address.county).lower() == "cook county":
-    if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
       if owner_occupant == True:
-        rlto_applies = False
+        if unit_number_general == "too_few_for_illinois":
+          rlto_applies = False
+        else:
+          rlto_applies = True
+      else:
+        rlto_applies = True
+  elif rental_address.city.lower() == "evanston":
+    which_rlto = "Evanston"
+    if property_type_check == True:
+      rlto_applies = False
+    else:  
+      rlto_applies = True    
+  elif end_in_county(rental_address.county).lower() == "cook county":
+    which_rlto = "Cook County"
+    if property_type_check == True:
+      rlto_applies = False
+    else:  
+      if owner_occupant == True:
+        if unit_number_general == "depends_on_area" or unit_number_general == "too_few_for_illinois":
+          rlto_applies = False
+        else:
+          rlto_applies = True
       else:
         if cook_family_check == True:
           rlto_applies = False
         else:
           rlto_applies = True
-          which_rlto = "Cook County"
-    else:
-      rlto_applies = True
-      which_rlto = "Cook County"
   else:
-    if unit_number_general != "too_few_for_illinois":
-      rlto_applies = True
-      which_rlto = "Illinois"
-    else:
+    which_rlto = "Illinois"
+    if property_type_check == True:
       rlto_applies = False
-    
-  #if rental_address.city != "Chicago" and rental_address.city != "Evanston" and rental_address.city != "Oak Park" and rental_address.city != "Urbana":
-  #  if end_in_county(rental_address.county) != "Cook County":
-  #    rlto_applies = False
-  #  else:
-  #    if property_type_check == True:
-  #      rlto_applies = False
-  #    else:
-  #      if cook_owner_occupant == False:
-  #        if cook_family_check == True:
-  #          rlto_applies = False
-  #        else:
-  #          rlto_applies = True
-  #      else:
-  #        if unit_number_chicagoland == "six":
-  #          rlto_applies = False
-  #        else:
-  #          rlto_applies = True  
-  #elif property_type_check == True:
-  #  rlto_applies = False
-  #elif rental_address.city == "Chicago":
-  #  if unit_number_chicagoland == "six" and chicago_owner_occupant == True:
-  #    rlto_applies = False
-  #  else:
-  #    rlto_applies = True 
-  #elif rental_address.city == "Oak Park":
-  #  if cook_owner_occupant == False:
-  #    if cook_family_check == True:
-  #      rlto_applies = False
-  #    else:
-  #      rlto_applies = True
-  #  else:
-  #    if unit_number_chicagoland == "six":
-  #      rlto_applies = False
-  #    else:
-  #      rlto_applies = True
-  #else:
-  #  #This seems incorrect, double check it!
-  #  rlto_applies = True
+    else:  
+      rlto_applies = True
 ---
-id: RLTO note
+id: rlto note
 continue button field: rlto_note
 question: |
   Local landlord-tenant law
 subquestion: |
   % if rlto_applies == True:
-  % if which_rlto == "Evanston":
-  Based on your answers, the City of Evanston's Residential Landlord and Tenant Ordinance applies to the rental property.
+  % if which_rlto == "Urbana":
+  Based on your answers, the city of Urbana's code of ordinances applies to the rental property.
+  % elif which_rlto == "Mount Prospect":
+  Based on your answers, Mount Prospect's residential landlord and tenant regulations apply to the rental property. Mount Prospect does not allow for extra damages.
+  % elif which_rlto == "Evanston":
+  Based on your answers, the City of Evanston's landlord and tenant regulations apply to the rental property.
   % elif which_rlto == "Chicago":
   Based on your answers, the City of Chicago's Residential Landlord Tenant Ordinance applies to the rental property.
   % elif which_rlto == "Oak Park":
@@ -1745,10 +1682,14 @@ subquestion: |
   The City of Chicago's Residential Landlord Tenant Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
   % elif which_rlto == "Evanston":
   The City of Evanston's Residential Landlord and Tenant Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  % elif which_rlto == "Urbana":
+  The city of Urbana's code of ordinances applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
   % elif which_rlto == "Oak Park":
   Oak Park's Residential Tenant and Landlord Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
   % elif which_rlto == "DeKalb":
   DeKalb's Landlord-Tenant Regulations applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  % elif which_rlto == "Mount Prospect":
+  Based on your answers, Mount Prospect's residential landlord and tenant regulations apply to the rental property. Mount Prospect does not allow for extra damages.
   % elif which_rlto == "Cook County":
   Cook County's Residential Tenant Landlord Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
   % else:
@@ -1756,7 +1697,7 @@ subquestion: |
   % endif
   % endif
 ---
-#I implemented this the way it is set up in a2jauthor, but it seems reversed? I will have to check the statute to ensure these numbers are correct.
+#Different ordinances give landlords different deadlines for returning a deposit or sending a damages letter. These deadlines are X days after the tenant vacates the unit. These variable values are used elsewhere to determine if the landlord has more time to return the deposit and whether the damages letter they sent was timely.
 depends on:
   - rental_address.city
   - rlto_applies
@@ -1772,11 +1713,11 @@ code: |
       days_to_return_deposit = 30
       days_to_receive_letter = 30
     elif rental_address.city.lower() == "mount prospect":
-      days_to_return_deposit = 30
-      days_to_receive_letter = 45
+      days_to_return_deposit = 45
+      days_to_receive_letter = 30
     elif rental_address.city.lower() == "dekalb":
-      days_to_return_deposit = 30
-      days_to_receive_letter = 45
+      days_to_return_deposit = 45
+      days_to_receive_letter = 30
     elif rental_address.city.lower() == "chicago":
       days_to_return_deposit = 45
       days_to_receive_letter = 30
@@ -1795,8 +1736,10 @@ code: |
   return_deadline = move_out_date.plus(days=days_to_return_deposit)
   damage_deadline = move_out_date.plus(days=days_to_receive_letter)
 ---
+#See documentation for above block
 depends on:
   - return_deadline
+  - damage_deadline
 code: |
   return_date_diff_reference = date_difference(starting=return_deadline, ending=today())
   damage_date_diff_reference = date_difference(starting=damage_deadline, ending=today())
@@ -1900,7 +1843,16 @@ fields:
   - Amount returned: partial_return_amount
     datatype: currency
     min: 0
----    
+---
+id: chicago fire
+continue button field: chicago_fire
+question: |
+  Fire and natural disasters
+subquestion: |
+  If you had to move out due to a fire or natural disaster, you may want to talk to a lawyer about your options.
+  
+  Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+---
 id: partial return date
 question: |
   When did your landlord give back part of your security deposit?
@@ -1912,6 +1864,7 @@ fields:
     alMax: ${ today().format("yyyy-MM-dd") }
     alMin: ${deposit_dates[0]}
 ---
+#Tenants may have paid security deposit in installments. A landlord may have returned a portion of the security deposit. This uses the list of payments--deposit_payments--and the amount the landlord returned--partial_return_amount--to calculate the total deposit_balance_owed
 reconsider: True
 depends on:
   - deposit_payments[0]
@@ -1966,8 +1919,7 @@ fields:
     alMax: ${ today().format("yyyy-MM-dd") }
     alMin: ${move_out_date}
 ---
-
-#This is code pulled from the a2jauthor interview, but I don't think it is needed?
+#The landlord_timely variable tracks whether the landlrod is timely with sending the statement of damages
 depends on:
   - rlto_applies
   - rental_address.city
@@ -1975,14 +1927,20 @@ depends on:
   - damages_check
   - damages_date
 code: |
-  damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
   if rlto_applies == True:
+    # if the landlord did not send a damages letter at all, the landlord is not timely with their damages letter!
     if damages_check == False:
       landlord_timely = False
     else:
+      damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
       if rental_address.city.lower() == "evanston":
         
         if damage_date_difference.days > 21:
+          landlord_timely = False
+        else:
+          landlord_timely = True
+      elif rental_address.city.lower() == "oak park":
+        if damage_date_difference.days > 30:
           landlord_timely = False
         else:
           landlord_timely = True
@@ -1991,12 +1949,21 @@ code: |
           landlord_timely = False
         else:
           landlord_timely = True
+      elif rental_address.city.lower() == "chicago":
+        if damage_date_difference.days > 30:
+          landlord_timely = False
+        else:
+          landlord_timely = True
       else:
         if damage_date_difference.days > 30:
           landlord_timely = False
         else:
           landlord_timely = True
+  else:
+    #the value of landlord_timely should not matter if rtlo_applies is False
+    landlord_timely = True
 ---
+#If the unit does not fall under the landlord's exclusions and the landlord did not timely send a damages letter, then the tenant can get extra damages. Wait... some jurisdictions don't allow extra damages? Did I put that catch in the default text generation code? Oy.
 depends on:
   - landlord_timely
   - rlto_applies
@@ -2004,11 +1971,14 @@ depends on:
   - rental_address.county
 code: |
   if rlto_applies == True:
-    extra_damages = True
+    if landlord_timely == False:
+      extra_damages = True
+    else:
+      extra_damages = False
   else:
     extra_damages = False
 ---
-#jump to
+#see documentation for code above. I don't know why I made this and the above block separate blocks, but I am not foolhardy enough to pull unnecessarily on the spaghetti code.
 reconsider: True
 depends on:
   - total_deposit
@@ -2047,7 +2017,7 @@ question: |
   Damages
 subquestion: |
   % if rlto_applies == True:
-  Because your landlord did not return your full security deposit on time, you can sue for ${currency(deposit_with_damages)}.
+  Because your landlord did not return your full security deposit on time, you can sue for ${currency(calculated_deposit_claim)}.
   
   This amount is ${currency(deposit_balance_owed)}, the amount of security deposit not yet returned, plus damages for violating landlord-tenant law. Damages are double the security deposit you paid (${currency(total_deposit)} x 2).
   % else:
@@ -2059,19 +2029,12 @@ subquestion: |
   * You owe rent, or
   * You damaged the property and the landlord provided proof of repairs or an estimate.
 ---
-id: deposit claim amount update
-question: |
-  Do you want to update your claim amount from ${currency(amount_check)} to ${currency(deposit_with_damages)}?
-fields:
-  - no label: claim_amount_update
-    datatype: yesnoradio
----
+#This is a flag that catches if the deposit amount owed plus damages is too great to be litigated in small claims court. If it is, this leads to a kickout.
 reconsider: True
 only sets: 
   - amount_updated
   - calculated_deposit_claim
 depends on:
-  - claim_amount_update
   - deposit_with_damages
   - deposit_balance_owed
   - extra_damages
@@ -2079,16 +2042,11 @@ depends on:
   - deposit_payments[0]
   - deposit_payments[1]
   - deposit_payments[2]
-  - amount_check
 code: |
-  #if claim_amount_update == True:
   calculated_deposit_claim = deposit_with_damages
   if deposit_with_damages > 10000:
     deposit_damages_too_big
   amount_updated = True
-  #else:
-    #calculated_deposit_claim = amount_check
-    #amount_updated = False
 ---
 id: deposit too big
 event: too_much_owed
@@ -2109,7 +2067,7 @@ event: deposit_damages_too_big
 question: |
   Claim amount too big with damages
 subquestion: |
-  With damages, your claim amount is ${currency(deposit_with_damages)}. You can only sue for $10,000 or less in Small Claims Court.
+  With damages, your claim amount is ${currency(calculated_deposit_claim)}. You can only sue for $10,000 or less in Small Claims Court.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
@@ -2163,7 +2121,7 @@ fields:
   - no label: demand_letter_attach
     datatype: yesnoradio
 ---
-#jump to
+#This is the meatiest code block in the program. It creates the default claim text for the user. Despite its length, it should be relatively straight forward.
 reconsider: True
 depends on:
   - rental_address
@@ -2209,9 +2167,9 @@ code: |
   else:
     default_deposit_claim_reason += ".\n" + "\n"
     
-  default_deposit_claim_reason += "I moved out of the unit on " + move_out_date + ". "
+  default_deposit_claim_reason += "I moved out of the unit on " + move_out_date + ". "  
 
-  default_deposit_claim_reason += "I sent a demand letter to " + comma_and_list(other_parties) + " on " + demand_letter_date + ". "
+  default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + comma_and_list(other_parties) + " on " + demand_letter_date + ". "
   if demand_letter_attach == True:
     default_deposit_claim_reason += "A copy of the letter is attached. "
   
@@ -2221,16 +2179,22 @@ code: |
     default_deposit_claim_reason += "As of " + today() + " " + comma_and_list(other_parties) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n" + "\n"
 
   if damages_check == False:
-    default_deposit_claim_reason += "As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " stating they would use my security deposit to make repairs to the rental unit."
+    default_deposit_claim_reason += "As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " stating they would use my security deposit to make repairs to the rental unit" + ".\n" + "\n"
   else:
     if landlord_timely == False:
       default_deposit_claim_reason += "I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
       if rental_address.city.lower() == "evanston":
-        default_deposit_claim_reason += "21 days of vacating the property. "
+        default_deposit_claim_reason += "21 days of vacating the property" + ".\n" + "\n"
       elif rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "dekalb":
-        default_deposit_claim_reason += "45 days of vacating the property. "
+        default_deposit_claim_reason += "45 days of vacating the property" + ".\n" + "\n"
+      elif rental_address.city.lower() == "chicago":
+        default_deposit_claim_reason += "30 days of vacating the property as required by Section 5-12-080(d)(2) of the municipal code of Chicago" + ".\n" + "\n"
+      elif rental_address.city.lower() == "urbana":
+        default_deposit_claim_reason += "30 days of vacating the property as required by Section 12.5-20(a) of Urbana's code of ordinances " + ".\n" + "\n"
       else:
-        default_deposit_claim_reason += "30 days of vacating the property. "
+        default_deposit_claim_reason += "30 days of vacating the property" + ".\n" + "\n"
+    else:
+      default_deposit_claim_reason += "I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit. I dispute that this was a reasonable amount necessary to repair damage" + ".\n" + "\n"
     
   default_deposit_claim_reason +=  comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
   
@@ -2241,17 +2205,19 @@ code: |
       default_deposit_claim_reason += "Per Sec. 42-111(m) of the Cook County code of ordinances, I can be awarded damages in an amount equal to two times the security deposit. "
     
     elif rental_address.city.lower() == "chicago":
-      default_deposit_claim_reason += "Per Sec. 5-12-080(f) of the municipal code of Chicago, I can be awarded damages in an amount equal to two times the security deposit plus interest. "
+      default_deposit_claim_reason += "Per Section 5-12-080(f) of the municipal code of Chicago, I can be awarded damages in an amount equal to two times the security deposit plus interest. "
     elif rental_address.city.lower() == "dekalb":
-      default_deposit_claim_reason += "Per Sec. 10.14(a) of the municipal code of DeKalb, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      default_deposit_claim_reason += "Per Section 10.14(a) of the municipal code of DeKalb, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
     elif rental_address.city.lower() == "evanston":
-      default_deposit_claim_reason += "Per Sec. 5-3-5-1(F) of Evanston's code of ordinances, I may recover damages in an amount equal to twice the amount wrongfully withheld. "
+      default_deposit_claim_reason += "Per Section 5-3-5-1(F) of Evanston's code of ordinances, I may recover damages in an amount equal to twice the amount wrongfully withheld. "
     elif rental_address.city.lower() == "mount prospect":
-      default_deposit_claim_reason += "Per Sec. 23.1806(A)(5) of Mount Prospect's code of ordinances, I may recover the money due. "
+      default_deposit_claim_reason += "Per Section 23.1806(A)(5) of Mount Prospect's code of ordinances, I may recover the money due. "
     elif rental_address.city.lower() == "oak park":
-      default_deposit_claim_reason += "Per Sec. 12-4-1 of Oak Park's code of ordinances, " + comma_and_list(other_parties) + "can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      default_deposit_claim_reason += "Per Section 12-4-1 of Oak Park's code of ordinances, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
     elif rental_address.city.lower() == "urbana":
-      default_deposit_claim_reason += "Per Sec. 12.5-20(b) of Urbana's code of ordinances, " + comma_and_list(other_parties) + "can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      default_deposit_claim_reason += "Per Section 12.5-20(b) of Urbana's code of ordinances, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+    else:
+      default_deposit_claim_reason += "Per Section 1(c) of the Security Deposit Return Act, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
       
 
   default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
@@ -3077,11 +3043,10 @@ review:
     fields:
       - use_deposit_default
       - recompute:
-        - default_deposit_claim_reason
         - use_that_default
         - deposit_claim_reason
     button: |
-      **Why does your landlord owe you ${currency(amount_check)}?**
+      **Your claim:**
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
@@ -3090,23 +3055,22 @@ review:
       - use_deposit_default
       - new_deposit_claim_reason
       - recompute:
-        - default_deposit_claim_reason
         - use_that_default
         - deposit_claim_reason 
     button: |
-      **Why does your landlord owe you ${currency(amount_check)}?**
+      **Your claim**
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == True
     #jump to
   - Edit: add_second_page
     button: |
-      **Do you need a second page to explain why your landlord owes you ${currency(amount_check)}?**
+      **Do you need a second page to explain your claim?**
       ${word(yesno(add_second_page))}
     show if: landlord_check == True and use_deposit_default == True
   - Edit: more_deposit_reason
     button: |
-      **Why does your landlord owe you ${currency(amount_check)} (second page)?**
+      **Your claim (second page):**
       
       ${more_deposit_reason}
     show if: landlord_check == True and use_deposit_default == True and add_second_page == True
@@ -3556,12 +3520,10 @@ review:
     fields:
       - use_deposit_default
       - recompute:
-        - default_deposit_claim_reason
         - use_that_default
         - deposit_claim_reason
     button: |
-      **Why does your landlord owe you ${currency(amount_check)}?**
-      
+      **Your claim:**  
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
   - label: Edit
@@ -3569,22 +3531,21 @@ review:
       - use_deposit_default
       - new_deposit_claim_reason
       - recompute:
-        - default_deposit_claim_reason
         - use_that_default
         - deposit_claim_reason 
     button: |
-      **Why does your landlord owe you ${currency(amount_check)}?**
+      **Your claim:**  
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == True
   - Edit: add_second_page
     button: |
-      **Do you need a second page to explain why your landlord owes you $${amount_check}?**
+      **Do you need a second page to explain your claim?**
       ${word(yesno(add_second_page))}
     show if: landlord_check == True and use_deposit_default == True
   - Edit: more_deposit_reason
     button: |
-      **Why does your landlord owe you ${currency(amount_check)} (second page)?**
+      **Your claim (second page):**
       
       ${more_deposit_reason}
     show if: landlord_check == True and use_deposit_default == True and add_second_page == True
