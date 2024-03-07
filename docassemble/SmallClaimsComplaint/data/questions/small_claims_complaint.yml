@@ -311,6 +311,8 @@ fields:
     required: False
   - Last: users[0].name.last
   - Suffix: users[0].name.suffix
+    code: |
+      name_suffix()
     required: False
 ---
 id: user address
@@ -832,6 +834,12 @@ fields:
 id: demand payment check
 question: |
   Have you demanded payment of ${currency(amount_check)}?
+subquestion: |
+  % if other_parties.number_gathered() > 1:
+  This does not need to be a written request. If you asked the defendants to pay you ${currency(amount_check)}, click **Yes**.
+  % else:
+  This does not need to be a written request. If you asked the ${other_parties[0].name.full(middle='full')} to pay you ${currency(amount_check)}, click **Yes**.
+  % endif
 fields:
   - no label: demand_check
     datatype: yesnoradio
@@ -911,6 +919,7 @@ fields:
     input type: area
     rows: 16
     maxlength: 1800
+  - note: After you click **Next**, the program will take a moment to make a preview of the page.
 ---
 id: preview complaint
 reconsider:
@@ -977,10 +986,11 @@ subquestion: |
   
   ${collapse_template(reason_thus_far)}
 fields:
-  - Explanation: more_reason
+  - Explanation (continued): more_reason
     input type: area
     rows: 16
     maxlength: 2600
+  - note: After you click **Next**, the program will take a moment to make a preview of the page.
 ---
 template: reason_thus_far
 subject: |
@@ -1031,6 +1041,7 @@ fields:
     input type: area
     rows: 16
     maxlength: 2400
+  - note: After you click **Next**, the program will take a moment to make a preview of the page.
 ---
 template: deposit_reason_thus_far
 subject: |
@@ -1108,6 +1119,8 @@ fields:
     required: False
   - Last: other_parties[i].agent.name.last
   - Suffix: other_parties[i].agent.name.suffix
+    code: |
+      name_suffix()
     required: False
 ---
 id: defendant same address
@@ -1173,6 +1186,8 @@ question: |
   % else:
   What is the alternate address for ${other_parties[i].name.full(middle='full')}?
   % endif
+subquestion: |
+  If you do not have another address to enter, leave these blank.
 fields:
   - Street address: other_parties[i].alt_service_address.address
     address autocomplete: True
@@ -1216,6 +1231,8 @@ question: |
   % else:
   What is ${other_parties[i].name.full(middle='full')}'s alternate contact information?
   % endif
+subquestion: |
+  If you do not have another phone number or email address to enter, leave these blank.
 fields:
   - Phone number: other_parties[i].alt_service_phone
     datatype: al_international_phone
@@ -1254,7 +1271,7 @@ content: |
   * You believe it to be true and correct, and
   * You are not filing it for an improper purpose, such as to cause delay.
 
-  See **[Illinois Supreme Court Rule 137](https://www.illinoiscourts.gov/supreme-court-rules)** for more information.
+  See **[Illinois Supreme Court Rule 137](https://ilcourtsaudio.blob.core.windows.net/antilles-resources/resources/9ce1fce9-895f-463e-b87d-f9b7631f8fde/Rule%20137.pdf)** for more information.
 ---
 id: next steps
 continue button field: next_steps
@@ -2107,6 +2124,10 @@ id: deposit payment proof
 question: |
   Will you attach proof that you paid a security deposit of ${currency(total_deposit)} to your *Small Claims Complaint*?
 subquestion: |
+  % if another_deposit[0] == True:
+  ${currency(total_deposit)} is the total you said you paid in security deposits.
+  
+  % endif
   It will be easier to show the judge that you paid if you attach receipts or other statements.
 fields:
   - no label: deposit_payment_proof
@@ -2157,9 +2178,9 @@ code: |
     
   
   if another_deposit[0] == False:
-    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " on " + deposit_dates[0] + ". "
+    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " on " + deposit_dates[0] + " as a security deposit. "
   else:
-    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + ". On " + deposit_dates[0] + ", I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + ", I paid " + currency(deposit_payments[1]) + ". "
+    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " as a security deposit. On " + deposit_dates[0] + ", I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + ", I paid " + currency(deposit_payments[1]) + ". "
     if another_deposit[1] == True:
       default_deposit_claim_reason += "On " + deposit_dates[2] + ", I paid " + currency(deposit_payments[2]) + ". "    
   if deposit_payment_proof == True:
@@ -2235,7 +2256,7 @@ subquestion: |
   ${single_to_double_newlines(default_deposit_claim_reason)}
   
   ---
-  This Easy Form can update the above text if you change your previous answers. If you add to or edit the text, this program won't be able to automatically update it
+  **Note:** If you change the text, this Easy Form won't be able to update it.
 fields:
   - no label: use_deposit_default
     datatype: yesnoradio
@@ -2249,15 +2270,16 @@ code: |
     deposit_claim_reason = default_deposit_claim_reason
   else:
     deposit_claim_reason = new_deposit_claim_reason
+    preview_complaint
   use_that_default = True
 ---
 id: new deposit claim reason
 question: |
   Edit the reasons why you are owed ${currency(calculated_deposit_claim)}.
 subquestion: |
-  The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen.
+  **Note:** Once you change this text, this Easy Form won't be able to update it. Be sure the text says what you want.
   
-  If you change your earlier answers, this Easy Form won't be able to update this text to match the changes. You would have to edit the text yourself.
+  The form has space for about 27 lines of text, or about 1,800 characters. If you need more room to explain, you can add an additional page. You can preview how your answer looks on the form on the next screen.
 fields:
   - Explanation: new_deposit_claim_reason
     input type: area
@@ -2265,6 +2287,7 @@ fields:
     maxlength: 1800
     default: |
       ${default_deposit_claim_reason} 
+  - note: After you click **Next**, the program will take a moment to make a preview of the page.
 ---
 id: get docs screen
 event: get_docs_screen
@@ -2421,7 +2444,7 @@ attachment:
     - "defendant_two_name": ${other_parties[1].name.full(middle='full')}
     - "defendant_two_address": ${other_parties[1].address.on_one_line(bare=True)}
     - "extra_defendants": ${True if other_parties.number_gathered() > 2 else False}
-    - "amount_owed": ${currency(amount_check) if landlord_check == False else currency(calculated_deposit_claim)}
+    - "amount_check": ${currency(amount_check) if landlord_check == False else  currency(calculated_deposit_claim)}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "no_agreement": ${no_agreement_logic}
     - "attached_agreement": ${attached_agreement_logic}
@@ -2435,7 +2458,6 @@ attachment:
     - "plaintiff_city_state_zip": ${users[0].address.line_two()}
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
-    - "amount_check": ${currency(amount_check) if landlord_check == False else calculated_deposit_claim}
     - "preview_watermark": ${ watermark if i=='preview' else '' }
 ---
 attachment:
