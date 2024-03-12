@@ -982,7 +982,7 @@ subquestion: |
   
   Remember you can only sue for money in Small Claims Court.
   
-  The form has space for about 36 lines of text, or about 2,600 characters. You can preview how your answer looks on the form on the next screen.
+  The form has space for about 36 lines of text, or about 2,600 characters. You can preview how your answer looks on the forms on the next screen.
   
   ${collapse_template(reason_thus_far)}
 fields:
@@ -1018,7 +1018,7 @@ subquestion: |
   
   Remember you can only sue for money in Small Claims Court.
   
-  The form has space for about 37 lines of text, or about 2,400 characters. You can preview how your answer looks on the form on the next screen.
+  The form has space for about 37 lines of text, or about 2,400 characters. You can preview how your answer looks on the forms on the next screen.
 
   ${collapse_template(deposit_reason_thus_far)}
   
@@ -1067,7 +1067,7 @@ subquestion: |
   
   If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
   
-  If this looks good, click **Next**.
+  If these look good, click **Next**.
 ---
 id: preview additional deposit reasons
 continue button field: preview_additional_deposit_reasons
@@ -1087,7 +1087,7 @@ subquestion: |
   
   If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
   
-  If this looks good, click *Next*.
+  If these look good, click *Next*.
 ---
 depends on:
   - other_parties[i].person_type
@@ -2256,7 +2256,7 @@ subquestion: |
   ${single_to_double_newlines(default_deposit_claim_reason)}
   
   ---
-  **Note:** If you change the text, this Easy Form won't be able to update it.
+  **Note:** If you change this text and then edit your other answers, this text will not update. Be sure the forms say what you want.
 fields:
   - no label: use_deposit_default
     datatype: yesnoradio
