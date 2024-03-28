@@ -298,7 +298,7 @@ subquestion: |
   Here are some things to consider before filing a *Small Claims Complaint*:
 
   * Try contacting the other person or business to solve the problem out of court. If you are successful, you save time, effort, and money. Call or write the other party to explain your position and the settlement you want.
-  * Consider whether the person or business has money, income, or property. If they do not have any money, you may not be able to collect even if the judge decides they owe you money.
+  * Consider whether the person or business has money, income, or property. If they do not have any money, you may not be able to collect even if the judge decides they owe you money and enters a judgment against them.
   
   To learn more, read ILAO's article about [**your options before filing a small claims case**](https://www.illinoislegalaid.org/legal-information/what-consider-filing-small-claims-case).
 ---
@@ -737,6 +737,8 @@ content: |
   * A general partnership.
   
   Incorporated businesses are listed in the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/). You do not need to list an owner for an incorporated business.
+  
+  If the business has a registerd agent, you do not need to list them as a defendant. You will be able to add their information later in the interview.
 ---
 sets:
   -other_parties[i].address.address
@@ -799,14 +801,16 @@ question: |
 id: agreement check
 question: |
   % if other_parties.number_gathered() > 1:
-  Do you have a written agreement with the defendants?
+  Did you have a written agreement with the defendants?
   % else:
-  Do you have a written agreement with ${other_parties[0].name.full(middle='full')}?
+  Did you have a written agreement with ${other_parties[0].name.full(middle='full')}?
   % endif
 subquestion: |
   This could be a contract or some other proof of an agreement. 
   
   A receipt of a purchase can be a written agreement.
+  
+  If you had a written agreement, you should click **Yes** even if you lost your copy.
 fields:
   - no label: agreement_check
     datatype: yesnoradio
@@ -1251,12 +1255,14 @@ question: |
 subquestion: |
   In Small Claims Court, you can serve a defendant by:
 
-  * Circuit Clerk (by certified or registered mail, only for defendants in Illinois),
+  * Circuit Clerk (only for defendants in Illinois),
   * Sheriff, or
   * Special process server.
+  
+  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/legal-information/serving-summons).
 field: other_parties[i].service_method
 choices:
-  - Circuit Clerk (by certified or registered mail, only for defendants in Illinois): clerk
+  - Circuit Clerk (only for defendants in Illinois): clerk
   - Sheriff: sheriff
   - Special process server: server
   - I do not know yet.: unknown
@@ -1278,12 +1284,12 @@ continue button field: next_steps
 question: |
   Completing the summons
 subquestion: |
-  You will need to ask the Circuit Clerk how the defendants must respond to your *Small Claims Complaint*. The clerk will give you:
+  You will need to ask the Circuit Clerk how the defendants must respond to your *Small Claims Complaint*. When you file your complaint, the clerk will give you:
 
   * A time and date for a hearing, and
   * Information on whether the hearing is in person or remote.
 
-  After you find out, put this information in Section 3 of the *Summons* on page 2. 
+  Once the clerk gives you this information, put it in Section 3 of the *Summons* on page 2. 
   
   [FILE summons_snip.png, 100%, Summons hearing information]
 
@@ -1352,6 +1358,9 @@ subquestion: |
   
   To "serve" means to officially deliver court forms to a defendant. If your *Small Claims Complaint* is not served correctly, your case might be dismissed.
   % endif
+  
+  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/legal-information/serving-summons).
+  
   ${collapse_template(help_business_service)}
 ---
 template: help_business_service
@@ -1792,7 +1801,7 @@ continue button field: landlord_deadline
 question: |
   Landlord's deadline
 subquestion: |
-  The landlord had until ${return_deadline} to return your security deposit.
+  Based on the law that applies to the rental unit and your move out date, the landlord had until ${return_deadline} to return your security deposit.
 
   The next questions will help you figure out the amount you can sue for in your *Small Claims Complaint*.
 ---
@@ -2104,9 +2113,9 @@ id: lease attach check
 question: |
   Will you attach a copy of the lease agreement to your *Small Claims Complaint*?
 subquestion: |
-  If you have a written lease, you should attach it to your *Small Claims Complaint*.
+  If you have a written lease, you should attach a copy of it to your *Small Claims Complaint* as an exhibit.
 
-  If you cannot attach the written agreement, you can explain why on the next screen.
+  If you cannot attach the written lease, you can explain why on the next screen.
 fields:
   - no label: lease_attach_check
     datatype: yesnoradio
@@ -3321,7 +3330,7 @@ review:
       **How will you serve ${x.name.full(middle='full')}?**
       % endif
       % if x.service_method == "clerk":
-      By Circuit Clerk (by certified or registered mail)
+      By Circuit Clerk (only for defendants in Illinois)
       % elif x.service_method == "sheriff":
       By sheriff
       % elif x.service_method == "server":
