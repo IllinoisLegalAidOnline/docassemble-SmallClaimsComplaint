@@ -211,7 +211,7 @@ code: |
   
   nav.set_section('section_download')
   attachment_logic
-  
+  order_info
   get_docs_screen
 ---
 #Gathers defendants
@@ -738,7 +738,7 @@ content: |
   
   Incorporated businesses are listed in the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/). You do not need to list an owner for an incorporated business.
   
-  If the business has a registerd agent, you do not need to list them as a defendant. You will be able to add their information later in the interview.
+  If the business has a registered agent, you do not need to list the agent as a defendant. You will be able to add their information later in the interview.
 ---
 sets:
   -other_parties[i].address.address
@@ -1442,8 +1442,11 @@ fields:
   - Sent date: demand_letter_date
     datatype: ThreePartsDate
     alMax: ${ today().format("yyyy-MM-dd") }
-    alMin: ${move_out_date.minus(months=3)}
+    #alMin: ${move_out_date.minus(months=3)}
     #Can the demand letter be sent before moving out? If not, this min should be changed to the move out date.
+validation code: |
+  if date_difference(starting=move_out_date.minus(months=3), ending=demand_letter_date).days < 0:
+    validation_error(word("You need to enter a date no earlier than 3 months before you moved out of the rental unit."))
 ---    
 id: apartment city
 question: |
@@ -2105,6 +2108,8 @@ buttons:
 id: lease check
 question: |
   Did you have a written lease with your landlord?
+subquestion: |
+  If you had a written lease, you should click **Yes** even if you lost your copy.
 fields:
   - no label: lease_check
     datatype: yesnoradio
@@ -2297,6 +2302,15 @@ fields:
     default: |
       ${default_deposit_claim_reason} 
   - note: After you click **Next**, the program will take a moment to make a preview of the page.
+---
+id: order info
+continue button field: order_info
+question: |
+  About the *Order* form
+subquestion: |
+  This program creates a *Small Claims Order* form. You may want to ask the court clerk whether they want you to include it when you file your complaint.
+  
+  An order is not valid until completed and signed by a judge.
 ---
 id: get docs screen
 event: get_docs_screen
