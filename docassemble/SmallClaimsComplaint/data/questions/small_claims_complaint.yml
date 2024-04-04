@@ -211,7 +211,7 @@ code: |
   
   nav.set_section('section_download')
   attachment_logic
-  order_info
+  #order_info
   get_docs_screen
 ---
 #Gathers defendants
@@ -1445,8 +1445,8 @@ fields:
     #alMin: ${move_out_date.minus(months=3)}
     #Can the demand letter be sent before moving out? If not, this min should be changed to the move out date.
 validation code: |
-  if date_difference(starting=move_out_date.minus(months=3), ending=demand_letter_date).days < 0:
-    validation_error(word("You need to enter a date no earlier than 3 months before you moved out of the rental unit."))
+  if date_difference(starting=move_out_date, ending=demand_letter_date).days < 0:
+    validation_error(word("You can not enter a date before you moved out of the rental unit."))
 ---    
 id: apartment city
 question: |
