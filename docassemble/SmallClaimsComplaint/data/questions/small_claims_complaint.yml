@@ -64,7 +64,8 @@ code: |
     money_kickout
   #landlord_check is an important variable. The program differs substantially based on its value; if True, the program goes into the detailed security deposit claim path.
   if landlord_check == False:
-    if amount_check > 10000:
+    amount_check
+    if show_amount_kickout:
       amount_kickout
   else:
     note_about_amount_limit
@@ -128,10 +129,11 @@ code: |
       partial_return_amount
       partial_return_date
     if deposit_balance_owed > 0:
-      if deposit_balance_owed < 10000:
-        deposit_still_owed
-      else:
-        too_much_owed
+      deposit_still_owed
+      #if deposit_balance_owed < 10000:
+      #  deposit_still_owed
+      #else:
+      #  too_much_owed
     else:
       all_paid_error
     
@@ -432,7 +434,21 @@ buttons:
   - Exit: exit
   - Restart: restart
 ---
-sets: amount_check
+id: amount too big
+continue button field: amount_kickout
+question: |
+  Your claim is too big for Small Claims Court
+subquestion: |
+  You can only sue for $10,000.00 or less in Small Claims Court.
+  
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  
+   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+   
+    If you would like to file for only $10,000 to remain in Small Claims Court, you can click **Next**.
+---
+sets: 
+  - amount_check
 id: amount check
 question: |
   How much money are you suing for?
@@ -442,31 +458,23 @@ fields:
   - Amount owed: amount_check
     datatype: number
     step: 0.01
----
-id: amount kickout
-event: amount_kickout
-question: |
-  Sorry
-subquestion: |
-  You can only sue for $10,000.00 or less in Small Claims Court.
-  
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
-  
-   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+validation code: |
+  if amount_check > 10000:
+    show_amount_kickout = True
+    amount_check = 10000
 ---
 id: note about amount limit
 continue button field: note_about_amount_limit
 question: |
   About claim limits
 subquestion: |
-  You can only sue for $10,000.00 or less in Small Claims Court.
+  You can only sue for $10,000 or less in Small Claims Court.
   
-  If you paid more than $10,000.00 for your security deposit, you can not use this program to make a small claims complaint.
+  If you paid more than $10,000 for your security deposit, you may not want to file in Small Claims Court.
   
   Depending on where your rental unit is, you may be able to sue for damages in addition to the amount of your security deposit your landlord has not returned. However, these damages may make your claim too big for Small Claims Court.
+  
+  If your claim is too big for Small Claims Court, you may be able to sue for only $10,000 to stay in Small Claims Court. 
   
   This program will calculate how much you can sue for. If your claim is too big for Small Claims Court, this program will let you know.
 ---
@@ -1105,7 +1113,7 @@ id: defendant agent check
 question: |
   Does ${other_parties[i].name.full(middle='full')} have a registered agent?
 subquestion: |
-  A registered agent is someone chosen by a business to receive court papers if the business is sued. You may be able to find this information from the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/).
+  A registered agent is someone chosen by a business to receive court papers if the business is sued. You may be able to find this information from the [**Illinois Secretary of State**](https://apps.ilsos.gov/businessentitysearch/).
   
   Note: If ${other_parties[i].name.full(middle='full')} does not have a registered agent, be sure to include ${other_parties[i].name.full(middle='full')}'s owner as a defendant. You can add the owner by returning to the [**About the case**](${ url_action('section_case') }) section.
 fields:
@@ -1116,16 +1124,9 @@ id: defendant agent name
 question: |
   Who is ${other_parties[i].name.full(middle='full')}'s registered agent?
 subquestion: |
-  You may be able to find this information from the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/).
+  You may be able to find this information from the [**Illinois Secretary of State**](https://apps.ilsos.gov/businessentitysearch/).
 fields:
-  - First: other_parties[i].agent.name.first
-  - Middle: other_parties[i].agent.name.middle
-    required: False
-  - Last: other_parties[i].agent.name.last
-  - Suffix: other_parties[i].agent.name.suffix
-    code: |
-      name_suffix()
-    required: False
+  - Registered agent: other_parties[i].agent.name.first
 ---
 id: defendant same address
 question: |
@@ -1327,6 +1328,13 @@ code: |
     else:
       which_evidence = "ERROR"
 ---
+reconsider: True
+code: |
+  if other_parties.number_gathered() > 1:
+    defendant_defendants = "defendants"
+  else:
+    defendant_defendants = "defendant"
+---
 id: evidence
 continue button field: evidence
 question: |
@@ -1334,13 +1342,15 @@ question: |
 subquestion: |
   % if landlord_check == True:
   % if which_evidence != "ERROR":
-  You said you would attach ${which_evidence} to your complaint. Remember to include those documents when you file your claim. 
+  You said you would attach ${which_evidence} to your complaint. Make sure to include those documents when you file your claim. 
   % else:
   You can attach evidence of your claim to your complaint. Evidence can be things like paperwork or photos that show why a defendant owes you money.
   % endif
   % else:
   You can attach evidence of your claim to your complaint. Evidence can be things like paperwork or photos that show why a defendant owes you money.
   % endif
+  
+  You also need to include copies of evidence to the forms you serve to the ${defendant_defendants}.
 
   If you are e-filing, you can upload other documents as part of the e-filing process. If you are paper filing, bring copies of the documents to the clerk's office so you can attach them to the complaint.
 ---
@@ -1690,39 +1700,39 @@ question: |
 subquestion: |
   % if rlto_applies == True:
   % if which_rlto == "Urbana":
-  Based on your answers, the city of Urbana's code of ordinances applies to the rental property.
+  Based on your answers, the city of Urbana's code of ordinances may apply to the rental property.
   % elif which_rlto == "Mount Prospect":
-  Based on your answers, Mount Prospect's residential landlord and tenant regulations apply to the rental property. Mount Prospect does not allow for extra damages.
+  Based on your answers, Mount Prospect's residential landlord and tenant regulations may apply to the rental property. Mount Prospect does not allow for extra damages.
   % elif which_rlto == "Evanston":
-  Based on your answers, the City of Evanston's landlord and tenant regulations apply to the rental property.
+  Based on your answers, the City of Evanston's landlord and tenant regulations may apply to the rental property.
   % elif which_rlto == "Chicago":
-  Based on your answers, the City of Chicago's Residential Landlord Tenant Ordinance applies to the rental property.
+  Based on your answers, the City of Chicago's Residential Landlord Tenant Ordinance may apply to the rental property.
   % elif which_rlto == "Oak Park":
-  Based on your answers, Oak Park's Residential Tenant and Landlord Ordinance applies to the rental property.
+  Based on your answers, Oak Park's Residential Tenant and Landlord Ordinance may apply to the rental property.
   % elif which_rlto == "DeKalb":
-  Based on your answers, DeKalb's Landlord-Tenant Regulations applies to the rental property.
+  Based on your answers, DeKalb's Landlord-Tenant Regulations may apply to the rental property.
   % elif which_rlto == "Cook County":
-  Based on your answers, Cook County's Residential Tenant Landlord Ordinance applies to the rental property.
+  Based on your answers, Cook County's Residential Tenant Landlord Ordinance may apply to the rental property.
   % elif which_rlto == "Illinois":
-  Based on your answers, Illinois's Security Deposit Return Act applies to the rental property.
+  Based on your answers, Illinois's Security Deposit Return Act may apply to the rental property.
   % endif
   % else:
   % if which_rlto == "Chicago":
-  The City of Chicago's Residential Landlord Tenant Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  The City of Chicago has a Residential Landlord Tenant Ordinance, but it may not apply to the rental property. Illinois state law may apply to your case.
   % elif which_rlto == "Evanston":
-  The City of Evanston's Residential Landlord and Tenant Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  The City of Evanston has a Residential Landlord and Tenant Ordinance, but it may not apply to the rental property. Illinois state law may apply to your case.
   % elif which_rlto == "Urbana":
-  The city of Urbana's code of ordinances applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  The city of Urbana's code of ordinances may not apply to the rental property. Illinois state law may apply to your case.
   % elif which_rlto == "Oak Park":
-  Oak Park's Residential Tenant and Landlord Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  Oak Park has a Residential Tenant and Landlord Ordinance, but it may not apply to the rental property. Illinois state law may apply to your case.
   % elif which_rlto == "DeKalb":
-  DeKalb's Landlord-Tenant Regulations applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  DeKalb's Landlord-Tenant Regulations may not apply to the rental property. Illinois state law may apply to your case.
   % elif which_rlto == "Mount Prospect":
-  Based on your answers, Mount Prospect's residential landlord and tenant regulations apply to the rental property. Mount Prospect does not allow for extra damages.
+  Mount Prospect's residential landlord and tenant regulations may apply to the rental property. Mount Prospect does not allow for extra damages.
   % elif which_rlto == "Cook County":
-  Cook County's Residential Tenant Landlord Ordinance applies to the rental property, but based on your answers it does not allow for extra damages. Illinois state law will apply to your case.
+  Cook County has a Residential Tenant Landlord Ordinance, but it may not appliy to the rental property. Illinois state law may apply to your case.
   % else:
-  Based on your answers, Illinois state law applies to your case.
+  Based on your answers, Illinois state law may apply to your case.
   % endif
   % endif
 ---
@@ -2053,6 +2063,10 @@ subquestion: |
   No additional damages apply, so you can only sue for ${currency(deposit_balance_owed)}.
   % endif
   
+  % if lets_stay_small:
+  In order to stay in Small Claims Court, you can only sue for $10,000.
+  
+  % endif
   **Note:** If you win your case, the landlord can reduce the amount they owe if they prove that:
 
   * You owe rent, or
@@ -2063,6 +2077,7 @@ reconsider: True
 only sets: 
   - amount_updated
   - calculated_deposit_claim
+  - lets_stay_small
 depends on:
   - deposit_with_damages
   - deposit_balance_owed
@@ -2072,38 +2087,39 @@ depends on:
   - deposit_payments[1]
   - deposit_payments[2]
 code: |
+  lets_stay_small = False
   calculated_deposit_claim = deposit_with_damages
   if deposit_with_damages > 10000:
+    lets_stay_small = True
     deposit_damages_too_big
+    
   amount_updated = True
 ---
 id: deposit too big
-event: too_much_owed
+continue button field: too_much_owed
 question: |
-  Amount owed too big
+  Your claim can not be more than $10,000
 subquestion: |
   Your claim amount is at least ${currency(deposit_balance_owed)}. You can only sue for $10,000 or less in Small Claims Court.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+   
+  If you would like to file for only $10,000 to remain in Small Claims Court, you can click **Next**.
 ---
 id: deposit damages too big kickout
-event: deposit_damages_too_big
+continue button field: deposit_damages_too_big
 question: |
-  Claim amount too big with damages
+  Your claim can not be more than $10,000
 subquestion: |
   With damages, your claim amount is ${currency(calculated_deposit_claim)}. You can only sue for $10,000 or less in Small Claims Court.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
-buttons:
-  - Exit: exit
-  - Restart: restart
+   
+  If you would like to file for only $10,000 to remain in Small Claims Court, you can click **Next**.
 ---
 id: lease check
 question: |
@@ -2156,6 +2172,11 @@ fields:
   - no label: demand_letter_attach
     datatype: yesnoradio
 ---
+id: paragraph number debug
+continue button field: made_it_this_far
+question: |
+  Made it this far!
+---
 #This is the meatiest code block in the program. It creates the default claim text for the user. Despite its length, it should be relatively straight forward.
 reconsider: True
 depends on:
@@ -2183,12 +2204,17 @@ depends on:
   - deposit_dates[2]
   - another_deposit[0]
   - another_deposit[1]
+  - lets_stay_small
 code: |
-  default_deposit_claim_reason = "I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties) + ". "
+  #paragraph number variable must increment with each paragraph break, i.e. the \n \n lines.
+  paragraph_number = 1
+  
+  default_deposit_claim_reason = str(paragraph_number) + ". I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties) + ". "
   
   default_deposit_claim_reason += "\n" + "\n"
+  paragraph_number += 1
       
-  default_deposit_claim_reason += "I moved into the property on " + move_in_date + ". "
+  default_deposit_claim_reason += str(paragraph_number) + ". I moved into the property on " + move_in_date + ". "
     
   
   if another_deposit[0] == False:
@@ -2201,8 +2227,9 @@ code: |
     default_deposit_claim_reason += "Proof showing that I paid the security deposit is attached" + ".\n" + "\n"
   else:
     default_deposit_claim_reason += ".\n" + "\n"
+  paragraph_number += 1
     
-  default_deposit_claim_reason += "I moved out of the unit on " + move_out_date + ". "  
+  default_deposit_claim_reason += str(paragraph_number) + ". I moved out of the unit on " + move_out_date + ". "  
 
   default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + comma_and_list(other_parties) + " on " + demand_letter_date + ". "
   if demand_letter_attach == True:
@@ -2212,12 +2239,14 @@ code: |
     default_deposit_claim_reason += "As of " + today() + " " + comma_and_list(other_parties) + " had returned $0 of the security deposit" + ".\n" + "\n"
   else:
     default_deposit_claim_reason += "As of " + today() + " " + comma_and_list(other_parties) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n" + "\n"
+  paragraph_number += 1
 
   if damages_check == False:
-    default_deposit_claim_reason += "As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " stating they would use my security deposit to make repairs to the rental unit" + ".\n" + "\n"
+    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " stating they would use my security deposit to make repairs to the rental unit" + ".\n" + "\n"
+    paragraph_number += 1
   else:
     if landlord_timely == False:
-      default_deposit_claim_reason += "I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
+      default_deposit_claim_reason += str(paragraph_number) + ". I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
       if rental_address.city.lower() == "evanston":
         default_deposit_claim_reason += "21 days of vacating the property" + ".\n" + "\n"
       elif rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "dekalb":
@@ -2230,8 +2259,9 @@ code: |
         default_deposit_claim_reason += "30 days of vacating the property" + ".\n" + "\n"
     else:
       default_deposit_claim_reason += "I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit. I dispute that this was a reasonable amount necessary to repair damage" + ".\n" + "\n"
+    paragraph_number += 1
     
-  default_deposit_claim_reason +=  comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
+  default_deposit_claim_reason += str(paragraph_number) + ". " + comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
   
   #In the a2jauthor interview there is logic at this point regarding the damages letter. I will look into whether we should include that later; it appears to be deprecated in the old program.
   
@@ -2254,8 +2284,10 @@ code: |
     else:
       default_deposit_claim_reason += "Per Section 1(c) of the Security Deposit Return Act, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
       
-
-  default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
+  if showifdef('lets_stay_small') == True:
+    default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me $10,000. In order to file this claim in Small Claims Court, I am not seeking damages greater than $10,000."
+  else:
+    default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
   
   generate_default = True
 ---
@@ -3246,7 +3278,7 @@ review:
     button: |
       **Defendant name:**
       ${x.name.full(middle='full')}
-  - Edit: x.person_type
+  - Edit: x.name.first
     button: |
       **Is ${x.name.full(middle='full')} a person or a business?**
       % if x.person_type == "person":
