@@ -50,6 +50,7 @@ code: |
   nav.set_section('section_intro')
   user_ask_role = "plaintiff"
   sees_nav_bar
+  snapshot_start
   set_progress(5)
   how_to_use
   accept_terms
@@ -214,7 +215,37 @@ code: |
   nav.set_section('section_download')
   attachment_logic
   #order_info
+  snapshot_forms
   get_docs_screen
+---
+code: |
+  stuff_to_snapshot = {
+  	'start_time': str(current_datetime().format_datetime()),
+  	'started_interview': True, 
+  	}
+    
+  stuff_to_snapshot['user_zip'] = showifdef('users[0].address.zip')
+
+  stuff_to_snapshot['downloaded_forms'] = showifdef('attachment_logic')
+  
+  stuff_to_snapshot['seeking_security_deposit'] = showifdef('landlord_check')
+  
+  stuff_to_snapshot['rental_city'] = showifdef('rental_address.city')
+  
+  stuff_to_snapshot['rental_county'] = showifdef('rental_address.county')  
+  
+  store_variables_snapshot(
+  	data=stuff_to_snapshot, persistent=True
+  	)
+  snapshot_interview_state = True
+---
+code: |
+  snapshot_interview_state
+  snapshot_start = True  
+---
+code: |
+  reconsider('snapshot_interview_state')
+  snapshot_forms = True
 ---
 #Gathers defendants
 code: |
@@ -354,10 +385,10 @@ fields:
     show if: 
       variable: users[0].has_email_address
       is: True
-validation code: |
-  if (not showifdef('users[0].phone_number') and \
-      (users[0].has_email_address == False)):
-    validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
+#validation code: |
+#  if (not showifdef('users[0].phone_number') and \
+#      (users[0].has_email_address == False)):
+#    validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
 ---
 template: contact_info_help
 subject: |
@@ -1945,6 +1976,8 @@ buttons:
 id: statement of damages
 question: |
   Did your landlord send you a letter saying they need money from your security deposit to make repairs?
+subquestion: |
+  **Note:** If your landlord can prove they paid for repairs to the unit, you might not be able to get back the full security deposit. The judge will decide if your landlord was right to use the security deposit to pay for repairs.
 fields:
   - no label: damages_check
     datatype: yesnoradio
@@ -2062,9 +2095,7 @@ question: |
   Damages
 subquestion: |
   % if rlto_applies == True:
-  Because your landlord did not return your full security deposit on time, you can sue for ${currency(calculated_deposit_claim)}.
-  
-  This amount is ${currency(deposit_balance_owed)}, the amount of security deposit not yet returned, plus damages for violating landlord-tenant law. Damages are double the security deposit you are owed (${currency(deposit_balance_owed)} x 2).
+  Because your landlord did not return your full security deposit on time, you can sue for ${currency(calculated_deposit_claim)}. This amount is double ${currency(deposit_balance_owed)}, the amount of security deposit not yet returned.
   % else:
   No additional damages apply, so you can only sue for ${currency(deposit_balance_owed)}.
   % endif
@@ -2240,11 +2271,13 @@ code: |
   default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + comma_and_list(other_parties) + " on " + demand_letter_date + ". "
   if demand_letter_attach == True:
     default_deposit_claim_reason += "A copy of the letter is attached. "
+  default_deposit_claim_reason += "\n" + "\n"
+  paragraph_number += 1
   
   if partial_return_check ==  False:
-    default_deposit_claim_reason += "As of " + today() + " " + comma_and_list(other_parties) + " had returned $0 of the security deposit" + ".\n" + "\n"
+    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + comma_and_list(other_parties) + " had returned $0 of the security deposit" + ".\n" + "\n"
   else:
-    default_deposit_claim_reason += "As of " + today() + " " + comma_and_list(other_parties) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n" + "\n"
+    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + comma_and_list(other_parties) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n" + "\n"
   paragraph_number += 1
 
   if damages_check == False:
@@ -2290,10 +2323,13 @@ code: |
     else:
       default_deposit_claim_reason += "Per Section 1(c) of the Security Deposit Return Act, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
       
+  default_deposit_claim_reason += "\n" + "\n"
+  paragraph_number += 1
+      
   if showifdef('lets_stay_small') == True:
-    default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me $10,000. In order to file this claim in Small Claims Court, I am not seeking damages greater than $10,000."
+    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me $10,000. In order to file this claim in Small Claims Court, I am not seeking damages greater than $10,000."
   else:
-    default_deposit_claim_reason += "I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
+    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
   
   generate_default = True
 ---
