@@ -58,11 +58,11 @@ code: |
   to_consider
   if age_check == False:
     age_kickout
-  nav.set_section('section_case')
   if corporation_check == True:
     corporation_kickout
   if money_check == True:
     money_kickout
+  nav.set_section('section_case')
   #landlord_check is an important variable. The program differs substantially based on its value; if True, the program goes into the detailed security deposit claim path.
   if landlord_check == False:
     amount_check
@@ -129,6 +129,7 @@ code: |
     if partial_return_check == True:
       partial_return_amount
       partial_return_date
+      dispute_withholding
     if deposit_balance_owed > 0:
       deposit_still_owed
       #if deposit_balance_owed < 10000:
@@ -470,13 +471,13 @@ continue button field: amount_kickout
 question: |
   Your claim is too big for Small Claims Court
 subquestion: |
-  You can only sue for $10,000.00 or less in Small Claims Court.
+  You can only sue for $10,000.00 or less in Small Claims Court. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
-    If you would like to file for only $10,000 to remain in Small Claims Court, you can click **Next**.
+  If your total claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000. If you would like to file in Small Claims Court, you can click **Next**.
 ---
 sets: 
   - amount_check
@@ -487,25 +488,25 @@ subquestion: |
   Do not include court costs in this amount.
 fields:
   - Amount owed: amount_check
-    datatype: number
+    datatype: currency
     step: 0.01
 validation code: |
   if amount_check > 10000:
     show_amount_kickout = True
     amount_check = 10000
+  else:
+    show_amount_kickout = False
 ---
 id: note about amount limit
 continue button field: note_about_amount_limit
 question: |
   About claim limits
 subquestion: |
-  You can only sue for $10,000 or less in Small Claims Court.
-  
-  If you paid more than $10,000 for your security deposit, you may not want to file in Small Claims Court.
+  You can only sue for $10,000 or less in Small Claims Court. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
   Depending on where your rental unit is, you may be able to sue for damages in addition to the amount of your security deposit your landlord has not returned. However, these damages may make your claim too big for Small Claims Court.
   
-  If your claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000.
+  If your total claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000.
   
   This program will calculate how much you can sue for. If your claim is too big for Small Claims Court, this program will let you know.
 ---
@@ -2097,7 +2098,7 @@ subquestion: |
   % if extra_damages:
   Because your landlord did not return your full security deposit on time, you can sue for ${currency(calculated_deposit_claim)}. This amount is double ${currency(deposit_balance_owed)}, the amount of security deposit not yet returned.
   % else:
-  No additional damages apply, so you can only sue for ${currency(deposit_balance_owed)}.
+  You can sue for ${currency(deposit_balance_owed)}, the amount of your security deposit that hasn't been returned. No additional damages apply.
   % endif
   
   % if lets_stay_small:
@@ -2202,12 +2203,19 @@ fields:
 ---
 id: demand letter attach
 question: |
-  Will you attach a copy of the demand letter you sent on ${demand_letter_date} to your *Small Claims Complaint* ?
+  Will you attach a copy of the demand letter you sent on ${demand_letter_date} to your *Small Claims Complaint*?
 subquestion: |
   It will be easier to show the judge that you asked for payment if you attach the letter.
 fields:
   - no label: demand_letter_attach
     datatype: yesnoradio
+---
+id: dispute withholding
+question: |
+  Do you agree that ${currency(deposit_balance_owed)} is a reasonable amount to repair damages to the rental unit?
+fields:
+  no label: dispute_withholding
+  datatype: yesnoradio
 ---
 id: paragraph number debug
 continue button field: made_it_this_far
@@ -2297,14 +2305,17 @@ code: |
       else:
         default_deposit_claim_reason += "30 days of vacating the property" + ".\n" + "\n"
     else:
-      default_deposit_claim_reason += str(paragraph_number) + ". I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit. I dispute that this was a reasonable amount necessary to repair damage" + ".\n" + "\n"
+      default_deposit_claim_reason += str(paragraph_number) + ". I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit."
+      if not dispute_withholding:
+        default_deposit_claim_reason +=  " I dispute that this was a reasonable amount necessary to repair damage."
+      default_deposit_claim_reason += "\n" + "\n"
     paragraph_number += 1
     
   default_deposit_claim_reason += str(paragraph_number) + ". " + comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
   
   #In the a2jauthor interview there is logic at this point regarding the damages letter. I will look into whether we should include that later; it appears to be deprecated in the old program.
   
-  if rlto_applies == True:
+  if extra_damages:
     if rental_address.city.lower() != "chicago" and rental_address.city.lower() != "dekalb" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect" and rental_address.city.lower() != "oak park" and rental_address.city.lower() != "urbana" and end_in_county(rental_address.county).lower() == "cook county":
       default_deposit_claim_reason += "Per Sec. 42-111(m) of the Cook County code of ordinances, I can be awarded damages in an amount equal to two times the security deposit. "
     
@@ -3160,6 +3171,21 @@ review:
       **Date partial amount returned to you:**
       ${partial_return_date}
     show if: landlord_check == True and partial_return_check == True
+  - Edit: damages_check
+    button: |
+      **Did your landlord send you a letter saying they need money from your security deposit to make repairs?**
+      ${word(yesno(damages_check))}
+    show if: landlord_check
+  - Edit: damages_date
+    button: |
+      **Date you received the statement of damages:**
+      ${damages_date}
+    show if: landlord_check and damages_check
+  - Edit: dispute_withholding
+    button: |
+      **Do you agree that your landlord used a reasonable amount of the deposit to repair damages?**
+      ${word(yesno(dispute_withholding))}
+    show if: landlord_check and damages_check
   - Edit: lease_check
     button: |
       **Did you have a written lease?**
@@ -3637,6 +3663,21 @@ review:
       **Date partial amount returned to you:**
       ${partial_return_date}
     show if: landlord_check == True and partial_return_check == True
+  - Edit: damages_check
+    button: |
+      **Did your landlord send you a letter saying they need money from your security deposit to make repairs?**
+      ${word(yesno(damages_check))}
+    show if: landlord_check
+  - Edit: damages_date
+    button: |
+      **Date you received the statement of damages:**
+      ${damages_date}
+    show if: landlord_check and damages_check
+  - Edit: dispute_withholding
+    button: |
+      **Do you agree that your landlord used a reasonable amount of the deposit to repair damages?**
+      ${word(yesno(dispute_withholding))}
+    show if: landlord_check and damages_check
   - Edit: lease_check
     button: |
       **Did you have a written lease?**
