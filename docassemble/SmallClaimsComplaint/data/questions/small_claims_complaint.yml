@@ -2094,7 +2094,7 @@ continue button field: deposit_damages_info
 question: |
   Damages
 subquestion: |
-  % if rlto_applies == True:
+  % if extra_damages:
   Because your landlord did not return your full security deposit on time, you can sue for ${currency(calculated_deposit_claim)}. This amount is double ${currency(deposit_balance_owed)}, the amount of security deposit not yet returned.
   % else:
   No additional damages apply, so you can only sue for ${currency(deposit_balance_owed)}.
