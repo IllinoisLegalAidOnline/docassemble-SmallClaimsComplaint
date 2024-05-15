@@ -156,7 +156,7 @@ code: |
     generate_default
     use_that_default
     chop_off_county
-    if use_deposit_default == True:
+    if use_new_text == True:
       preview_complaint
       if add_second_page == True:
         more_deposit_reason
@@ -2361,15 +2361,15 @@ subquestion: |
   ---
   **Note:** If you edit this text and then change your other answers, this text will not update. Be sure the forms say what you want.
 fields:
-  - Edit this text?: use_deposit_default
+  - Edit this text?: use_new_text
     datatype: yesnoradio
 ---
 depends on:
   - default_deposit_claim_reason
-  - use_deposit_default
+  - use_new_text
   - new_deposit_claim_reason
 code: |
-  if use_deposit_default == False:
+  if use_new_text == False:
     deposit_claim_reason = default_deposit_claim_reason
   else:
     deposit_claim_reason = new_deposit_claim_reason
@@ -2517,7 +2517,7 @@ code: |
     if add_second_page == True:
       additional_reasons.enabled = True
   else:
-    if use_deposit_default == True:
+    if use_new_text == True:
       if add_second_page == True:
         additional_reasons.enabled = True
     
@@ -3217,7 +3217,7 @@ review:
     show if: landlord_check
   - label: Edit
     fields:
-      - use_deposit_default
+      - use_new_text
       - recompute:
         - use_that_default
         - deposit_claim_reason
@@ -3225,10 +3225,10 @@ review:
       **Your claim (Edit to refresh text with your latest answers):**
       
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == False
+    show if: landlord_check == True and use_new_text == False
   - label: Edit
     fields:
-      - use_deposit_default
+      - use_new_text
       - new_deposit_claim_reason
       - recompute:
         - use_that_default
@@ -3237,19 +3237,19 @@ review:
       **Your claim:**
       
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == True
+    show if: landlord_check == True and use_new_text == True
     #jump to
   - Edit: add_second_page
     button: |
       **Do you need a second page to explain your claim?**
       ${word(yesno(add_second_page))}
-    show if: landlord_check == True and use_deposit_default == True
+    show if: landlord_check == True and use_new_text == True
   - Edit: more_deposit_reason
     button: |
       **Your claim (second page):**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == True and add_second_page == True
+    show if: landlord_check == True and use_new_text == True and add_second_page == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -3709,17 +3709,17 @@ review:
     show if: landlord_check
   - label: Edit
     fields:
-      - use_deposit_default
+      - use_new_text
       - recompute:
         - use_that_default
         - deposit_claim_reason
     button: |
       **Your claim (Edit to refresh text with your latest answers):**  
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == False
+    show if: landlord_check == True and use_new_text == False
   - label: Edit
     fields:
-      - use_deposit_default
+      - use_new_text
       - new_deposit_claim_reason
       - recompute:
         - use_that_default
@@ -3728,18 +3728,18 @@ review:
       **Your claim:**  
       
       ${deposit_claim_reason}
-    show if: landlord_check == True and use_deposit_default == True
+    show if: landlord_check == True and use_new_text == True
   - Edit: add_second_page
     button: |
       **Do you need a second page to explain your claim?**
       ${word(yesno(add_second_page))}
-    show if: landlord_check == True and use_deposit_default == True
+    show if: landlord_check == True and use_new_text == True
   - Edit: more_deposit_reason
     button: |
       **Your claim (second page):**
       
       ${more_deposit_reason}
-    show if: landlord_check == True and use_deposit_default == True and add_second_page == True
+    show if: landlord_check == True and use_new_text == True and add_second_page == True
   - Edit: agreement_check
     button: |
       % if other_parties.number_gathered() > 1:
@@ -3864,7 +3864,7 @@ review:
 reconsider: True
 code: | 
   if landlord_check == True:
-    if use_deposit_default == True:
+    if use_new_text == True:
       if add_second_page == True:
         reasons_attach = True
       else:
