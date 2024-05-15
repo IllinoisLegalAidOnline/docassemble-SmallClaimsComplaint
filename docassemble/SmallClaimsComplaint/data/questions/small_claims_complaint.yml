@@ -1980,7 +1980,7 @@ id: statement of damages
 question: |
   Did your landlord send you a letter saying they need money from your security deposit to make repairs?
 subquestion: |
-  The letter should include a "statement of damages." A statement of damages should say what repairs your landlord used your security deposit to make. If the letter does not say what repairs your landlord made, you can click **No** here.
+  The letter should include a statement of damages that explains what repairs your landlord had to make to the rental unit and how much each repair cost. If the letter does not say what repairs your landlord had to make or what they cost, you can click **No** here.
 
   **Note:** If your landlord can prove they paid for repairs to the unit, you might not be able to get back the full security deposit. The judge will decide if your landlord was right to use the security deposit to pay for repairs.
 fields:
@@ -2344,7 +2344,7 @@ code: |
   if showifdef('lets_stay_small') == True:
     default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me $10,000. In order to file this claim in Small Claims Court, I am not seeking damages greater than $10,000."
   else:
-    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am also asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
+    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am also asking this court to order " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
   
   generate_default = True
 ---
@@ -3180,15 +3180,15 @@ review:
       **Did your landlord send you a letter saying they need money from your security deposit to make repairs?**
       ${word(yesno(damages_check))}
     show if: landlord_check
-  - Edit: damages_date
-    button: |
-      **Date you received the statement of damages:**
-      ${damages_date}
-    show if: landlord_check and damages_check
   - Edit: dispute_withholding
     button: |
       **Do you agree that your landlord used a reasonable amount of the deposit to repair damages?**
       ${word(yesno(dispute_withholding))}
+    show if: landlord_check and damages_check
+  - Edit: damages_date
+    button: |
+      **Date you received the statement of damages:**
+      ${damages_date}
     show if: landlord_check and damages_check
   - Edit: lease_check
     button: |
@@ -3672,15 +3672,15 @@ review:
       **Did your landlord send you a letter saying they need money from your security deposit to make repairs?**
       ${word(yesno(damages_check))}
     show if: landlord_check
-  - Edit: damages_date
-    button: |
-      **Date you received the statement of damages:**
-      ${damages_date}
-    show if: landlord_check and damages_check
   - Edit: dispute_withholding
     button: |
       **Do you agree that your landlord used a reasonable amount of the deposit to repair damages?**
       ${word(yesno(dispute_withholding))}
+    show if: landlord_check and damages_check
+  - Edit: damages_date
+    button: |
+      **Date you received the statement of damages:**
+      ${damages_date}
     show if: landlord_check and damages_check
   - Edit: lease_check
     button: |
