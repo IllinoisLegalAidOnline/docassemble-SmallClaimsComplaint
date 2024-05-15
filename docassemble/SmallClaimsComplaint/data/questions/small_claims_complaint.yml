@@ -129,7 +129,7 @@ code: |
     if partial_return_check == True:
       partial_return_amount
       partial_return_date
-      dispute_withholding
+      
     if deposit_balance_owed > 0:
       deposit_still_owed
       #if deposit_balance_owed < 10000:
@@ -139,8 +139,10 @@ code: |
     else:
       all_paid_error
     
-    if damages_check == True:
+    if damages_check:
+      dispute_withholding
       damages_date
+      
     #deposit_debug
     if deposit_with_damages > 10000:
       deposit_damages_too_big
@@ -1978,6 +1980,8 @@ id: statement of damages
 question: |
   Did your landlord send you a letter saying they need money from your security deposit to make repairs?
 subquestion: |
+  The letter should include a "statement of damages." A statement of damages should say what repairs your landlord used your security deposit to make. If the letter does not say what repairs your landlord made, you can click **No** here.
+
   **Note:** If your landlord can prove they paid for repairs to the unit, you might not be able to get back the full security deposit. The judge will decide if your landlord was right to use the security deposit to pay for repairs.
 fields:
   - no label: damages_check
@@ -2212,7 +2216,7 @@ fields:
 ---
 id: dispute withholding
 question: |
-  Do you agree that ${currency(deposit_balance_owed)} is a reasonable amount to repair damages to the rental unit?
+  Do you agree with the amount the landlord said was needed to make repairs?
 fields:
   no label: dispute_withholding
   datatype: yesnoradio
@@ -2289,7 +2293,7 @@ code: |
   paragraph_number += 1
 
   if damages_check == False:
-    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " stating they would use my security deposit to make repairs to the rental unit" + ".\n" + "\n"
+    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " with a statement of damages the security deposit was used to repair" + ".\n" + "\n"
     paragraph_number += 1
   else:
     if landlord_timely == False:
@@ -2340,7 +2344,7 @@ code: |
   if showifdef('lets_stay_small') == True:
     default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me $10,000. In order to file this claim in Small Claims Court, I am not seeking damages greater than $10,000."
   else:
-    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
+    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am also asking " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
   
   generate_default = True
 ---
@@ -3218,7 +3222,7 @@ review:
         - use_that_default
         - deposit_claim_reason
     button: |
-      **Your claim:**
+      **Your claim (Edit to refresh text with your latest answers):**
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
@@ -3230,7 +3234,7 @@ review:
         - use_that_default
         - deposit_claim_reason 
     button: |
-      **Your claim**
+      **Your claim:**
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == True
@@ -3710,7 +3714,7 @@ review:
         - use_that_default
         - deposit_claim_reason
     button: |
-      **Your claim:**  
+      **Your claim (Edit to refresh text with your latest answers):**  
       ${deposit_claim_reason}
     show if: landlord_check == True and use_deposit_default == False
   - label: Edit
