@@ -281,9 +281,6 @@ continue button field: how_to_use
 question: |
   Instructions
 subquestion: |
-  
-  To use this program you will need to know:
-
   To complete this program, you will need to know:
 
   * The name and address of the person or business you are suing, and
@@ -473,13 +470,13 @@ continue button field: amount_kickout
 question: |
   Your claim is too big for Small Claims Court
 subquestion: |
-  You can only sue for $10,000.00 or less in Small Claims Court. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
+  If your total claim is over $10,000 you can still sue in Small Claims Court, but the most you can ask for is $10,000. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
   To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
-  If your total claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000. If you would like to file in Small Claims Court, you can click **Next**.
+   If you would like to file in Small Claims Court, you can click **Next**.
 ---
 sets: 
   - amount_check
@@ -506,7 +503,7 @@ question: |
 subquestion: |
   You can only sue for $10,000 or less in Small Claims Court. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
-  Depending on where your rental unit is, you may be able to sue for damages in addition to the amount of your security deposit your landlord has not returned. However, these damages may make your claim too big for Small Claims Court.
+  Depending on where your rental unit is, you may be able to sue for damages in addition to the amount of your unreturned security deposit. However, these damages may make your claim too big for Small Claims Court.
   
   If your total claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000.
   
@@ -741,7 +738,7 @@ continue button field: daley_center_note
 question: |
   Free help at the Daley Center
 subquestion: |
-  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Filing Desk**](https://www.cookcountycourt.org/FOR-PEOPLE-WITHOUT-LAWYERS/Help-Desks-in-the-Courthouse/cid/222/smid/2897/tmid/2803).
+  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Filing Desk**](https://www.cookcountyclerkofcourt.org/divisions/civil-division#:~:text=Pro%20se%20petitioners%20can%20file,603%2D5626%20with%20any%20questions.).
   
   While it may be easier to get help at the Daley Center, you can still continue to make forms with this program.
 ---
@@ -772,7 +769,7 @@ subject: |
 content: |  
   **Important:** If a business is not incorporated, you will need to list both the business and the business owner as defendants.
   
-  You will need to list both the business and its owner if it the business is:
+  You will need to list both the business and its owner if the business is:
   
   * An unincorporated business,
   * A sole proprietorship, or
@@ -830,7 +827,7 @@ id: landlord check
 question: |
   Are you suing your former landlord to return a security deposit?
 subquestion: |
-  To learn more, read ILAO's article about [**getting or returning a security deposit**](www.illinoislegalaid.org/node/31176).
+  To learn more, read ILAO's article about [**getting or returning a security deposit**](https://www.illinoislegalaid.org/node/31176).
 fields:
   - no label: landlord_check
     datatype: yesnoradio
@@ -973,7 +970,7 @@ reconsider:
 question: |
   Complaint page 2 preview
 subquestion: |
-  Click the below image to preview page 2 of your *Small Claims Complaint*.
+  Click the image below to preview page 2 of your *Small Claims Complaint*.
   
   **Note: this is not a complete form.** Finish the program to get all your forms.
  
@@ -1005,7 +1002,7 @@ template: help_reason
 subject: |
   **Can I see some examples?**
 content: |  
-  "On April 21, 2023, I agreed to sell my couch to my neighbor Fred Washington for $100. We agreed that Fred would pay me $100 within a week after receiving the couch. We wrote down the agreement. A copy of the agreement is attached. I gave Fred the couch on May 22, 2020. He paid me $25 on June 1, 2020. I asked him to pay the remaining $75 every week since then. He has not paid me the $75."
+  "On April 21, 2023, I agreed to sell my couch to my neighbor Fred Washington for $100. We agreed that Fred would pay me $100 within a week after receiving the couch. We wrote down the agreement. A copy of the agreement is attached. I gave Fred the couch on May 22, 2023. He paid me $25 on June 1, 2023. I asked him to pay the remaining $75 every week since then. He has not paid me the $75."
 
   "On June 3, 2023, Julia Smith's dog bit me. I went to the emergency room to get treatment. The bill was for $568.90. I gave Julia a copy of the bill on August 3, 2023. A copy of the bill is attached. I have asked Julia to pay me back for the hospital bill. She has not paid me."
 ---
@@ -1103,7 +1100,7 @@ reconsider:
 question: |
   Additional reasons preview
 subquestion: |
-  Click the below images to preview your Complaint form and your Additional reasons form.
+  Click the images below to preview your Complaint form and your Additional reasons form.
   
   **Note: these are not complete forms.** Finish the program to get all your forms.
   
@@ -1123,7 +1120,7 @@ reconsider:
 question: |
   Additional reasons preview
 subquestion: |
-  Click the below images to preview your Complaint form and your Additional reasons form.
+  Click the images below to preview your Complaint form and your Additional reasons form.
   
   **Note: these are not complete forms.** Finish the program to get all your forms.
   
@@ -1384,7 +1381,7 @@ subquestion: |
   You can attach evidence of your claim to your complaint. Evidence can be things like paperwork or photos that show why a defendant owes you money.
   % endif
   
-  Be sure to attach copies of your evidence to the forms you serve on the ${defendant_defendants}
+  Be sure to attach copies of your evidence to the forms you serve on the ${defendant_defendants}.
 
   If you are e-filing, you can upload other documents as part of the e-filing process. If you are paper filing, bring copies of the documents to the clerk's office so you can attach them to the complaint.
 ---
@@ -1415,7 +1412,7 @@ content: |
   
   You can learn if a business is incorporated from the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/). If you cannot find the business in this database, you will have to list the business's owner as another defendant.
   
-  If the business is incorporated, they may have a registered agent listed on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/). If they have a registerd agent, you will need to serve them. Some of the following questions will ask about registered agents.
+  If the business is incorporated, they may have a registered agent listed on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/). If they have a registered agent, you will need to serve them. Some of the following questions will ask about registered agents.
 ---
 id: move in date
 question: |
@@ -1518,7 +1515,7 @@ subquestion: |
   ${rental_address.city} has laws that affect landlord and tenant relationships and security deposits.
   % endif
   
-  This program will help you in most situations. You may want to [**Get Legal Help**](www.illinoislegalaid.org/get-legal-help) to learn more about what you can do in your situation.
+  This program will help you in most situations. You may want to [**Get Legal Help**](https://www.illinoislegalaid.org/get-legal-help) to learn more about what you can do in your situation.
 ---
 id: cook county question
 question: |
@@ -3380,7 +3377,7 @@ review:
   - Edit: x.name.first
     button: |
       **Is ${x.name.full(middle='full')} a person or a business?**
-      % if x.person_type == "person":
+      % if x.person_type == "ALIndividual":
       A person
       % else:
       A business
