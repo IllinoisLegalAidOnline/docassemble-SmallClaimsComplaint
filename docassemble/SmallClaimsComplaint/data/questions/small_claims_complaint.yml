@@ -217,6 +217,7 @@ code: |
   e_signature
   
   nav.set_section('section_download')
+  forms_assembling
   attachment_logic
   #order_info
   snapshot_forms
@@ -230,7 +231,7 @@ code: |
     
   stuff_to_snapshot['user_zip'] = showifdef('users[0].address.zip')
 
-  stuff_to_snapshot['downloaded_forms'] = showifdef('attachment_logic')
+  stuff_to_snapshot['downloaded_forms'] = showifdef('forms_assembling')
   
   stuff_to_snapshot['seeking_security_deposit'] = showifdef('landlord_check')
   
@@ -1003,9 +1004,9 @@ template: help_reason
 subject: |
   **Can I see some examples?**
 content: |  
-  "On April 21, 2023, I agreed to sell my couch to my neighbor Fred Washington for $100. We agreed that Fred would pay me $100 within a week after receiving the couch. We wrote down the agreement. A copy of the agreement is attached. I gave Fred the couch on May 22, 2023. He paid me $25 on June 1, 2023. I asked him to pay the remaining $75 every week since then. He has not paid me the $75."
+  "On April 21, ${int(format_date(today(), format="yyyy"))-1}, I agreed to sell my couch to my neighbor Fred Washington for $100. We agreed that Fred would pay me $100 within a week after receiving the couch. We wrote down the agreement. A copy of the agreement is attached. I gave Fred the couch on May 22, ${int(format_date(today(), format="yyyy"))-1}. He paid me $25 on June 1, ${int(format_date(today(), format="yyyy"))-1}. I asked him to pay the remaining $75 every week since then. He has not paid me the $75."
 
-  "On June 3, 2023, Julia Smith's dog bit me. I went to the emergency room to get treatment. The bill was for $568.90. I gave Julia a copy of the bill on August 3, 2023. A copy of the bill is attached. I have asked Julia to pay me back for the hospital bill. She has not paid me."
+  "On June 3, ${int(format_date(today(), format="yyyy"))-1}, Julia Smith's dog bit me. I went to the emergency room to get treatment. The bill was for $568.90. I gave Julia a copy of the bill on August 3, ${int(format_date(today(), format="yyyy"))-1}. A copy of the bill is attached. I have asked Julia to pay me back for the hospital bill. She has not paid me."
 ---
 id: more reason
 question: |
@@ -2429,6 +2430,17 @@ terms:
   - "e-signature": |
       An e-signature is an electronic signature. It is a digital version of a signature that has the same effect as a hand-written signature.
 ---
+id: forms assembling
+continue button field: forms_assembling
+question: |
+  Almost done
+subquestion: |
+  After you click **Next**, it may take a few moments to finish making your forms.
+  
+  ###### You do not need to refresh your screen. Hang in there!
+  
+  [NEWLINE]
+---
 id: get docs screen
 event: get_docs_screen
 question: |
@@ -2438,6 +2450,8 @@ subquestion: |
   
   Read the instructions to learn what to do next.
   
+  This program does not file your forms with the court or deliver them to defendants. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
+  
   ${ action_button_html(url_action('review_answers'), label=':edit: Make changes', color='success', size="md") }
 
   ${ al_user_bundle.download_list_html() }
@@ -2446,7 +2460,7 @@ subquestion: |
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
   
-  **Note:** this program does not file your forms with the court or deliver them to defendants.
+  **Note:** This program does not file your forms with the court or deliver them to defendants. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
 
   Thank you for using ILAO Easy Forms!
 under: |
