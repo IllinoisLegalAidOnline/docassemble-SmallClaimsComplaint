@@ -185,6 +185,7 @@ code: |
       
       more_reason
       preview_additional_reasons
+
   evidence
   
   nav.set_section('section_service')
@@ -738,7 +739,7 @@ continue button field: daley_center_note
 question: |
   Free help at the Daley Center
 subquestion: |
-  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Filing Desk**](https://www.cookcountyclerkofcourt.org/divisions/civil-division#:~:text=Pro%20se%20petitioners%20can%20file,603%2D5626%20with%20any%20questions.).
+  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Small Claims Court**](https://www.cookcountycourt.org/district/first-municipal-district-chicago/pro-se-small-claims-court).
   
   While it may be easier to get help at the Daley Center, you can still continue to make forms with this program.
 ---
@@ -1327,7 +1328,7 @@ subquestion: |
 
   **Important:** The *Summons* is not ready for service until Section 3 is complete.
 ---
-#This code block keeps track of the evidence a uswer said they would attach to their security deposit-related complaint. It creates a string used near the end of the interview to remind the user of each document to include.
+#This code block keeps track of the evidence a user said they would attach to their security deposit-related complaint. It creates a string used near the end of the interview to remind the user of each document to include.
 depends on:
   - lease_check
   - lease_attach_check
@@ -1349,6 +1350,8 @@ code: |
       which_evidence = "proof you paid a security deposit"
     elif lease_attach_check == False and deposit_payment_proof == False and demand_letter_attach == True:
       which_evidence = "the demand letter you sent to your landlord"
+    else:
+      which_evidence = "none"
   else:      
     if deposit_payment_proof == True and demand_letter_attach == True:
       which_evidence = "proof you paid a security deposit and the demand letter you sent to your landlord"
@@ -1357,7 +1360,7 @@ code: |
     elif deposit_payment_proof == False and demand_letter_attach == True:
       which_evidence = "the demand letter you sent your landlord"
     else:
-      which_evidence = "ERROR"
+      which_evidence = "none"
 ---
 reconsider: True
 code: |
@@ -1372,7 +1375,7 @@ question: |
   Evidence
 subquestion: |
   % if landlord_check == True:
-  % if which_evidence != "ERROR":
+  % if which_evidence != "none":
   You said you would attach ${which_evidence} to your complaint. Make sure to include those documents when you file your claim. 
   % else:
   You can attach evidence of your claim to your complaint. Evidence can be things like paperwork or photos that show why a defendant owes you money.
@@ -1935,7 +1938,7 @@ fields:
     alMin: ${deposit_dates[0]}
 ---
 #Tenants may have paid security deposit in installments. A landlord may have returned a portion of the security deposit. This uses the list of payments--deposit_payments--and the amount the landlord returned--partial_return_amount--to calculate the total deposit_balance_owed
-reconsider: True
+#reconsider: True
 depends on:
   - deposit_payments[0]
   - deposit_payments[1]
@@ -2059,7 +2062,7 @@ code: |
     extra_damages = False
 ---
 #see documentation for code above. I don't know why I made this and the above block separate blocks, but I am not foolhardy enough to pull unnecessarily on the spaghetti code.
-reconsider: True
+#reconsider: True
 depends on:
   - total_deposit
   - deposit_balance_owed
@@ -2068,6 +2071,7 @@ depends on:
   - deposit_payments[2]
   - another_deposit[0]
   - another_deposit[1]
+  - extra_damages
 code: |
   if extra_damages == True:
     deposit_with_damages = deposit_balance_owed + deposit_balance_owed
@@ -3390,7 +3394,7 @@ review:
     button: |
       **Does ${x.name.full(middle='full')} have a registered agent?**
       ${word(yesno(x.agent_check))}
-    show if: x.person_type != "person"
+    show if: x.person_type != "ALIndividual"
   - Edit: x.agent.name.first
     button: |
       **What is ${x.name.full(middle='full')}'s registered agent's name?**
