@@ -229,6 +229,11 @@ code: |
   	'started_interview': True, 
   	}
     
+  try:
+    stuff_to_snapshot['ip_address'] = device(ip=True)
+  except:
+    pass
+    
   stuff_to_snapshot['user_zip'] = showifdef('users[0].address.zip')
 
   stuff_to_snapshot['downloaded_forms'] = showifdef('forms_assembling')
@@ -3365,6 +3370,7 @@ review:
 #  else:
 #    show_amount_check = True
 ---
+id: other parties review screen
 continue button field: other_parties.revisit
 question: |
     Edit the defendants
@@ -3383,6 +3389,7 @@ columns:
 delete buttons: True
 confirm: True
 ---
+id: defendant info review screen
 continue button field: x.review_defendant_info
 generic object: ALIndividual
 question: |
