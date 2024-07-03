@@ -2702,6 +2702,7 @@ attachment:
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
     - "defendant_list": ${other_parties.short_list(4)}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[0].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[0].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[0].agent.name.full(middle='full')}
