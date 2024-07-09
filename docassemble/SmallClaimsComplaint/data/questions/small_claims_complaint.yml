@@ -58,13 +58,15 @@ code: |
   to_consider
   if age_check == False:
     age_kickout
-  if corporation_check == True:
+  if corporation_check:
     corporation_kickout
   if money_check == True:
     money_kickout
   nav.set_section('section_case')
   #landlord_check is an important variable. The program differs substantially based on its value; if True, the program goes into the detailed security deposit claim path.
-  if landlord_check == False:
+  landlord_check
+  snapshot_intermediate
+  if not landlord_check:
     amount_check
     if show_amount_kickout:
       amount_kickout
@@ -252,6 +254,10 @@ code: |
 code: |
   snapshot_interview_state
   snapshot_start = True  
+---
+code: |
+  reconsider('snapshot_interview_state')
+  snapshot_intermediate = True
 ---
 code: |
   reconsider('snapshot_interview_state')
@@ -3298,9 +3304,9 @@ review:
   - Edit: demand_answer_check
     button: |
       % if other_parties.number_gathered() > 1:
-      **Have the defendants paid you any amount?**
+      **Have the defendants failed to pay you in full?**
       % else:
-      **Has ${other_parties[0].name.full(middle='full')} paid you any amount?**
+      **Has ${other_parties[0].name.full(middle='full')} failed to pay you in full?**
       % endif
       ${word(yesno(demand_answer_check))}
     show if: landlord_check == False and demand_check == True
@@ -3790,9 +3796,9 @@ review:
   - Edit: demand_answer_check
     button: |
       % if other_parties.number_gathered() > 1:
-      **Have the defendants paid you any amount?**
+      **Have the defendants failed to pay you in full?**
       % else:
-      **Has ${other_parties[0].name.full(middle='full')} paid you any amount?**
+      **Has ${other_parties[0].name.full(middle='full')} failed to pay you in full?**
       % endif
       ${word(yesno(demand_answer_check))}
     show if: landlord_check == False and demand_check == True
