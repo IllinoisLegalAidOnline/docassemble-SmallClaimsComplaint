@@ -801,7 +801,7 @@ subquestion: |
   % if other_parties[i].person_type == "business":
   You can find the address of some businesses on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
 
-  The next page will ask if ${other_parties[i].name.full(middle='full')} has a registered agent. Do not enter their agent's information here.
+  If ${other_parties[i].name.full(middle='full')} has a registered agent, you can enter the agent's information on other screens. On this screen, enter ${other_parties[i].name.full(middle='full')}'s address.
   % endif
 fields:
   - Street address: other_parties[i].address.address
