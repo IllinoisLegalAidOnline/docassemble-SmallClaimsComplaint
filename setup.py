@@ -1,6 +1,6 @@
 import os
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
 
@@ -44,7 +44,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.SmallClaimsComplaint',
-      version='1.0.6',
+      version='1.0.7',
       description=('A docassemble extension.'),
       long_description='# docassemble.SmallClaimsComplaint\r\n\r\nA docassemble extension.\r\n\r\n## Author\r\n\r\nVivian McNaughton, vmcnaughton@illinoislegalaid.org\r\n\r\n',
       long_description_content_type='text/markdown',
@@ -52,8 +52,7 @@ setup(name='docassemble.SmallClaimsComplaint',
       author_email='vmcnaughton@illinoislegalaid.org',
       license='The MIT License (MIT)',
       url='https://docassemble.org',
-      packages=find_packages(),
-      namespace_packages=['docassemble'],
+      packages=find_namespace_packages(),
       install_requires=[],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/SmallClaimsComplaint/', package='docassemble.SmallClaimsComplaint'),
