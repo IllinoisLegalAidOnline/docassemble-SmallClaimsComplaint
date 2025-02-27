@@ -2607,7 +2607,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_one_name": ${other_parties[0].name.full(middle='full')}
     - "defendant_one_address": ${other_parties[0].address.on_one_line(bare=True)}
     - "defendant_two_name": ${other_parties[1].name.full(middle='full')}
@@ -2640,7 +2640,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "further_reasons": ${more_reason if landlord_check == False else more_deposit_reason}
     - "preview_watermark": ${ watermark if i=='preview' else '' }
 ---
@@ -2655,7 +2655,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_three_name": ${other_parties[2].name.full(middle='full')}
     - "defendant_three_address": ${other_parties[2].address.on_one_line(bare=True)}
     - "defendant_four_name": ${other_parties[3].name.full(middle='full')}
@@ -2685,7 +2685,7 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "e_signature": ${users[0].name.full(middle='full') if e_signature == True else ""}
-    - "short_defendant_list": ${other_parties.short_list(1)}
+    - "short_defendant_list": ${""}
 ---
 attachment:
   variable name: order[i]
@@ -2698,7 +2698,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
 ---
 attachment:
   variable name: summons_one[i]
@@ -2711,7 +2711,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[0].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[0].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
@@ -2746,7 +2746,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[1].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[1].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[1].agent.name.full(middle='full')}
@@ -2780,7 +2780,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[2].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[2].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[2].agent.name.full(middle='full')}
@@ -2814,7 +2814,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[3].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[3].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[3].agent.name.full(middle='full')}
@@ -2848,7 +2848,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[4].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[4].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[4].agent.name.full(middle='full')}
@@ -2882,7 +2882,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[5].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[5].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[5].agent.name.full(middle='full')}
@@ -2916,7 +2916,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[6].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[6].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[6].agent.name.full(middle='full')}
@@ -2950,7 +2950,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[7].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[7].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[7].agent.name.full(middle='full')}
@@ -2984,7 +2984,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${other_parties.short_list(4)}
+    - "defendant_list": ${comma_and_list(other_parties)}
     - "defendant_name": ${other_parties[8].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[8].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[8].agent.name.full(middle='full')}
