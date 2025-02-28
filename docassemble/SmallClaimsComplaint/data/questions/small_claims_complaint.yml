@@ -2273,7 +2273,7 @@ code: |
   #paragraph number variable must increment with each paragraph break, i.e. the \n \n lines.
   paragraph_number = 1
   
-  default_deposit_claim_reason = str(paragraph_number) + ". I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties) + ". "
+  default_deposit_claim_reason = str(paragraph_number) + ". I rented a residential unit at " + rental_address.on_one_line(bare=True) + " from " + comma_and_list(other_parties.complete_elements().full_names()) + ". "
   
   default_deposit_claim_reason += "\n" + "\n"
   paragraph_number += 1
@@ -2282,9 +2282,9 @@ code: |
     
   
   if another_deposit[0] == False:
-    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " on " + deposit_dates[0] + " as a security deposit. "
+    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties.complete_elements().full_names()) + " a total of " + currency(total_deposit) + " on " + deposit_dates[0] + " as a security deposit. "
   else:
-    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties) + " a total of " + currency(total_deposit) + " as a security deposit. On " + deposit_dates[0] + ", I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + ", I paid " + currency(deposit_payments[1]) + ". "
+    default_deposit_claim_reason += "I paid " + comma_and_list(other_parties.complete_elements().full_names()) + " a total of " + currency(total_deposit) + " as a security deposit. On " + deposit_dates[0] + ", I paid " + currency(deposit_payments[0]) + ". On " + deposit_dates[1] + ", I paid " + currency(deposit_payments[1]) + ". "
     if another_deposit[1] == True:
       default_deposit_claim_reason += "On " + deposit_dates[2] + ", I paid " + currency(deposit_payments[2]) + ". "    
   if deposit_payment_proof == True:
@@ -2295,24 +2295,24 @@ code: |
     
   default_deposit_claim_reason += str(paragraph_number) + ". I moved out of the unit on " + move_out_date + ". "  
 
-  default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + comma_and_list(other_parties) + " on " + demand_letter_date + ". "
+  default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + comma_and_list(other_parties.complete_elements().full_names()) + " on " + demand_letter_date + ". "
   if demand_letter_attach == True:
     default_deposit_claim_reason += "A copy of the letter is attached. "
   default_deposit_claim_reason += "\n" + "\n"
   paragraph_number += 1
   
   if partial_return_check ==  False:
-    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + comma_and_list(other_parties) + " had returned $0 of the security deposit" + ".\n" + "\n"
+    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + comma_and_list(other_parties.complete_elements().full_names()) + " had returned $0 of the security deposit" + ".\n" + "\n"
   else:
-    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + comma_and_list(other_parties) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n" + "\n"
+    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + comma_and_list(other_parties.complete_elements().full_names()) + " had returned " + currency(partial_return_amount) + " of the security deposit" + ".\n" + "\n"
   paragraph_number += 1
 
   if damages_check == False:
-    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " I have not received a letter from " + comma_and_list(other_parties) + " with a statement of damages the security deposit was used to repair" + ".\n" + "\n"
+    default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " I have not received a letter from " + comma_and_list(other_parties.complete_elements().full_names()) + " with a statement of damages the security deposit was used to repair" + ".\n" + "\n"
     paragraph_number += 1
   else:
     if landlord_timely == False:
-      default_deposit_claim_reason += str(paragraph_number) + ". I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
+      default_deposit_claim_reason += str(paragraph_number) + ". I received a letter from " + comma_and_list(other_parties.complete_elements().full_names()) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit, but I did not receive this letter within "
       if rental_address.city.lower() == "evanston":
         default_deposit_claim_reason += "21 days of vacating the property" + ".\n" + "\n"
       elif rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "dekalb":
@@ -2324,13 +2324,13 @@ code: |
       else:
         default_deposit_claim_reason += "30 days of vacating the property" + ".\n" + "\n"
     else:
-      default_deposit_claim_reason += str(paragraph_number) + ". I received a letter from " + comma_and_list(other_parties) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit."
+      default_deposit_claim_reason += str(paragraph_number) + ". I received a letter from " + comma_and_list(other_parties.complete_elements().full_names()) + " on " + damages_date + " saying they would use some or all of my security deposit to make repairs to the rental unit."
       if not dispute_withholding:
         default_deposit_claim_reason +=  " I dispute that this was a reasonable amount necessary to repair damage."
       default_deposit_claim_reason += "\n" + "\n"
     paragraph_number += 1
     
-  default_deposit_claim_reason += str(paragraph_number) + ". " + comma_and_list(other_parties) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
+  default_deposit_claim_reason += str(paragraph_number) + ". " + comma_and_list(other_parties.complete_elements().full_names()) + " failed to return " + word(currency(deposit_balance_owed)) + " within " + word(days_to_return_deposit) + " days after I vacated the property. "
   
   #In the a2jauthor interview there is logic at this point regarding the damages letter. I will look into whether we should include that later; it appears to be deprecated in the old program.
   
@@ -2341,25 +2341,25 @@ code: |
     elif rental_address.city.lower() == "chicago":
       default_deposit_claim_reason += "Per Section 5-12-080(f) of the municipal code of Chicago, I can be awarded damages in an amount equal to two times the security deposit plus interest. "
     elif rental_address.city.lower() == "dekalb":
-      default_deposit_claim_reason += "Per Section 10.14(a) of the municipal code of DeKalb, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      default_deposit_claim_reason += "Per Section 10.14(a) of the municipal code of DeKalb, " + comma_and_list(other_parties.complete_elements().full_names()) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
     elif rental_address.city.lower() == "evanston":
       default_deposit_claim_reason += "Per Section 5-3-5-1(F) of Evanston's code of ordinances, I may recover damages in an amount equal to twice the amount wrongfully withheld. "
     elif rental_address.city.lower() == "mount prospect":
       default_deposit_claim_reason += "Per Section 23.1806(A)(5) of Mount Prospect's code of ordinances, I may recover the money due. "
     elif rental_address.city.lower() == "oak park":
-      default_deposit_claim_reason += "Per Section 12-4-1 of Oak Park's code of ordinances, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      default_deposit_claim_reason += "Per Section 12-4-1 of Oak Park's code of ordinances, " + comma_and_list(other_parties.complete_elements().full_names()) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
     elif rental_address.city.lower() == "urbana":
-      default_deposit_claim_reason += "Per Section 12.5-20(b) of Urbana's code of ordinances, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      default_deposit_claim_reason += "Per Section 12.5-20(b) of Urbana's code of ordinances, " + comma_and_list(other_parties.complete_elements().full_names()) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
     else:
-      default_deposit_claim_reason += "Per Section 1(c) of the Security Deposit Return Act, " + comma_and_list(other_parties) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
+      default_deposit_claim_reason += "Per Section 1(c) of the Security Deposit Return Act, " + comma_and_list(other_parties.complete_elements().full_names()) + " can be liable for an amount equal to twice the amount of the security deposit due, together with court costs. "
       
   default_deposit_claim_reason += "\n" + "\n"
   paragraph_number += 1
       
   if showifdef('lets_stay_small') == True:
-    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me $10,000. In order to file this claim in Small Claims Court, I am not seeking damages greater than $10,000."
+    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties.complete_elements().full_names()) + " to pay me $10,000. In order to file this claim in Small Claims Court, I am not seeking damages greater than $10,000."
   else:
-    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties) + " to pay me " + currency(calculated_deposit_claim) + ". I am also asking this court to order " + comma_and_list(other_parties) + " to pay for court costs and interest, if applicable."
+    default_deposit_claim_reason += str(paragraph_number) + ". I am asking this court to order " + comma_and_list(other_parties.complete_elements().full_names()) + " to pay me " + currency(calculated_deposit_claim) + ". I am also asking this court to order " + comma_and_list(other_parties.complete_elements().full_names()) + " to pay for court costs and interest, if applicable."
   
   generate_default = True
 ---
@@ -2367,7 +2367,7 @@ id: deposit claim reason check
 question: |
   Do you want to add to or change this explanation?
 subquestion: |
-  Your *Small Claims Complaint* will include the following explanation of why ${comma_and_list(other_parties)} owes you ${currency(calculated_deposit_claim)}.
+  Your *Small Claims Complaint* will include the following explanation of why ${comma_and_list(other_parties.complete_elements().full_names())} owes you ${currency(calculated_deposit_claim)}.
   
   ---
   
@@ -2607,7 +2607,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_one_name": ${other_parties[0].name.full(middle='full')}
     - "defendant_one_address": ${other_parties[0].address.on_one_line(bare=True)}
     - "defendant_two_name": ${other_parties[1].name.full(middle='full')}
@@ -2640,7 +2640,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "further_reasons": ${more_reason if landlord_check == False else more_deposit_reason}
     - "preview_watermark": ${ watermark if i=='preview' else '' }
 ---
@@ -2655,7 +2655,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_three_name": ${other_parties[2].name.full(middle='full')}
     - "defendant_three_address": ${other_parties[2].address.on_one_line(bare=True)}
     - "defendant_four_name": ${other_parties[3].name.full(middle='full')}
@@ -2698,7 +2698,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
 ---
 attachment:
   variable name: summons_one[i]
@@ -2711,7 +2711,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[0].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[0].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
@@ -2746,7 +2746,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[1].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[1].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[1].agent.name.full(middle='full')}
@@ -2780,7 +2780,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[2].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[2].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[2].agent.name.full(middle='full')}
@@ -2814,7 +2814,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[3].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[3].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[3].agent.name.full(middle='full')}
@@ -2848,7 +2848,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[4].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[4].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[4].agent.name.full(middle='full')}
@@ -2882,7 +2882,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[5].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[5].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[5].agent.name.full(middle='full')}
@@ -2916,7 +2916,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[6].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[6].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[6].agent.name.full(middle='full')}
@@ -2950,7 +2950,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[7].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[7].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[7].agent.name.full(middle='full')}
@@ -2984,7 +2984,7 @@ attachment:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
     - "plaintiff_name": ${users[0].name.full(middle='full')}
-    - "defendant_list": ${comma_and_list(other_parties)}
+    - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[8].name.full(middle='full')}
     - "defendant_name_again": ${other_parties[8].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
     - "agent_name": ${other_parties[8].agent.name.full(middle='full')}
