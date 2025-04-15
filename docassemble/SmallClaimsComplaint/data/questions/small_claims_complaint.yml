@@ -818,9 +818,9 @@ fields:
 ---
 template: unknown_address
 subject: |
-  **What if I don't know ${other_parties[i].name.full(middle='full')}'s home address?**
+  **Help finding ${other_parties[i].name.full(middle='full')}'s home address**
 content: |
-  When you are suing someone, it is important to know their address so you can serve them with legal documents and so the court knows where they are.
+  When you are suing someone, it is important to know their address so you can serve them with legal documents and so the court knows where they are. If you do not know their address, try looking up their information online or reaching out to people who know them.
   
   If you know ${other_parties[i].name.full(middle='full')}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name.full(middle='full')} has filed a change of address request. You can call USPS at 1-800-275-8777. 
 
