@@ -802,6 +802,8 @@ subquestion: |
   You can find the address of some businesses on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
 
   If ${other_parties[i].name.full(middle='full')} has a registered agent, you can enter the agent's information on other screens. On this screen, enter ${other_parties[i].name.full(middle='full')}'s address.
+  % else:
+  ${collapse_template(unknown_address)}
   % endif
 fields:
   - Street address: other_parties[i].address.address
@@ -813,6 +815,16 @@ fields:
     code: |
       states_list()
   - ZIP code: other_parties[i].address.zip
+---
+template: unknown_address
+subject: |
+  **What if I don't know ${other_parties[i].name.full(middle='full')}'s home address?**
+content: |
+  When you are suing someone, it is important to know their address so you can serve them with legal documents and so the court knows where they are.
+  
+  If you know ${other_parties[i].name.full(middle='full')}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name.full(middle='full')} has filed a change of address request. You can call USPS at 1-800-275-8777. 
+
+  If you cannot find ${other_parties[i].name.full(middle='full')}'s address, you may want to visit **[Illinois Court Help](https://www.ilcourthelp.gov/)** or call or text (833) 411-1121 for assistance.
 ---
 id: more than 9 defendants
 question: |
