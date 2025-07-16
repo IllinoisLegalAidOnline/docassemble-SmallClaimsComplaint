@@ -796,12 +796,12 @@ sets:
   -other_parties[i].address.address
 id: defendant address
 question: |
-  What is ${other_parties[i].name.full(middle='full')}'s address?
+  What is ${other_parties[i].name_full()}'s address?
 subquestion: |
   % if other_parties[i].person_type == "business":
   You can find the address of some businesses on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
 
-  If ${other_parties[i].name.full(middle='full')} has a registered agent, you can enter the agent's information on other screens. On this screen, enter ${other_parties[i].name.full(middle='full')}'s address.
+  If ${other_parties[i].name_full()} has a registered agent, you can enter the agent's information on other screens. On this screen, enter ${other_parties[i].name_full()}'s address.
   % else:
   ${collapse_template(unknown_address)}
   % endif
@@ -818,13 +818,13 @@ fields:
 ---
 template: unknown_address
 subject: |
-  **Help finding ${other_parties[i].name.full(middle='full')}'s home address**
+  **Help finding ${other_parties[i].name_full()}'s home address**
 content: |
   When you are suing someone, it is important to know their address so you can serve them with legal documents and so the court knows where they are. If you do not know their address, try looking up their information online or reaching out to people who know them.
   
-  If you know ${other_parties[i].name.full(middle='full')}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name.full(middle='full')} has filed a change of address request. You can call USPS at 1-800-275-8777. 
+  If you know ${other_parties[i].name_full()}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name_full()} has filed a change of address request. You can call USPS at 1-800-275-8777. 
 
-  If you cannot find ${other_parties[i].name.full(middle='full')}'s address, you may want to visit **[Illinois Court Help](https://www.ilcourthelp.gov/)** or call or text (833) 411-1121 for assistance.
+  If you cannot find ${other_parties[i].name_full()}'s address, you may want to visit **[Illinois Court Help](https://www.ilcourthelp.gov/)** or call or text (833) 411-1121 for assistance.
 ---
 id: more than 9 defendants
 question: |
@@ -869,7 +869,7 @@ question: |
   % if other_parties.number_gathered() > 1:
   Did you have a written agreement with the defendants?
   % else:
-  Did you have a written agreement with ${other_parties[0].name.full(middle='full')}?
+  Did you have a written agreement with ${other_parties[0].name_full()}?
   % endif
 subquestion: |
   This could be a contract or some other proof of an agreement. 
@@ -908,7 +908,7 @@ subquestion: |
   % if other_parties.number_gathered() > 1:
   This does not need to be a written request. If you asked the defendants to pay you ${currency(amount_check)}, click **Yes**.
   % else:
-  This does not need to be a written request. If you asked the ${other_parties[0].name.full(middle='full')} to pay you ${currency(amount_check)}, click **Yes**.
+  This does not need to be a written request. If you asked the ${other_parties[0].name_full()} to pay you ${currency(amount_check)}, click **Yes**.
   % endif
 fields:
   - no label: demand_check
@@ -919,7 +919,7 @@ question: |
   % if other_parties.number_gathered() > 1:
   Have defendants failed to pay you the full amount of ${currency(amount_check)}?
   % else:
-  Has ${other_parties[0].name.full(middle='full')} failed to pay you the full amount of ${currency(amount_check)}?
+  Has ${other_parties[0].name_full()} failed to pay you the full amount of ${currency(amount_check)}?
   % endif
 fields:
   - no label: demand_answer_check
@@ -944,7 +944,7 @@ subquestion: |
   % if other_parties.number_gathered() > 1: 
   You can only use this program if the defendants still owe you money.
   % else:
-  You can only use this program if ${other_parties[0].name.full(middle='full')} still owea you money.
+  You can only use this program if ${other_parties[0].name_full()} still owea you money.
   % endif
   
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
@@ -957,13 +957,13 @@ question: |
   % if other_parties.number_gathered() > 1:
   Why do the defendants owe you ${currency(amount_check)}?
   % else:
-  Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)}?
+  Why does ${other_parties[0].name_full()} owe you ${currency(amount_check)}?
   % endif
 subquestion: |
   % if other_parties.number_gathered() > 1:
   Explain why the defendants owe you money. 
   % else:
-  Explain why the ${other_parties[0].name.full(middle='full')} owes you money. 
+  Explain why the ${other_parties[0].name_full()} owes you money. 
   % endif
   
   Be specific. Include:
@@ -983,7 +983,7 @@ fields:
       % if other_parties.number_gathered() > 1:
       Explain why defendants owe you ${currency(amount_check)}:
       % else:
-      Explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}:
+      Explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}:
       % endif
     field: claim_reason
     input type: area
@@ -1012,13 +1012,13 @@ question: |
   % if other_parties.number_gathered() > 1:
   Do you want to add an additional page to explain why defendants owe you ${currency(amount_check)}?
   % else:
-  Do you want to add an additional page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?
+  Do you want to add an additional page to explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}?
   % endif
   % else:
   % if other_parties.number_gathered() > 1:
   Do you want to add an additional page to explain why defendants owe you ${currency(calculated_deposit_claim)}?
   % else:
-  Do you want to add an additional page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(calculated_deposit_claim)}?
+  Do you want to add an additional page to explain why ${other_parties[0].name_full()} owes you ${currency(calculated_deposit_claim)}?
   % endif
   % endif
 fields:
@@ -1040,7 +1040,7 @@ subquestion: |
   % if other_parties.number_gathered() > 1:
   Explain why the defendants owe you ${currency(amount_check)}. 
   % else:
-  Explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}. 
+  Explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}. 
   % endif
   
   Be specific. Include:
@@ -1076,13 +1076,13 @@ subquestion: |
   % if other_parties.number_gathered() > 1:
   Add more reasons why the defendants owe you ${currency(amount_check)} below. 
   % else:
-  Add more reasons why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)} below.
+  Add more reasons why ${other_parties[0].name_full()} owes you ${currency(amount_check)} below.
   % endif
   % else:
   % if other_parties.number_gathered() > 1:
   Add more reasons why the defendants owe you ${currency(calculated_deposit_claim)} below. 
   % else:
-  Add more reasons why ${other_parties[0].name.full(middle='full')} owes you ${currency(calculated_deposit_claim)} below.
+  Add more reasons why ${other_parties[0].name_full()} owes you ${currency(calculated_deposit_claim)} below.
   % endif
   % endif
   
@@ -1098,13 +1098,13 @@ fields:
       % if other_parties.number_gathered() > 1:
       Continue explaining why defendants owe you ${currency(amount_check)}:
       % else:
-      Continue explaining why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}:
+      Continue explaining why ${other_parties[0].name_full()} owes you ${currency(amount_check)}:
       % endif
       % else:
       % if other_parties.number_gathered() > 1:
       Continue explaining why defendants owe you ${currency(calculated_deposit_claim)}:
       % else:
-      Continue explaining why ${other_parties[0].name.full(middle='full')} owes you ${currency(calculated_deposit_claim)}:
+      Continue explaining why ${other_parties[0].name_full()} owes you ${currency(calculated_deposit_claim)}:
       % endif
       % endif
     field: more_deposit_reason
@@ -1169,18 +1169,18 @@ code: |
 #This question should only be asked if a given defendant is a business.
 id: defendant agent check
 question: |
-  Does ${other_parties[i].name.full(middle='full')} have a registered agent?
+  Does ${other_parties[i].name_full()} have a registered agent?
 subquestion: |
   A registered agent is someone chosen by a business to receive court papers if the business is sued. You may be able to find this information from the [**Illinois Secretary of State**](https://apps.ilsos.gov/businessentitysearch/).
   
-  Note: If ${other_parties[i].name.full(middle='full')} does not have a registered agent, be sure to include ${other_parties[i].name.full(middle='full')}'s owner as a defendant. You can add the owner by returning to the [**About the case**](${ url_action('section_case') }) section.
+  Note: If ${other_parties[i].name_full()} does not have a registered agent, be sure to include ${other_parties[i].name_full()}'s owner as a defendant. You can add the owner by returning to the [**About the case**](${ url_action('section_case') }) section.
 fields:
   - no label: other_parties[i].agent_check
     datatype: yesnoradio
 ---
 id: defendant agent name
 question: |
-  Who is ${other_parties[i].name.full(middle='full')}'s registered agent?
+  Who is ${other_parties[i].name_full()}'s registered agent?
 subquestion: |
   You may be able to find this information from the [**Illinois Secretary of State**](https://apps.ilsos.gov/businessentitysearch/).
 fields:
@@ -1189,18 +1189,18 @@ fields:
 id: defendant same address
 question: |
   % if other_parties[i].agent_check == True:
-  Do you want to serve ${other_parties[i].agent.name.full(middle='full')} at ${other_parties[i].name.full(middle='full')}'s address?
+  Do you want to serve ${other_parties[i].agent.name_full()} at ${other_parties[i].name_full()}'s address?
   % else:
-  Do you want to serve ${other_parties[i].name.full(middle='full')} at their address?
+  Do you want to serve ${other_parties[i].name_full()} at their address?
   % endif
 subquestion: |
-  ${other_parties[i].name.full(middle='full')}'s address is:
+  ${other_parties[i].name_full()}'s address is:
   
   ${other_parties[i].address.line_one(bare=True)}
   ${other_parties[i].address.line_two()}
   
   % if other_parties[i].agent_check == True:
-  If ${other_parties[i].name.full(middle='full')} has listed a different address where they named ${other_parties[i].agent.name.full(middle='full')} as their registered agent on the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/) website, you must select **No** and then enter that address.
+  If ${other_parties[i].name_full()} has listed a different address where they named ${other_parties[i].agent.name_full()} as their registered agent on the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/) website, you must select **No** and then enter that address.
   % endif
 field: other_parties[i].same_address
 choices:
@@ -1210,13 +1210,13 @@ choices:
 id: defendant service address
 question: |
   % if other_parties[i].agent_check == True:
-  Where will you serve ${other_parties[i].agent.name.full(middle='full')}?
+  Where will you serve ${other_parties[i].agent.name_full()}?
   % else:
-  Where will you serve ${other_parties[i].name.full(middle='full')}?
+  Where will you serve ${other_parties[i].name_full()}?
   % endif
 subquestion: |
   % if other_parties[i].agent_check == True:
-  Their address should be listed on ${other_parties[i].name.full(middle='full')}'s entry on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
+  Their address should be listed on ${other_parties[i].name_full()}'s entry on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
   % endif
 fields:
   - Street address: other_parties[i].service_address.address
@@ -1232,12 +1232,12 @@ fields:
 id: defendant alt service
 question: |
   % if other_parties[i].agent_check == True:
-  Do you want to list an alternate address, phone number, or email for ${other_parties[i].agent.name.full(middle='full')}?
+  Do you want to list an alternate address, phone number, or email for ${other_parties[i].agent.name_full()}?
   % else:
-  Do you want to list an alternate address, phone number, or email for ${other_parties[i].name.full(middle='full')}?
+  Do you want to list an alternate address, phone number, or email for ${other_parties[i].name_full()}?
   % endif
 subquestion: |
-  Adding this information can help make sure ${other_parties[i].name.full(middle='full')} is served.
+  Adding this information can help make sure ${other_parties[i].name_full()} is served.
 fields:
   - no label: other_parties[i].alt_delivery
     datatype: yesnoradio
@@ -1245,9 +1245,9 @@ fields:
 id: defendant alt service address alt address
 question: |
   % if other_parties[i].agent_check == True:
-  What is the alternate address for ${other_parties[i].agent.name.full(middle='full')}?
+  What is the alternate address for ${other_parties[i].agent.name_full()}?
   % else:
-  What is the alternate address for ${other_parties[i].name.full(middle='full')}?
+  What is the alternate address for ${other_parties[i].name_full()}?
   % endif
 subquestion: |
   If you do not have another address to enter, leave these blank.
@@ -1269,15 +1269,15 @@ fields:
 id: defendant service contact
 question: |
   % if other_parties[i].agent_check == True:
-  What is ${other_parties[i].agent.name.full(middle='full')}'s contact information?
+  What is ${other_parties[i].agent.name_full()}'s contact information?
   % else:
-  What is ${other_parties[i].name.full(middle='full')}'s contact information?
+  What is ${other_parties[i].name_full()}'s contact information?
   % endif
 subquestion: |
   If you do not know this, you can leave this blank.
 
   % if other_parties[i].agent_check == True:
-  As a registered agent, ${other_parties[i].agent.name.full(middle='full')}'s contact information should be listed on ${other_parties[i].name.full(middle='full')}'s entry on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
+  As a registered agent, ${other_parties[i].agent.name_full()}'s contact information should be listed on ${other_parties[i].name_full()}'s entry on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
   % endif
 fields:
   - Phone number: other_parties[i].service_phone
@@ -1290,9 +1290,9 @@ fields:
 id: defendant alt contact
 question: |
   % if other_parties[i].agent_check == True:
-  What is ${other_parties[i].agent.name.full(middle='full')}'s alternate contact information?
+  What is ${other_parties[i].agent.name_full()}'s alternate contact information?
   % else:
-  What is ${other_parties[i].name.full(middle='full')}'s alternate contact information?
+  What is ${other_parties[i].name_full()}'s alternate contact information?
   % endif
 subquestion: |
   If you do not have another phone number or email address to enter, leave these blank.
@@ -1307,9 +1307,9 @@ fields:
 id: defendant service method
 question: |
   % if other_parties[i].agent_check == True:
-  How will you serve ${other_parties[i].agent.name.full(middle='full')}?
+  How will you serve ${other_parties[i].agent.name_full()}?
   % else:
-  How will you serve ${other_parties[i].name.full(middle='full')}?
+  How will you serve ${other_parties[i].name_full()}?
   % endif
 subquestion: |
   In Small Claims Court, you can serve a defendant by:
@@ -1420,7 +1420,7 @@ question: |
   About service
 subquestion: |
   % if other_parties.number_gathered() == 1:
-  The next questions will ask about how you will serve ${other_parties[0].name.full(middle='full')} with the complaint and summons.
+  The next questions will ask about how you will serve ${other_parties[0].name_full()} with the complaint and summons.
   
   To "serve" means to officially deliver court forms to a defendant. If your *Small Claims Complaint* is not served correctly, your case might be dismissed.
   % else:
@@ -2432,7 +2432,7 @@ id: signature
 question: |
   Do you want to add your e-signature to your forms?
 subquestion: |
-  This program can put "**/s/ ${users[0].name.full(middle='full')}**" where you would sign your name. The court will accept this as your signature.
+  This program can put "**/s/ ${users[0].name_full()}**" where you would sign your name. The court will accept this as your signature.
   
   If you do not add your **{e-signature}** now, you must sign your forms before you file them.
   
@@ -2618,11 +2618,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_one_name": ${other_parties[0].name.full(middle='full')}
+    - "defendant_one_name": ${other_parties[0].name_full()}
     - "defendant_one_address": ${other_parties[0].address.on_one_line(bare=True)}
-    - "defendant_two_name": ${other_parties[1].name.full(middle='full')}
+    - "defendant_two_name": ${other_parties[1].name_full()}
     - "defendant_two_address": ${other_parties[1].address.on_one_line(bare=True)}
     - "extra_defendants": ${True if other_parties.number_gathered() > 2 else False}
     - "amount_check": ${currency(amount_check) if landlord_check == False else  currency(calculated_deposit_claim)}
@@ -2634,7 +2634,7 @@ attachment:
     - "demanded_and_failed": ${demand_letter_check if landlord_check == True else have_demanded_field}
     - "why_owed": ${claim_reason if landlord_check == False else deposit_claim_reason}
     - "additional_reasons": ${reasons_attach}
-    - "e_signature": ${users[0].name.full(middle='full') if e_signature == True else ""}
+    - "e_signature": ${users[0].name_full() if e_signature == True else ""}
     - "plaintiff_street": ${users[0].address.line_one(bare=True)}
     - "plaintiff_city_state_zip": ${users[0].address.line_two()}
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
@@ -2651,7 +2651,7 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "further_reasons": ${more_reason if landlord_check == False else more_deposit_reason}
     - "preview_watermark": ${ watermark if i=='preview' else '' }
@@ -2666,21 +2666,21 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_three_name": ${other_parties[2].name.full(middle='full')}
+    - "defendant_three_name": ${other_parties[2].name_full()}
     - "defendant_three_address": ${other_parties[2].address.on_one_line(bare=True)}
-    - "defendant_four_name": ${other_parties[3].name.full(middle='full')}
+    - "defendant_four_name": ${other_parties[3].name_full()}
     - "defendant_four_address": ${other_parties[3].address.on_one_line(bare=True)}
-    - "defendant_five_name": ${other_parties[4].name.full(middle='full')}
+    - "defendant_five_name": ${other_parties[4].name_full()}
     - "defendant_five_address": ${other_parties[4].address.on_one_line(bare=True)}
-    - "defendant_six_name": ${other_parties[5].name.full(middle='full')}
+    - "defendant_six_name": ${other_parties[5].name_full()}
     - "defendant_six_address": ${other_parties[5].address.on_one_line(bare=True)}
-    - "defendant_seven_name": ${other_parties[6].name.full(middle='full')}
+    - "defendant_seven_name": ${other_parties[6].name_full()}
     - "defendant_seven_address": ${other_parties[6].address.on_one_line(bare=True)}
-    - "defendant_eight_name": ${other_parties[7].name.full(middle='full')}
+    - "defendant_eight_name": ${other_parties[7].name_full()}
     - "defendant_eight_address": ${other_parties[7].address.on_one_line(bare=True)}
-    - "defendant_nine_name": ${other_parties[8].name.full(middle='full')}
+    - "defendant_nine_name": ${other_parties[8].name_full()}
     - "defendant_nine_address": ${other_parties[8].address.on_one_line(bare=True)}
 ---
 attachment:
@@ -2691,12 +2691,12 @@ attachment:
   editable: False
   pdf template file: SMC_Letter_to_Sheriff.pdf
   fields:
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "plaintiff_address_one": ${users[0].address.line_one(bare=True)}
     - "plaintiff_address_two": ${users[0].address.line_two()}
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
-    - "e_signature": ${users[0].name.full(middle='full') if e_signature == True else ""}
+    - "e_signature": ${users[0].name_full() if e_signature == True else ""}
     - "short_defendant_list": ${""}
 ---
 attachment:
@@ -2709,7 +2709,7 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
 ---
 attachment:
@@ -2722,12 +2722,12 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
-    - "defendant_name": ${other_parties[0].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[0].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[0].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[0].name_full()}
+    - "defendant_name_again": ${other_parties[0].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[0].agent.name_full()}
     - "main_service_street": ${other_parties[0].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[0].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[0].service_phone) if other_parties[0].service_phone != "" else ""}
@@ -2757,11 +2757,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[1].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[1].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[1].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[1].name_full()}
+    - "defendant_name_again": ${other_parties[1].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[1].agent.name_full()}
     - "main_service_street": ${other_parties[1].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[1].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[1].service_phone) if other_parties[1].service_phone != "" else ""}
@@ -2791,11 +2791,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[2].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[2].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[2].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[2].name_full()}
+    - "defendant_name_again": ${other_parties[2].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[2].agent.name_full()}
     - "main_service_street": ${other_parties[2].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[2].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[2].service_phone) if other_parties[2].service_phone != "" else ""}
@@ -2825,11 +2825,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[3].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[3].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[3].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[3].name_full()}
+    - "defendant_name_again": ${other_parties[3].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[3].agent.name_full()}
     - "main_service_street": ${other_parties[3].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[3].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[3].service_phone) if other_parties[3].service_phone != "" else ""}
@@ -2859,11 +2859,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[4].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[4].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[4].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[4].name_full()}
+    - "defendant_name_again": ${other_parties[4].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[4].agent.name_full()}
     - "main_service_street": ${other_parties[4].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[4].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[4].service_phone) if other_parties[4].service_phone != "" else ""}
@@ -2893,11 +2893,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[5].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[5].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[5].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[5].name_full()}
+    - "defendant_name_again": ${other_parties[5].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[5].agent.name_full()}
     - "main_service_street": ${other_parties[5].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[5].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[5].service_phone) if other_parties[5].service_phone != "" else ""}
@@ -2927,11 +2927,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[6].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[6].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[6].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[6].name_full()}
+    - "defendant_name_again": ${other_parties[6].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[6].agent.name_full()}
     - "main_service_street": ${other_parties[6].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[6].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[6].service_phone) if other_parties[6].service_phone != "" else ""}
@@ -2961,11 +2961,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[7].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[7].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[7].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[7].name_full()}
+    - "defendant_name_again": ${other_parties[7].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[7].agent.name_full()}
     - "main_service_street": ${other_parties[7].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[7].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[7].service_phone) if other_parties[7].service_phone != "" else ""}
@@ -2995,11 +2995,11 @@ attachment:
   fields:
     - "case_number": ${""}
     - "filing_county": ${filing_location.county.upper()}
-    - "plaintiff_name": ${users[0].name.full(middle='full')}
+    - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
-    - "defendant_name": ${other_parties[8].name.full(middle='full')}
-    - "defendant_name_again": ${other_parties[8].name.full(middle='full') if other_parties[0].alt_delivery == True else ""}
-    - "agent_name": ${other_parties[8].agent.name.full(middle='full')}
+    - "defendant_name": ${other_parties[8].name_full()}
+    - "defendant_name_again": ${other_parties[8].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "agent_name": ${other_parties[8].agent.name_full()}
     - "main_service_street": ${other_parties[8].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[8].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[8].service_phone) if other_parties[8].service_phone != "" else ""}
@@ -3050,7 +3050,7 @@ review:
       **Defendants: (Edit to change names, addresses, and other information)**
 
       % for my_var in other_parties:
-        * ${ my_var.name.full(middle="full") }
+        * ${ my_var.name_full() }
       % endfor
   - Edit: landlord_check
     button: |
@@ -3298,7 +3298,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Do you have a written agreement with the defendants?**
       % else:
-      **Do you have a written agreement with ${other_parties[0].name.full(middle='full')}?**
+      **Do you have a written agreement with ${other_parties[0].name_full()}?**
       % endif
       ${word(yesno(agreement_check))}
     show if: landlord_check == False
@@ -3322,7 +3322,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Have the defendants failed to pay you in full?**
       % else:
-      **Has ${other_parties[0].name.full(middle='full')} failed to pay you in full?**
+      **Has ${other_parties[0].name_full()} failed to pay you in full?**
       % endif
       ${word(yesno(demand_answer_check))}
     show if: landlord_check == False and demand_check == True
@@ -3331,7 +3331,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Why do the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)}?**
+      **Why does ${other_parties[0].name_full()} owe you ${currency(amount_check)}?**
       % endif
       
       ${claim_reason}
@@ -3341,7 +3341,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Do you need a second page to explain why the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Do you need a second page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?**
+      **Do you need a second page to explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}?**
       % endif
       ${add_second_page}
     show if: landlord_check == False
@@ -3350,7 +3350,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Why do the defendants owe you ${currency(amount_check)} (second page)?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)} (second page)?**
+      **Why does ${other_parties[0].name_full()} owe you ${currency(amount_check)} (second page)?**
       % endif
       
       ${more_reason}
@@ -3358,7 +3358,7 @@ review:
   - Edit: users[0].name.first
     button: |
       **Your name:**
-      ${users[0].name.full(middle='full')}
+      ${users[0].name_full()}
   - Edit: users[0].address.address
     button: |
       **Your address:**
@@ -3406,7 +3406,7 @@ table: other_parties.table
 rows: other_parties
 columns:
   - Name: |
-      row_item.name.full(middle="full") if defined("row_item.name.first") else ""
+      row_item.name_full() if defined("row_item.name.first") else ""
   - Contact, service address, and additional information: |
       action_button_html(url_action(row_item.attr_name("review_defendant_info")), label="Edit", icon="pencil-alt")
 delete buttons: True
@@ -3416,15 +3416,15 @@ id: defendant info review screen
 continue button field: x.review_defendant_info
 generic object: ALIndividual
 question: |
-  Edit ${ x.name.full(middle="full") }'s information
+  Edit ${ x.name_full() }'s information
 review: 
   - Edit: x.name.first
     button: |
       **Defendant name:**
-      ${x.name.full(middle='full')}
+      ${x.name_full()}
   - Edit: x.name.first
     button: |
-      **Is ${x.name.full(middle='full')} a person or a business?**
+      **Is ${x.name_full()} a person or a business?**
       % if x.person_type == "ALIndividual":
       A person
       % else:
@@ -3432,92 +3432,92 @@ review:
       % endif
   - Edit: x.address.address
     button: |
-      **${x.name.full(middle='full')}'s address:**
+      **${x.name_full()}'s address:**
       ${x.address.on_one_line(bare=True)}
   - Edit: x.agent_check
     button: |
-      **Does ${x.name.full(middle='full')} have a registered agent?**
+      **Does ${x.name_full()} have a registered agent?**
       ${word(yesno(x.agent_check))}
     show if: x.person_type != "ALIndividual"
   - Edit: x.agent.name.first
     button: |
-      **What is ${x.name.full(middle='full')}'s registered agent's name?**
-      ${x.agent.name.full(middle='full')}
+      **What is ${x.name_full()}'s registered agent's name?**
+      ${x.agent.name_full()}
     show if: x.agent_check
   - Edit: x.same_address
     button: |
       % if x.agent_check == True:
-      **Do you want to serve ${x.agent.name.full(middle='full')} at ${x.address.on_one_line(bare=True)}?**
+      **Do you want to serve ${x.agent.name_full()} at ${x.address.on_one_line(bare=True)}?**
       % else:
-      **Do you want to serve ${x.name.full(middle='full')} at ${x.address.on_one_line(bare=True)}?**
+      **Do you want to serve ${x.name_full()} at ${x.address.on_one_line(bare=True)}?**
       % endif
       ${word(yesno(x.same_address))}
   - Edit: x.service_address.address
     button: |
       % if x.agent_check == True:
-      **Where do you want to serve ${x.agent.name.full(middle='full')}?**
+      **Where do you want to serve ${x.agent.name_full()}?**
       % else:
-      **Where do you want to serve ${x.name.full(middle='full')}?**
+      **Where do you want to serve ${x.name_full()}?**
       % endif
       ${x.service_address.on_one_line(bare=True)}
     show if: x.same_address == False
   - Edit: x.service_phone
     button: |
       % if x.agent_check == True:
-      **What is ${x.agent.name.full(middle='full')}'s phone number?**
+      **What is ${x.agent.name_full()}'s phone number?**
       % else:
-      **What is ${x.name.full(middle='full')}'s phone number?**
+      **What is ${x.name_full()}'s phone number?**
       % endif
       ${phone_number_formatted(x.service_phone)}
   - Edit: x.service_email
     button: |
       % if x.agent_check == True:
-      **What is ${x.agent.name.full(middle='full')}'s email address?**
+      **What is ${x.agent.name_full()}'s email address?**
       % else:
-      **What is ${x.name.full(middle='full')}'s email address?**
+      **What is ${x.name_full()}'s email address?**
       % endif
       ${x.service_email}
   - Edit: x.alt_delivery
     button: |
       % if other_parties[i].agent_check == True:
-      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].agent.name.full(middle='full')}?**
+      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].agent.name_full()}?**
       % else:
-      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].name.full(middle='full')}?**
+      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].name_full()}?**
       % endif
       ${word(yesno(x.alt_delivery))}
   - Edit: x.alt_service_address.address
     button: |
       % if x.agent_check == True:
-      **What is ${x.agent.name.full(middle='full')}'s alternate service address?**
+      **What is ${x.agent.name_full()}'s alternate service address?**
       % else:
-      **What is ${x.name.full(middle='full')}'s alternate service address?**
+      **What is ${x.name_full()}'s alternate service address?**
       % endif
       ${x.alt_service_address.on_one_line(bare=True)}
     show if: x.alt_delivery
   - Edit: x.alt_service_phone
     button: |
       % if x.agent_check == True:
-      **What is ${x.agent.name.full(middle='full')}'s alternate phone number?**
+      **What is ${x.agent.name_full()}'s alternate phone number?**
       % else:
-      **What is ${x.name.full(middle='full')}'s alternate phone number?**
+      **What is ${x.name_full()}'s alternate phone number?**
       % endif
       ${phone_number_formatted(x.alt_service_phone)}
     show if: x.alt_delivery
   - Edit: x.alt_service_email
     button: |
       % if x.agent_check == True:
-      **What is ${x.agent.name.full(middle='full')}'s alternate email address?**
+      **What is ${x.agent.name_full()}'s alternate email address?**
       % else:
-      **What is ${x.name.full(middle='full')}'s alternate email address?**
+      **What is ${x.name_full()}'s alternate email address?**
       % endif
       ${x.alt_service_email}
     show if: x.alt_delivery
   - Edit: x.service_method
     button: |
       % if x.agent_check == True:
-      **How will you serve ${x.agent.name.full(middle='full')}?**
+      **How will you serve ${x.agent.name_full()}?**
       % else:
-      **How will you serve ${x.name.full(middle='full')}?**
+      **How will you serve ${x.name_full()}?**
       % endif
       % if x.service_method == "clerk":
       By Circuit Clerk (only for defendants in Illinois)
@@ -3790,7 +3790,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Do you have a written agreement with the defendants?**
       % else:
-      **Do you have a written agreement with ${other_parties[0].name.full(middle='full')}?**
+      **Do you have a written agreement with ${other_parties[0].name_full()}?**
       % endif
       ${word(yesno(agreement_check))}
     show if: landlord_check == False
@@ -3814,7 +3814,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Have the defendants failed to pay you in full?**
       % else:
-      **Has ${other_parties[0].name.full(middle='full')} failed to pay you in full?**
+      **Has ${other_parties[0].name_full()} failed to pay you in full?**
       % endif
       ${word(yesno(demand_answer_check))}
     show if: landlord_check == False and demand_check == True
@@ -3823,7 +3823,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Why do the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)}?**
+      **Why does ${other_parties[0].name_full()} owe you ${currency(amount_check)}?**
       % endif
       
       ${claim_reason}
@@ -3833,7 +3833,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Do you need a second page to explain why the defendants owe you ${currency(amount_check)}?**
       % else:
-      **Do you need a second page to explain why ${other_parties[0].name.full(middle='full')} owes you ${currency(amount_check)}?**
+      **Do you need a second page to explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}?**
       % endif
       % if preview_complaint == "Additional page":
       Yes
@@ -3846,7 +3846,7 @@ review:
       % if other_parties.number_gathered() > 1:
       **Why do the defendants owe you ${currency(amount_check)} (second page)?**
       % else:
-      **Why does ${other_parties[0].name.full(middle='full')} owe you ${currency(amount_check)} (second page)?**
+      **Why does ${other_parties[0].name_full()} owe you ${currency(amount_check)} (second page)?**
       % endif
       
       ${more_reason}
@@ -3856,7 +3856,7 @@ review:
       **Defendants: (Edit to change names, addresses, and other information)**
 
       % for my_var in other_parties:
-        * ${ my_var.name.full(middle="full") }
+        * ${ my_var.name_full() }
       % endfor
 ---
 section: About you
@@ -3870,7 +3870,7 @@ review:
   - Edit: users[0].name.first
     button: |
       **Your name:**
-      ${users[0].name.full(middle='full')}
+      ${users[0].name_full()}
   - Edit: users[0].address.address
     button: |
       **Your address:**
@@ -3901,7 +3901,7 @@ review:
       **Defendants: (Edit to change names, addresses, and other information)**
 
       % for my_var in other_parties:
-        * ${ my_var.name.full(middle="full") }
+        * ${ my_var.name_full() }
       % endfor
 ---
 #code block for creating variables used only in attachment blocks. Why oh why docassemble won't let me just put this code by the corresponding fields is beyond me.
