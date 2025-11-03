@@ -855,6 +855,8 @@ question: |
   Are you suing your former landlord to return a security deposit?
 subquestion: |
   To learn more, read ILAO's article about [**getting or returning a security deposit**](https://www.illinoislegalaid.org/node/31176).
+
+  If you gave a landlord a security deposit but did not move into the unit they were renting, click **No**.
 fields:
   - no label: landlord_check
     datatype: yesnoradio
