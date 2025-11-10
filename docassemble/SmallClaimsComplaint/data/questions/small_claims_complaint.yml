@@ -72,9 +72,9 @@ code: |
       amount_kickout
   else:
     note_about_amount_limit
-  filing_location.county_number
+  trial_court_index
   filing_location.get_county
-  if filing_location.county_number == -1:
+  if trial_court_index == -1:
     if landlord_check == False:
       if amount_check < 3000.01:
         if cook_district == "15":
@@ -536,19 +536,19 @@ subquestion: |
   % endif
   ${ collapse_template(county_lookup_help) }
 fields:
-  - County: filing_location.county_number
+  - County: trial_court_index
     datatype: integer
     code: |
       ilao_court_county_lookup(court_list)
 ---
 depends on:
-  - filing_location.county_number
+  - trial_court_index
   - cook_district
 code: |
-  if filing_location.county_number == -1:
+  if trial_court_index == -1:
     reference_number = court_list.as_court('trial_court', cook_district)
   else:
-    reference_number = court_list.as_court('trial_court', filing_location.county_number)
+    reference_number = court_list.as_court('trial_court', trial_court_index)
     
   court_name = str(reference_number.name)
   court_street_address = str(reference_number.address.address)
@@ -558,7 +558,7 @@ code: |
   courthouse_info = court_name + ", " + court_street_address + ", " + court_city + ", " + court_state + " " + court_zip
 ---
 depends on:
-  - filing_location.county_number
+  - trial_court_index
 code: |  
   filing_location.county = reference_number.address.county + " County" 
   filing_location.get_county = True
@@ -3043,10 +3043,14 @@ review:
       **You are suing for:**
       ${currency(amount_check)} 
     show if: landlord_check == False
-  - Edit: filing_location.county_number
+  - label: Edit
+    fields:
+      - trial_court_index
+      - recompute:
+        - reference_number.address.county
     button: |
-      **You are filing in:**
-      ${end_in_county(filing_location.county)}
+      **Which county are you filing your motion in?**
+      ${end_in_county(reference_number.address.county)}
   - Edit: other_parties.revisit
     button: |
       **Defendants: (Edit to change names, addresses, and other information)**
@@ -3544,10 +3548,14 @@ review:
       **You are suing for:**
       ${currency(amount_check)}  
     show if: landlord_check == False
-  - Edit: filing_location.county_number
+  - label: Edit
+    fields:
+      - trial_court_index
+      - recompute:
+        - reference_number.address.county
     button: |
-      **You are filing in:**
-      ${end_in_county(filing_location.county)}
+      **Which county are you filing your motion in?**
+      ${end_in_county(reference_number.address.county)}
   - Edit: landlord_check
     button: |
       **Are you suing your former landlord to return a security deposit?**
