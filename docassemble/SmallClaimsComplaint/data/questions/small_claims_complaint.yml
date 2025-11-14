@@ -180,7 +180,7 @@ code: |
     #        generic_amount_updated
     set_progress(40)
     claim_reason
-    chop_off_county
+    #chop_off_county
     set_progress(60)
     preview_complaint
     if add_second_page == True:
@@ -271,9 +271,9 @@ code: |
 ---
 reconsider: True
 code: |
-  quick_county_storage = filing_location.county.lower()
+  quick_county_storage = trial_court.address.county.lower()
   if quick_county_storage.endswith(" county"):
-    filing_location.county = filing_location.county[:-7]
+    trial_court.address.county = trial_court.address.county[:-7]
     chop_off_county = True
   else:
     chop_off_county = False
@@ -543,24 +543,33 @@ fields:
 ---
 depends on:
   - trial_court_index
+code: |
+  trial_court = court_list.as_court('trial_court', trial_court_index)
+---
+depends on:
+  - trial_court_index
   - cook_district
 code: |
   if trial_court_index == -1:
-    reference_number = court_list.as_court('trial_court', cook_district)
+    trial_court = court_list.as_court('trial_court', cook_district)
   else:
-    reference_number = court_list.as_court('trial_court', trial_court_index)
+    trial_court = court_list.as_court('trial_court', trial_court_index)
     
-  court_name = str(reference_number.name)
-  court_street_address = str(reference_number.address.address)
-  court_city = str(reference_number.address.city)
-  court_state = str(reference_number.address.state)
-  court_zip = str(reference_number.address.zip)
+  court_name = str(trial_court.name)
+  court_street_address = str(trial_court.address.address)
+  court_city = str(trial_court.address.city)
+  court_state = str(trial_court.address.state)
+  court_zip = str(trial_court.address.zip)
+  quick_county_storage = trial_court.address.county.lower()
+  if quick_county_storage.endswith(" county"):
+    trial_court.address.county = trial_court.address.county[:-7]
+  court_county = str(trial_court.address.county)
   courthouse_info = court_name + ", " + court_street_address + ", " + court_city + ", " + court_state + " " + court_zip
 ---
 depends on:
   - trial_court_index
 code: |  
-  filing_location.county = reference_number.address.county + " County" 
+  filing_location.county = trial_court.address.county + " County" 
   filing_location.get_county = True
 ---
 id: Cook County district
@@ -2619,7 +2628,7 @@ attachment:
   pdf template file: SMC_Complaint.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_one_name": ${other_parties[0].name_full()}
@@ -2652,7 +2661,7 @@ attachment:
   pdf template file: SMC_Additional_Reasons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "further_reasons": ${more_reason if landlord_check == False else more_deposit_reason}
@@ -2667,7 +2676,7 @@ attachment:
   pdf template file: SMC_Additional_Defendants.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_three_name": ${other_parties[2].name_full()}
@@ -2710,7 +2719,7 @@ attachment:
   pdf template file: SMC_Order.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
 ---
@@ -2723,7 +2732,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
@@ -2746,8 +2755,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_two[i]
@@ -2758,7 +2767,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[1].name_full()}
@@ -2780,8 +2789,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_three[i]
@@ -2792,7 +2801,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[2].name_full()}
@@ -2814,8 +2823,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_four[i]
@@ -2826,7 +2835,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[3].name_full()}
@@ -2848,8 +2857,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_five[i]
@@ -2860,7 +2869,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[4].name_full()}
@@ -2882,8 +2891,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_six[i]
@@ -2894,7 +2903,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[5].name_full()}
@@ -2916,8 +2925,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_seven[i]
@@ -2928,7 +2937,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[6].name_full()}
@@ -2950,8 +2959,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_eight[i]
@@ -2962,7 +2971,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[7].name_full()}
@@ -2984,8 +2993,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_nine[i]
@@ -2996,7 +3005,7 @@ attachment:
   pdf template file: SMC_Summons.pdf
   fields:
     - "case_number": ${""}
-    - "filing_county": ${filing_location.county.upper()}
+    - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
     - "defendant_name": ${other_parties[8].name_full()}
@@ -3018,8 +3027,8 @@ attachment:
     - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
     - "plaintiff_email": ${users[0].email}
     - "courthouse_address": ${ courthouse_info }
-    - "clerk_phone": ${ reference_number.phone }
-    - "clerk_website": ${ reference_number.website }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
 ---
 attachment:
   variable name: summons_blank[i]
@@ -3047,10 +3056,10 @@ review:
     fields:
       - trial_court_index
       - recompute:
-        - reference_number.address.county
+        - trial_court
     button: |
       **Which county are you filing your motion in?**
-      ${end_in_county(reference_number.address.county)}
+      ${end_in_county(court_county)}
   - Edit: other_parties.revisit
     button: |
       **Defendants: (Edit to change names, addresses, and other information)**
@@ -3552,10 +3561,10 @@ review:
     fields:
       - trial_court_index
       - recompute:
-        - reference_number.address.county
+        - courthouse_info
     button: |
       **Which county are you filing your motion in?**
-      ${end_in_county(reference_number.address.county)}
+      ${end_in_county(court_county)}
   - Edit: landlord_check
     button: |
       **Are you suing your former landlord to return a security deposit?**
