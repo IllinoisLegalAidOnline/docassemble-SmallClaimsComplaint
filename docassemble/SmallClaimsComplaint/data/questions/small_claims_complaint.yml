@@ -306,7 +306,7 @@ subquestion: |
   * The amount and date of security deposit payments you made, and
   * The date you sent your demand letter to the landlord.
 
-  Set aside 10 to 20 minutes to finish this program. You can log in and save your work to return to later. 
+  Set aside 10 to 20 minutes to finish this program. You can log in and save your work to continue later.
   
   ${ collapse_template(help_example) }  
 
@@ -2482,11 +2482,11 @@ event: get_docs_screen
 question: |
   Download
 subquestion: |
-  Your forms are ready. View and download your forms below. Click **Make changes** to fix any mistakes.
+  Your forms are ready. View and download your forms below. Click **:edit: Make changes** to fix any mistakes.
   
   Read the instructions to learn what to do next.
   
-  This program does not file your forms with the court or deliver them to defendants. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
+  This program **does not file** your forms with the court or deliver them to defendants. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
 
   **Note:** If you are e-filing, you can upload other documents as attachments during the e-filing process. If you are paper filing, bring copies of the documents to the clerk's office so you can attach them to the complaint.  
   
@@ -2498,7 +2498,7 @@ subquestion: |
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
   
-  **Note:** This program does not file your forms with the court or deliver them to defendants. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
+  **Note:** This program **does not file** your forms with the court or deliver them to defendants. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
 
   Thank you for using ILAO Easy Forms!
 under: |
@@ -3058,7 +3058,7 @@ review:
       - recompute:
         - trial_court
     button: |
-      **Which county are you filing your motion in?**
+      **Which county are you filing your *Small Claims Complaint* in?**
       ${end_in_county(court_county)}
   - Edit: other_parties.revisit
     button: |
@@ -3563,7 +3563,7 @@ review:
       - recompute:
         - courthouse_info
     button: |
-      **Which county are you filing your motion in?**
+      **Which county are you filing your *Small Claims Complaint* in?**
       ${end_in_county(court_county)}
   - Edit: landlord_check
     button: |
