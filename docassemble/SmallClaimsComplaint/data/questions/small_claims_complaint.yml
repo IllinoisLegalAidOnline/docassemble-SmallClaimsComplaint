@@ -15,7 +15,7 @@ include:
 objects:
   - users: ALPeopleList.using(there_are_any=True)
   - filing_location: ALAddress
-  - other_parties: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True, maximum_number=9)
+  - other_parties: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True)
   - other_parties[i].agent: ALIndividual
   - other_parties[i].service_address: ALAdress
   - other_parties[i].alt_service_address: ALAddress
@@ -83,8 +83,8 @@ code: |
       if cook_district == "15":
         daley_center_note
   other_parties.gather()
-  if other_parties.number_gathered() == 9:
-    blank_summons_check
+  #if other_parties.number_gathered() == 9:
+  #  blank_summons_check
   set_progress(20)
   #Here lies the security deposit path
   if landlord_check == True:
@@ -190,6 +190,7 @@ code: |
 
   evidence
   
+  
   nav.set_section('section_service')
   service_intro
   set_progress(80)
@@ -210,6 +211,8 @@ code: |
         person.alt_service_email
     person.service_method
   next_steps
+  if has_court_date:
+    hearing_date
   
   nav.set_section('section_about_you')
   set_progress(90)
@@ -221,6 +224,7 @@ code: |
   nav.set_section('section_download')
   forms_assembling
   attachment_logic
+  refresh_summons_bundle
   #order_info
   snapshot_forms
   get_docs_screen
@@ -521,6 +525,65 @@ subquestion: |
   If your total claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000.
   
   This program will calculate how much you can sue for. If your claim is too big for Small Claims Court, this program will let you know.
+---
+id: hearing scheduled
+question: |
+  Do you already have a court date scheduled for this complaint?
+subquestion: |
+  In some counties, the circuit clerk can give you a hearing date before you file your complaint. In other counties, you will get a hearing date when you file your complaint. If you have this information now, you can add it to your forms.
+  
+  If the clerk gives you the hearing date after you file your *Small Claims Complaint*, you can add it to your *Summons* later. 
+  
+  **Note:** Be sure to add the hearing information to your *Summons* before you send it to other parties in your case.
+fields:
+  - "Know court date and time?": has_court_date
+    datatype: yesnoradio
+---
+id: hearing info
+question: |
+  Court hearing info
+subquestion: |
+  Enter the time and date of the hearing and how to attend the hearing.
+
+  Your court date could be in person, by phone, or by video. If your court date is by phone or video, it is called a "Remote Appearance."
+
+  If you do not have this information now, you can click **Back** and change your answer.
+
+  **Note:** Be sure to add the date and time to your *Notice of Court Date for Motion* before you send it to other parties in your case.
+fields:
+  - Date: hearing_date
+    datatype: date
+    min: ${ today().format("yyyy-MM-dd") }
+    required: False
+  - Time: hearing_time
+    datatype: time
+    required: False
+  - Hearing type: hearing_type
+    datatype: checkboxes
+    required: False
+    none of the above: False
+    choices:
+      - In person: person
+      - By phone or video: remote
+  - Courtroom: courtroom
+    maxlength: 10
+    required: False
+  - Video conference website (URL): remote_website
+    maxlength: 100
+    input type: area
+    rows: 2
+    required: False
+    show if: hearing_type['remote']
+  - Video conference log-in information (Meeting ID, password, etc.): remote_login
+    maxlength: 100
+    input type: area
+    rows: 2
+    required: False
+    show if: hearing_type['remote']
+  - Call-in phone number for remote appearance: remote_phone
+    datatype: al_international_phone
+    required: False
+    show if: hearing_type['remote']
 ---
 id: filing county
 question: |
@@ -2527,20 +2590,39 @@ objects:
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
   - letter_to_sheriff: ALDocument.using(title="Letter to sheriff (complete for each out-of-state defendant)", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
-  - summons_one: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
-  - summons_two: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
-  - summons_three: ALDocument.using(title="Summons 3", filename="summons_3.pdf", has_addendum=False)
-  - summons_four: ALDocument.using(title="Summons 4", filename="summons_4.pdf", has_addendum=False)
-  - summons_five: ALDocument.using(title="Summons 5", filename="summons_5.pdf", has_addendum=False)
-  - summons_six: ALDocument.using(title="Summons 6", filename="summons_6.pdf", has_addendum=False)
-  - summons_seven: ALDocument.using(title="Summons 7", filename="summons_7.pdf", has_addendum=False)
-  - summons_eight: ALDocument.using(title="Summons 8", filename="summons_8.pdf", has_addendum=False)
-  - summons_nine: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
-  - summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
+  #- summons_one: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
+  #- summons_two: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
+  #- summons_three: ALDocument.using(title="Summons 3", filename="summons_3.pdf", has_addendum=False)
+  #- summons_four: ALDocument.using(title="Summons 4", filename="summons_4.pdf", has_addendum=False)
+  #- summons_five: ALDocument.using(title="Summons 5", filename="summons_5.pdf", has_addendum=False)
+  #- summons_six: ALDocument.using(title="Summons 6", filename="summons_6.pdf", has_addendum=False)
+  #- summons_seven: ALDocument.using(title="Summons 7", filename="summons_7.pdf", has_addendum=False)
+  #- summons_eight: ALDocument.using(title="Summons 8", filename="summons_8.pdf", has_addendum=False)
+  #- summons_nine: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
+  #- summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
+---
+generic object: ALIndividual
+objects:
+  - x.summons_part_one: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
+  - x.summons_part_two: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
+---
+reconsider: True
+code: |
+  elements_for_summons_bundle = []
+  for index, person in enumerate(other_parties):
+    person.summons_part_one.enabled = True
+    elements_for_summons_bundle.append(person.summons_part_one)
+    person.summons_part_two.enabled = True
+    elements_for_summons_bundle.append(person.summons_part_two)
+  summons_bundle.elements = elements_for_summons_bundle
+  refresh_summons_bundle = True
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - summons_bundle: ALDocumentBundle.using(elements=[], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
+---
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle], filename="small_claims_complaint.pdf", title="All forms")
 ---
 objects:
   - small_claims_complaint_single_pdf_bundle: ALDocumentBundle.using(elements=[complaint, additional_defendants, additional_reasons], filename="small_claims_complaint_bundle.pdf", title="Small Claims Complaint", enabled=True)
@@ -2552,16 +2634,16 @@ code: |
   additional_reasons.enabled = False
   letter_to_sheriff.enabled = False
   order.enabled = True
-  summons_one.enabled = True
-  summons_two.enabled = False
-  summons_three.enabled = False
-  summons_four.enabled = False
-  summons_five.enabled = False
-  summons_six.enabled = False
-  summons_seven.enabled = False
-  summons_eight.enabled = False
-  summons_nine.enabled = False
-  summons_blank.enabled = False
+  #summons_one.enabled = True
+  #summons_two.enabled = False
+  #summons_three.enabled = False
+  #summons_four.enabled = False
+  #summons_five.enabled = False
+  #summons_six.enabled = False
+  #summons_seven.enabled = False
+  #summons_eight.enabled = False
+  #summons_nine.enabled = False
+  #summons_blank.enabled = False
   
   if other_parties.number_gathered() > 2:
     additional_defendants.enabled = True
@@ -2590,24 +2672,24 @@ code: |
         if person.service_address.state != "IL":
           letter_to_sheriff.enabled = True
   
-  if other_parties.number() > 1:
-      summons_two.enabled = True
-      if other_parties.number() > 2:
-        summons_three.enabled = True
-        if other_parties.number() > 3:
-          summons_four.enabled = True
-          if other_parties.number() > 4:
-            summons_five.enabled = True
-            if other_parties.number() > 5:
-              summons_six.enabled = True
-              if other_parties.number() > 6:
-                summons_seven.enabled = True
-                if other_parties.number() > 7:
-                  summons_eight.enabled = True
-                  if other_parties.number() > 8:
-                    summons_nine.enabled = True
-                    if blank_summons_check == True:
-                      summons_blank.enabled = True
+  #if other_parties.number() > 1:
+  #    summons_two.enabled = True
+  #    if other_parties.number() > 2:
+  #      summons_three.enabled = True
+  #      if other_parties.number() > 3:
+  #        summons_four.enabled = True
+  #        if other_parties.number() > 4:
+  #          summons_five.enabled = True
+  #          if other_parties.number() > 5:
+  #            summons_six.enabled = True
+  #            if other_parties.number() > 6:
+  #              summons_seven.enabled = True
+  #              if other_parties.number() > 7:
+  #                summons_eight.enabled = True
+  #                if other_parties.number() > 8:
+  #                  summons_nine.enabled = True
+  #                  if blank_summons_check == True:
+  #                    summons_blank.enabled = True
 ---
 attachment:
   variable name: instructions[i]
@@ -2722,6 +2804,64 @@ attachment:
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+---
+generic object: ALIndividual
+attachment:
+  variable name: x.summons_part_one[i]
+  name: summons_part_one
+  filename: summons_part_one
+  skip undefined: True
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
+  fields:
+    - "case_number": ${""}
+    - "filing_county": ${court_county.upper()}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
+    - "defendant_name": ${x.name_full()}
+    - "defendant_name_again": ${x.name_full() if x.alt_delivery == True else ""}
+    - "agent_name": ${x.agent.name_full()}
+    - "main_service_street": ${x.where_to_serve.line_one(bare=True)}
+    - "main_service_csz": ${x.where_to_serve.line_two()}
+    - "main_service_phone": ${ phone_number_formatted(x.service_phone) if x.service_phone != "" else ""}
+    - "main_service_email": ${x.service_email}
+    - "alt_service_street": ${x.alt_service_address.line_one(bare=True)  if x.alt_delivery == True else ""}
+    - "alt_service_csz": ${x.alt_service_address.line_two()  if x.alt_delivery == True else ""}
+    - "alt_service_phone": ${ phone_number_formatted(x.alt_service_phone) if x.alt_service_phone != "" and x.alt_delivery == True else ""}
+    - "alt_service_email": ${x.alt_service_email if x.alt_delivery == True else ""}
+    - "by_mail": ${ True if x.service_method == "clerk" else False}
+    - "by_sheriff": ${ True if x.service_method == "sheriff" else False}
+    - "by_server": ${ True if x.service_method == "server" else False}
+    - "plaintiff_street": ${users[0].address.line_one(bare=True)}
+    - "plaintiff_csz": ${users[0].address.line_two()}
+    - "plaintiff_phone": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
+    - "plaintiff_email": ${users[0].email}
+    - "courthouse_address": ${ courthouse_info }
+    - "clerk_phone": ${ trial_court.phone }
+    - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
+---
+generic object: ALIndividual
+attachment:
+  variable name: x.summons_part_two[i]
+  name: summons_part_two
+  filename: summons_part_two
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
 ---
 attachment:
   variable name: summons_one[i]
@@ -3370,6 +3510,54 @@ review:
       
       ${more_reason}
     show if: landlord_check == False
+  - Edit: has_court_date
+    button: |
+      **Do you know the court date?**
+      ${word(yesno(has_court_date))}
+  - Edit: hearing_date
+    button: |
+      **Hearing information:**
+      
+      % if hearing_date != "":
+      * Date: ${hearing_date}
+      % else:
+      * Date: None entered
+      % endif
+      % if hearing_time != "":
+      * Time: ${ format_time(hearing_time, "h:mm a") }
+      % else:
+      * Time: None entered
+      % endif
+      % if hearing_type['person'] and not hearing_type['remote']:
+      * Type: In person
+      % elif hearing_type['remote'] and not hearing_type['person']:
+      * Type: By phone or video
+      % elif hearing_type['remote'] and hearing_type['person']:
+      * Type: In person or by phone or video
+      % else:
+      * Type: None entered
+      % endif
+      % if courtroom != "":
+      * Courtroom: ${courtroom}
+      % else:
+      * Courtroom: None entered
+      % endif
+      % if remote_website != "":
+      * Video conference website (URL): ${remote_website}
+      % else:
+      * Video conference website (URL): None entered
+      % endif
+      % if remote_login != "":
+      * Log-in information: ${remote_login}
+      % else:
+      * Log-in information: None entered
+      % endif
+      % if remote_phone != "":
+      * Call-in phone number: ${ phone_number_formatted(remote_phone) }
+      % else:
+      * Call-in phone number: None entered
+      % endif
+    show if: has_court_date
   - Edit: users[0].name.first
     button: |
       **Your name:**
@@ -3877,6 +4065,54 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name_full() }
       % endfor
+  - Edit: has_court_date
+    button: |
+      **Do you know the court date?**
+      ${word(yesno(has_court_date))}
+  - Edit: hearing_date
+    button: |
+      **Hearing information:**
+      
+      % if hearing_date != "":
+      * Date: ${hearing_date}
+      % else:
+      * Date: None entered
+      % endif
+      % if hearing_time != "":
+      * Time: ${ format_time(hearing_time, "h:mm a") }
+      % else:
+      * Time: None entered
+      % endif
+      % if hearing_type['person'] and not hearing_type['remote']:
+      * Type: In person
+      % elif hearing_type['remote'] and not hearing_type['person']:
+      * Type: By phone or video
+      % elif hearing_type['remote'] and hearing_type['person']:
+      * Type: In person or by phone or video
+      % else:
+      * Type: None entered
+      % endif
+      % if courtroom != "":
+      * Courtroom: ${courtroom}
+      % else:
+      * Courtroom: None entered
+      % endif
+      % if remote_website != "":
+      * Video conference website (URL): ${remote_website}
+      % else:
+      * Video conference website (URL): None entered
+      % endif
+      % if remote_login != "":
+      * Log-in information: ${remote_login}
+      % else:
+      * Log-in information: None entered
+      % endif
+      % if remote_phone != "":
+      * Call-in phone number: ${ phone_number_formatted(remote_phone) }
+      % else:
+      * Call-in phone number: None entered
+      % endif
+    show if: has_court_date
 ---
 section: About you
 id: user review screen
@@ -3922,6 +4158,54 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name_full() }
       % endfor
+  - Edit: has_court_date
+    button: |
+      **Do you know the court date?**
+      ${word(yesno(has_court_date))}
+  - Edit: hearing_date
+    button: |
+      **Hearing information:**
+      
+      % if hearing_date != "":
+      * Date: ${hearing_date}
+      % else:
+      * Date: None entered
+      % endif
+      % if hearing_time != "":
+      * Time: ${ format_time(hearing_time, "h:mm a") }
+      % else:
+      * Time: None entered
+      % endif
+      % if hearing_type['person'] and not hearing_type['remote']:
+      * Type: In person
+      % elif hearing_type['remote'] and not hearing_type['person']:
+      * Type: By phone or video
+      % elif hearing_type['remote'] and hearing_type['person']:
+      * Type: In person or by phone or video
+      % else:
+      * Type: None entered
+      % endif
+      % if courtroom != "":
+      * Courtroom: ${courtroom}
+      % else:
+      * Courtroom: None entered
+      % endif
+      % if remote_website != "":
+      * Video conference website (URL): ${remote_website}
+      % else:
+      * Video conference website (URL): None entered
+      % endif
+      % if remote_login != "":
+      * Log-in information: ${remote_login}
+      % else:
+      * Log-in information: None entered
+      % endif
+      % if remote_phone != "":
+      * Call-in phone number: ${ phone_number_formatted(remote_phone) }
+      % else:
+      * Call-in phone number: None entered
+      % endif
+    show if: has_court_date
 ---
 #code block for creating variables used only in attachment blocks. Why oh why docassemble won't let me just put this code by the corresponding fields is beyond me.
 #service_address is the baseline service address, alt_service_address is used for the question paths that still ask for a second service address. The where_to_serve variable is the potentially redundant one; it is used to determine whether opposing_parties[i].address or opposing_parties[i].service_address is used in the form based on the value of opposing_parties[i].same_address.
