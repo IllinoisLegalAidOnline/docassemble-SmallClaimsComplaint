@@ -83,8 +83,7 @@ code: |
       if cook_district == "15":
         daley_center_note
   other_parties.gather()
-  if other_parties.number_gathered() == 9:
-    blank_summons_check
+
   set_progress(20)
   #Here lies the security deposit path
   if landlord_check == True:
@@ -194,22 +193,25 @@ code: |
   nav.set_section('section_service')
   service_intro
   set_progress(80)
-  for person in other_parties:
-    person.address.address
-    person.person_catch
-    if person.agent_check == True:
-      person.agent.name.first
-      person.service_address.address
-    elif person.same_address != True:
-      person.service_address.address
-    person.service_phone
-    person.service_email
-    if person.agent_check == False:
-      if person.alt_delivery == True:
-        person.alt_service_address.address
-        person.alt_service_phone
-        person.alt_service_email
-    person.service_method
+  for index, person in enumerate(other_parties):
+    if index == 9:
+      blank_summons_note
+    elif index < 9:
+      person.address.address
+      person.person_catch
+      if person.agent_check == True:
+        person.agent.name.first
+        person.service_address.address
+      elif person.same_address != True:
+        person.service_address.address
+      person.service_phone
+      person.service_email
+      if person.agent_check == False:
+        if person.alt_delivery == True:
+          person.alt_service_address.address
+          person.alt_service_phone
+          person.alt_service_email
+      person.service_method
   next_steps
   if has_court_date:
     hearing_date
@@ -281,8 +283,6 @@ code: |
 code: |
   other_parties[i].name.first
   #other_parties[i].address.address
-  if i == 8:
-    other_parties.there_is_another = False
   other_parties[i].complete = True
 ---
 reconsider: True
@@ -913,17 +913,13 @@ content: |
   If you cannot find ${other_parties[i].name_full()}'s address, you may want to visit **[Illinois Court Help](https://www.ilcourthelp.gov/)** or call or text (833) 411-1121 for assistance.
 ---
 id: more than 9 defendants
+continue button field: blank_summons_note
 question: |
-  Are there any more defendants?
+  About additional defendants
 subquestion: |
-  You can sue more than 9 defendants with this program, but this program will only make *Summons* forms for the first 9 defendants.
+  You can sue more than 9 defendants with this program, but this program will only make *Summons* forms for the first 9 defendants. You can download blank *Summons* forms at the end of this program.
   
   You will need to fill out *Summons* forms for any other defendants in your case. 
-  
-  If you choose **Yes**, you can download blank *Summons* forms at the end of this program.
-fields:
-  - "Anyone else?": blank_summons_check
-    datatype: yesnoradio
 ---
 id: any other defendants
 question: |
@@ -2682,21 +2678,22 @@ code: |
       if add_second_page == True:
         additional_reasons.enabled = True
     
-  for person in other_parties:
-    if person.service_method == "sheriff":
-      if person.agent_check == False:
-        if person.same_address == True:
-          if person.address.state != "IL":
-            letter_to_sheriff.enabled = True
+  for index, person in enumerate(other_parties):
+    if index < 9:
+      if person.service_method == "sheriff":
+        if person.agent_check == False:
+          if person.same_address == True:
+            if person.address.state != "IL":
+              letter_to_sheriff.enabled = True
+          else:
+            if person.service_address.state != "IL":
+              letter_to_sheriff.enabled = True
+          if person.alt_delivery == True:
+            if person.alt_service_address.state != "IL":
+              letter_to_sheriff.enabled == True
         else:
           if person.service_address.state != "IL":
             letter_to_sheriff.enabled = True
-        if person.alt_delivery == True:
-          if person.alt_service_address.state != "IL":
-            letter_to_sheriff.enabled == True
-      else:
-        if person.service_address.state != "IL":
-          letter_to_sheriff.enabled = True
   
   if other_parties.number() > 1:
       summons_two_a.enabled = True
@@ -2722,7 +2719,7 @@ code: |
                   if other_parties.number() > 8:
                     summons_nine_a.enabled = True
                     summons_nine_b.enabled = True
-                    if blank_summons_check == True:
+                    if other_parties.number() > 9:
                       summons_blank.enabled = True
 ---
 attachment:
@@ -4450,12 +4447,13 @@ code: |
       have_demanded_field = demand_check
     
       
-  for person in other_parties:
-    if person.agent_check == True:
-      person.where_to_serve = person.service_address
-    elif person.same_address == False:
-      person.where_to_serve = person.service_address
-    else:
-      person.where_to_serve = person.address
+  for index, person in enumerate(other_parties):
+    if index < 9:
+      if person.agent_check == True:
+        person.where_to_serve = person.service_address
+      elif person.same_address == False:
+        person.where_to_serve = person.service_address
+      else:
+        person.where_to_serve = person.address
      
   attachment_logic = True
