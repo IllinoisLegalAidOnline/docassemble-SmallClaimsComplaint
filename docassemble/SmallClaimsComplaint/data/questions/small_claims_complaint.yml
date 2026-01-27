@@ -2632,11 +2632,19 @@ objects:
   - summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
-  - summons_bundle: ALDocumentBundle.using(elements=[summons_one_a, summons_one_b, summons_two_a, summons_two_b, summons_three_a, summons_three_b, summons_four_a, summons_four_b, summons_five_a, summons_five_b, summons_six_a, summons_six_b, summons_seven_a, summons_seven_b, summons_eight_a, summons_eight_b, summons_nine_a, summons_nine_b], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
+  - summons_bundle: ALDocumentBundle.using(elements=[summons_one_a, summons_one_b], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
+  - summons_two_bundle: ALDocumentBundle.using(elements=[summons_two_a, summons_two_b], title= "Summons 2", filename="summons_2.pdf", has_addendum=False, enabled=True)
+  - summons_three_bundle: ALDocumentBundle.using(elements=[summons_three_a, summons_three_b], title= "Summons 3", filename="summons_3.pdf", has_addendum=False, enabled=True)
+  - summons_four_bundle: ALDocumentBundle.using(elements=[summons_four_a, summons_four_b], title= "Summons 4", filename="summons_4.pdf", has_addendum=False, enabled=True)
+  - summons_five_bundle: ALDocumentBundle.using(elements=[summons_five_a, summons_five_b], title= "Summons 5", filename="summons_5.pdf", has_addendum=False, enabled=True)
+  - summons_six_bundle: ALDocumentBundle.using(elements=[summons_six_a, summons_six_b], title= "Summons 6", filename="summons_6.pdf", has_addendum=False, enabled=True)
+  - summons_seven_bundle: ALDocumentBundle.using(elements=[summons_seven_a, summons_seven_b], title= "Summons 7", filename="summons_7.pdf", has_addendum=False, enabled=True)
+  - summons_eight_bundle: ALDocumentBundle.using(elements=[summons_eight_a, summons_eight_b], title= "Summons 8", filename="summons_8.pdf", has_addendum=False, enabled=True)
+  - summons_nine_bundle: ALDocumentBundle.using(elements=[summons_nine_a, summons_nine_b], title= "Summons 9", filename="summons_9.pdf", has_addendum=False, enabled=True)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
 ---
 objects:
   - small_claims_complaint_single_pdf_bundle: ALDocumentBundle.using(elements=[complaint, additional_defendants, additional_reasons], filename="small_claims_complaint_bundle.pdf", title="Small Claims Complaint", enabled=True)
