@@ -193,25 +193,22 @@ code: |
   nav.set_section('section_service')
   service_intro
   set_progress(80)
-  for index, person in enumerate(other_parties):
-    if index == 9:
-      blank_summons_note
-    elif index < 9:
-      person.address.address
-      person.person_catch
-      if person.agent_check == True:
-        person.agent.name.first
-        person.service_address.address
-      elif person.same_address != True:
-        person.service_address.address
-      person.service_phone
-      person.service_email
-      if person.agent_check == False:
-        if person.alt_delivery == True:
-          person.alt_service_address.address
-          person.alt_service_phone
-          person.alt_service_email
-      person.service_method
+  for person in other_parties:
+    person.address.address
+    person.person_catch
+    if person.agent_check == True:
+      person.agent.name.first
+      person.service_address.address
+    elif person.same_address != True:
+      person.service_address.address
+    person.service_phone
+    person.service_email
+    if person.agent_check == False:
+      if person.alt_delivery == True:
+        person.alt_service_address.address
+        person.alt_service_phone
+        person.alt_service_email
+    person.service_method
   next_steps
   if has_court_date:
     hearing_date
@@ -226,6 +223,7 @@ code: |
   nav.set_section('section_download')
   forms_assembling
   attachment_logic
+  trial_court
   #order_info
   snapshot_forms
   set_progress_to_100_once
@@ -283,6 +281,9 @@ code: |
 code: |
   other_parties[i].name.first
   #other_parties[i].address.address
+  if i == 8:
+    nine_max
+    other_parties.there_is_another = False
   other_parties[i].complete = True
 ---
 reconsider: True
@@ -912,20 +913,29 @@ content: |
 
   If you cannot find ${other_parties[i].name_full()}'s address, you may want to visit **[Illinois Court Help](https://www.ilcourthelp.gov/)** or call or text (833) 411-1121 for assistance.
 ---
-id: more than 9 defendants
-continue button field: blank_summons_note
+id: nine max
+continue button field: nine_max
 question: |
   About additional defendants
 subquestion: |
-  You can sue more than 9 defendants with this program, but this program will only make *Summons* forms for the first 9 defendants. You can download blank *Summons* forms at the end of this program.
-  
-  You will need to fill out *Summons* forms for any other defendants in your case. 
+  This program can only make forms for a case with 9 or fewer defendants.
+
+  If you want to sue 10 or more defendants, you may want to talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+---
+#id: more than 9 defendants
+#continue button field: blank_summons_note
+#question: |
+#  About additional defendants
+#subquestion: |
+#  You can sue more than 9 defendants with this program, but this program will only make *Summons* forms for the first 9 defendants. You can download blank *Summons* forms at the end of this program.
+#  
+#  You will need to fill out *Summons* forms for any other defendants in your case. 
 ---
 id: any other defendants
 question: |
   Do you have any other defendants to tell us about?
 subquestion: |
-  So far you have told us about ${fix_punctuation(other_parties.full_names())}
+  You can list up to 9 defendants. So far you have told us about ${fix_punctuation(other_parties.full_names())}
   
   ${collapse_template(help_suing_business)}
 fields:
@@ -1144,6 +1154,7 @@ subquestion: |
 fields:
   - Explanation (continued): more_reason
     input type: area
+    label above field: True
     rows: 16
     maxlength: 2600
   - note: After you click **Next**, the program will take a moment to make a preview of the page.
@@ -2629,7 +2640,7 @@ objects:
   - summons_eight_b: ALDocument.using(title="Summons 8", filename="summons_8.pdf", has_addendum=False)
   - summons_nine_a: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
   - summons_nine_b: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
-  - summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
+  #- summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
   - summons_bundle: ALDocumentBundle.using(elements=[summons_one_a, summons_one_b], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
@@ -2643,8 +2654,8 @@ objects:
   - summons_nine_bundle: ALDocumentBundle.using(elements=[summons_nine_a, summons_nine_b], title= "Summons 9", filename="summons_9.pdf", has_addendum=False, enabled=True)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
 ---
 objects:
   - small_claims_complaint_single_pdf_bundle: ALDocumentBundle.using(elements=[complaint, additional_defendants, additional_reasons], filename="small_claims_complaint_bundle.pdf", title="Small Claims Complaint", enabled=True)
@@ -2674,7 +2685,6 @@ code: |
   summons_eight_b.enabled = False
   summons_nine_a.enabled = False
   summons_nine_b.enabled = False
-  summons_blank.enabled = False
   if other_parties.number_gathered() > 2:
     additional_defendants.enabled = True
     
@@ -2686,22 +2696,21 @@ code: |
       if add_second_page == True:
         additional_reasons.enabled = True
     
-  for index, person in enumerate(other_parties):
-    if index < 9:
-      if person.service_method == "sheriff":
-        if person.agent_check == False:
-          if person.same_address == True:
-            if person.address.state != "IL":
-              letter_to_sheriff.enabled = True
-          else:
-            if person.service_address.state != "IL":
-              letter_to_sheriff.enabled = True
-          if person.alt_delivery == True:
-            if person.alt_service_address.state != "IL":
-              letter_to_sheriff.enabled == True
+  for person in other_parties:
+    if person.service_method == "sheriff":
+      if person.agent_check == False:
+        if person.same_address == True:
+          if person.address.state != "IL":
+            letter_to_sheriff.enabled = True
         else:
           if person.service_address.state != "IL":
             letter_to_sheriff.enabled = True
+        if person.alt_delivery == True:
+          if person.alt_service_address.state != "IL":
+            letter_to_sheriff.enabled == True
+      else:
+        if person.service_address.state != "IL":
+          letter_to_sheriff.enabled = True
   
   if other_parties.number() > 1:
       summons_two_a.enabled = True
@@ -2727,8 +2736,6 @@ code: |
                   if other_parties.number() > 8:
                     summons_nine_a.enabled = True
                     summons_nine_b.enabled = True
-                    if other_parties.number() > 9:
-                      summons_blank.enabled = True
 ---
 attachment:
   variable name: instructions[i]
@@ -3348,15 +3355,15 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "filing_county": ${court_county.upper()}
 ---
-attachment:
-  variable name: summons_blank[i]
-  name: summons_blank
-  filename: summons_blank
-  skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons_Blank.pdf
-  fields:
-   - "fake": ${""}
+#attachment:
+#  variable name: summons_blank[i]
+#  name: summons_blank
+#  filename: summons_blank
+#  skip undefined: True
+#  editable: False
+#  pdf template file: SMC_Summons_Blank.pdf
+#  fields:
+#   - "fake": ${""}
 ---
 id: review screen
 event: review_answers
@@ -3380,6 +3387,23 @@ review:
     button: |
       **Which county are you filing your *Small Claims Complaint* in?**
       ${end_in_county(court_county)}
+  - Edit: cook_district
+    button: |
+      **Cook County courthouse:**
+      % if cook_district == "15":
+      ${ "Daley Center, 50 W. Washington Street, Chicago" }
+      % elif cook_district == "16":
+      ${ "Second Municipal District, 5600 Old Orchard Road, Skokie" }
+      % elif cook_district == "17":
+      ${ "Third Municipal District, 2121 Euclid Avenue, Rolling Meadows" }
+      % elif cook_district == "18":
+      ${ "Fourth Municipal District, 1500 Maybrook Drive, Maywood" }
+      % elif cook_district == "19":
+      ${ "Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview" }
+      % else:
+      ${ "Sixth Municipal District, 16501 South Kedzie Parkway, Markham" }
+      % endif      
+    show if: trial_court_index == -1
   - Edit: other_parties.revisit
     button: |
       **Defendants: (Edit to change names, addresses, and other information)**
@@ -3937,6 +3961,23 @@ review:
     button: |
       **Which county are you filing your *Small Claims Complaint* in?**
       ${end_in_county(court_county)}
+  - Edit: cook_district
+    button: |
+      **Cook County courthouse:**
+      % if cook_district == "15":
+      ${ "Daley Center, 50 W. Washington Street, Chicago" }
+      % elif cook_district == "16":
+      ${ "Second Municipal District, 5600 Old Orchard Road, Skokie" }
+      % elif cook_district == "17":
+      ${ "Third Municipal District, 2121 Euclid Avenue, Rolling Meadows" }
+      % elif cook_district == "18":
+      ${ "Fourth Municipal District, 1500 Maybrook Drive, Maywood" }
+      % elif cook_district == "19":
+      ${ "Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview" }
+      % else:
+      ${ "Sixth Municipal District, 16501 South Kedzie Parkway, Markham" }
+      % endif      
+    show if: trial_court_index == -1
   - Edit: landlord_check
     button: |
       **Are you suing your former landlord to return a security deposit?**
