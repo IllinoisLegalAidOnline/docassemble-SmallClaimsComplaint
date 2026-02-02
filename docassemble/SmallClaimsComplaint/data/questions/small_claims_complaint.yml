@@ -83,6 +83,8 @@ code: |
       if cook_district == "15":
         daley_center_note
   other_parties.gather()
+  if other_parties.number_gathered() > 8:
+    nine_max
 
   set_progress(20)
   #Here lies the security deposit path
@@ -281,9 +283,6 @@ code: |
 code: |
   other_parties[i].name.first
   #other_parties[i].address.address
-  if i == 8:
-    nine_max
-    other_parties.there_is_another = False
   other_parties[i].complete = True
 ---
 reconsider: True
@@ -918,16 +917,18 @@ continue button field: nine_max
 question: |
   About additional defendants
 subquestion: |
-  This program can only make forms for a case with 9 or fewer defendants.
+  This program can only make forms for a case with nine or fewer defendants.
 
   If you want to sue 10 or more defendants, you may want to talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+
+  If you want to make a *Small Claims Complaint* with nine defendants, click **Next**.
 ---
 #id: more than 9 defendants
 #continue button field: blank_summons_note
 #question: |
 #  About additional defendants
 #subquestion: |
-#  You can sue more than 9 defendants with this program, but this program will only make *Summons* forms for the first 9 defendants. You can download blank *Summons* forms at the end of this program.
+#  You can sue more than nine defendants with this program, but this program will only make *Summons* forms for the first nine defendants. You can download blank *Summons* forms at the end of this program.
 #  
 #  You will need to fill out *Summons* forms for any other defendants in your case. 
 ---
@@ -935,12 +936,16 @@ id: any other defendants
 question: |
   Do you have any other defendants to tell us about?
 subquestion: |
-  You can list up to 9 defendants. So far you have told us about ${fix_punctuation(other_parties.full_names())}
+  You can list up to nine defendants. So far you have told us about ${fix_punctuation(other_parties.full_names())}
   
   ${collapse_template(help_suing_business)}
 fields:
   - "Anyone else?": other_parties.there_is_another
     datatype: yesnoradio
+---
+code: |
+  if other_parties.number_gathered() > 8:
+    other_parties.there_is_another = False    
 ---
 id: landlord check
 question: |
@@ -1083,6 +1088,7 @@ fields:
       % endif
     field: claim_reason
     input type: area
+    label above field: True
     rows: 16
     maxlength: 1800
   - note: After you click **Next**, the program will take a moment to make a preview of the page.
@@ -3640,7 +3646,6 @@ review:
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_new_text == True
-    #jump to
   - Edit: add_second_page
     button: |
       **Do you need a second page to explain your claim?**
@@ -3702,7 +3707,7 @@ review:
       % else:
       **Do you need a second page to explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}?**
       % endif
-      ${add_second_page}
+      ${word(yesno(add_second_page))}
     show if: landlord_check == False
   - Edit: more_reason
     button: |
@@ -3811,7 +3816,9 @@ question: |
 subquestion: |
   ${ other_parties.table }
 
+  % if other_parties.number_gathered() < 9:
   ${ other_parties.add_action() }
+  % endif
 ---
 table: other_parties.table
 rows: other_parties
@@ -3822,6 +3829,7 @@ columns:
       action_button_html(url_action(row_item.attr_name("review_defendant_info")), label="Edit", icon="pencil-alt")
 delete buttons: True
 confirm: True
+allow append: False
 ---
 id: defendant info review screen
 continue button field: x.review_defendant_info
@@ -4260,18 +4268,14 @@ review:
       
       ${claim_reason}
     show if: landlord_check == False
-  - Edit: preview_complaint
+  - Edit: add_second_page
     button: |
       % if other_parties.number_gathered() > 1:
       **Do you need a second page to explain why the defendants owe you ${currency(amount_check)}?**
       % else:
       **Do you need a second page to explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}?**
       % endif
-      % if preview_complaint == "Additional page":
-      Yes
-      % else:
-      No
-      % endif
+      ${word(yesno(add_second_page))}
     show if: landlord_check == False
   - Edit: more_reason
     button: |
