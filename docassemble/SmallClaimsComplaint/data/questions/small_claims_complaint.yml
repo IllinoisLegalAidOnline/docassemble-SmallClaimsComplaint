@@ -15,7 +15,7 @@ include:
 objects:
   - users: ALPeopleList.using(there_are_any=True)
   - filing_location: ALAddress
-  - other_parties: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True, maximum_number=9)
+  - other_parties: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True)
   - other_parties[i].agent: ALIndividual
   - other_parties[i].service_address: ALAdress
   - other_parties[i].alt_service_address: ALAddress
@@ -83,8 +83,9 @@ code: |
       if cook_district == "15":
         daley_center_note
   other_parties.gather()
-  if other_parties.number_gathered() == 9:
-    blank_summons_check
+  if other_parties.number_gathered() >= 9:
+    nine_max
+
   set_progress(20)
   #Here lies the security deposit path
   if landlord_check == True:
@@ -190,6 +191,7 @@ code: |
 
   evidence
   
+  
   nav.set_section('section_service')
   service_intro
   set_progress(80)
@@ -210,6 +212,8 @@ code: |
         person.alt_service_email
     person.service_method
   next_steps
+  if has_court_date:
+    hearing_date
   
   nav.set_section('section_about_you')
   set_progress(90)
@@ -221,8 +225,10 @@ code: |
   nav.set_section('section_download')
   forms_assembling
   attachment_logic
+  trial_court
   #order_info
   snapshot_forms
+  set_progress_to_100_once
   get_docs_screen
 ---
 code: |
@@ -262,6 +268,16 @@ code: |
 code: |
   reconsider('snapshot_interview_state')
   snapshot_forms = True
+---
+# this code block will ensure that when a user reaches the download screen, My Easy Forms will list it as 100% complete
+code: |
+    al_temp_metadata = get_interview_metadata(
+      current_context().filename, current_context().session
+    )
+    al_temp_metadata["progress"] = 100
+    set_current_session_metadata(al_temp_metadata)
+    del(al_temp_metadata)
+    set_progress_to_100_once = True
 ---
 #Gathers defendants
 code: |
@@ -522,6 +538,65 @@ subquestion: |
   
   This program will calculate how much you can sue for. If your claim is too big for Small Claims Court, this program will let you know.
 ---
+id: hearing scheduled
+question: |
+  Do you already have a court date scheduled for this complaint?
+subquestion: |
+  In some counties, the circuit clerk can give you a hearing date before you file your complaint. In other counties, you will get a hearing date when you file your complaint. If you have this information now, you can add it to your forms.
+  
+  If the clerk gives you the hearing date after you file your *Small Claims Complaint*, you can add it to your *Summons* later. 
+  
+  **Note:** Be sure to add the hearing information to your *Summons* before you send it to other parties in your case.
+fields:
+  - "Know court date and time?": has_court_date
+    datatype: yesnoradio
+---
+id: hearing info
+question: |
+  Court hearing info
+subquestion: |
+  Enter the time and date of the hearing and how to attend the hearing.
+
+  Your court date could be in person, by phone, or by video. If your court date is by phone or video, it is called a "Remote Appearance."
+
+  If you do not have this information now, you can click **Back** and change your answer.
+
+  **Note:** Be sure to add the date and time to your *Notice of Court Date for Motion* before you send it to other parties in your case.
+fields:
+  - Date: hearing_date
+    datatype: date
+    min: ${ today().format("yyyy-MM-dd") }
+    required: False
+  - Time: hearing_time
+    datatype: time
+    required: False
+  - Hearing type: hearing_type
+    datatype: checkboxes
+    required: False
+    none of the above: False
+    choices:
+      - In person: person
+      - By phone or video: remote
+  - Courtroom: courtroom
+    maxlength: 10
+    required: False
+  - Video conference website (URL): remote_website
+    maxlength: 100
+    input type: area
+    rows: 2
+    required: False
+    show if: hearing_type['remote']
+  - Video conference log-in information (Meeting ID, password, etc.): remote_login
+    maxlength: 100
+    input type: area
+    rows: 2
+    required: False
+    show if: hearing_type['remote']
+  - Call-in phone number for remote appearance: remote_phone
+    datatype: al_international_phone
+    required: False
+    show if: hearing_type['remote']
+---
 id: filing county
 question: |
   In which county are you filing your complaint?
@@ -577,177 +652,179 @@ question: |
   In which Cook County courthouse will you file your case?
 subquestion: |
   ${ collapse_template(cook_district_help) }  
-field: cook_district
-choices:
-  - First Municipal District, Daley Center, 50 W. Washington Street, Chicago: 15
-    help: |
-      The First Municipal District covers the **City of Chicago**. 
-  - Second Municipal District, 5600 Old Orchard Road, Skokie: 16
-    help: |
-      The Second Municipal District covers the **northern suburbs of Cook County**. It includes:
-      
-      * Deerfield
-      * Des Plaines
-      * Evanston
-      * Glencoe
-      * Glenview
-      * Golf
-      * Kenilworth
-      * Lincolnwood
-      * Maine (not within Rosemont)
-      * Morton Grove
-      * New Trier
-      * Niles
-      * Northbrook
-      * Northfield (not within Prospect Heights)
-      * Park Ridge
-      * Skokie
-      * Wilmette
-      * Winnetka
-      * Wheeling (within Des Plaines)
-  - Third Municipal District, 2121 Euclid Avenue, Rolling Meadows: 17
-    help: |
-      The Third Municipal District covers the **northwestern suburbs of Cook County**. It includes:
-
-      * Arlington Heights
-      * Barrington
-      * Barrington Hills
-      * Bartlett
-      * Bensenville
-      * Buffalo Grove
-      * East Dundee
-      * Elgin
-      * Elk Grove
-      * Elk Grove Village
-      * Hanover
-      * Hanover Park
-      * Harwood Heights
-      * Hoffman Estates
-      * Inverness
-      * Leyden (within Rosemont and Schiller Park)
-      * Maine (within Rosemont)
-      * Mount Prospect
-      * Norridge
-      * Northfield (within Prospect Heights)
-      * Norwood Park (not within Chicago)
-      * Palatine
-      * Prospect Heights
-      * Rolling Meadows
-      * Roselle
-      * Rosemont
-      * Schaumburg
-      * Schiller Park
-      * South Barrington
-      * Streamwood
-      * Wheeling (not within Des Plaines)    
-  - Fourth Municipal District, 1500 Maybrook Drive, Maywood: 18
-    help: |
-      The Fourth Municipal District covers the **western suburbs of Cook County**. It includes:
-      
-      * Bellwood
-      * Berkeley
-      * Berwyn
-      * Broadview
-      * Brookfield
-      * Cicero
-      * Elmwood Park
-      * Forest Park
-      * Franklin Park
-      * Hillside
-      * La Grange Park
-      * Leyden (not within Rosemont and Schiller Park)
-      * Maywood
-      * Melrose Park
-      * Northlake
-      * North Riverside
-      * Oak Park
-      * Proviso
-      * River Forest
-      * River Grove
-      * Riverside
-      * Stone Park
-      * Westchester  
-  - Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview: 19
-    help: |
-      The Fifth Municipal District covers the **southwestern suburbs of Cook County**. It includes:
-      
-      * Alsip
-      * Bedford Park
-      * Bridgeview
-      * Burbank
-      * Burr Ridge
-      * Chicago Ridge
-      * Crestwood
-      * Countryside
-      * Evergreen Park
-      * Forest View
-      * Hickory Hills
-      * Hinsdale
-      * Hodgkins
-      * Hometown
-      * Indian Head Park
-      * Justice
-      * La Grange
-      * Lemont
-      * Lyons
-      * McCook
-      * Merrionette Park
-      * Oak Forest
-      * Oak Lawn
-      * Orland Hills
-      * Orland Park
-      * Palos
-      * Palos Heights
-      * Palos Hills
-      * Palos Park
-      * Stickney
-      * Summit
-      * Tinley Park
-      * Western Springs
-      * Willow Springs
-      * Woodridge
-      * Worth
-  - Sixth Municipal District, 16501 South Kedzie Parkway, Markham: 20
-    help: |
-      The Sixth Municipal District covers the **southern suburbs of Cook County**. It includes:
-      
-      * Bloom
-      * Blue Island
-      * Bremen
-      * Burnham
-      * Calumet
-      * Calumet City
-      * Calumet Park
-      * Chicago Heights
-      * Country Club Hills
-      * Crete
-      * Dixmoor
-      * Dolton
-      * East Hazel Crest
-      * Flossmoor
-      * Ford Heights
-      * Glenwood
-      * Harvey
-      * Hazel Crest
-      * Homewood
-      * Lansing
-      * Lynwood
-      * Markham
-      * Matteson
-      * Midlothian
-      * Olympia Fields
-      * Park Forest
-      * Phoenix
-      * Posen
-      * Rich
-      * Richton Park
-      * Riverdale
-      * Robbins
-      * Sauk Village
-      * South Chicago Heights
-      * South Holland
-      * Steger
-      * Thornton  
+fields: 
+  - no label: cook_district
+    input type: radio
+    choices:
+      - First Municipal District, Daley Center, 50 W. Washington Street, Chicago: 15
+        help: |
+          The First Municipal District covers the **City of Chicago**. 
+      - Second Municipal District, 5600 Old Orchard Road, Skokie: 16
+        help: |
+          The Second Municipal District covers the **northern suburbs of Cook County**. It includes:
+          
+          * Deerfield
+          * Des Plaines
+          * Evanston
+          * Glencoe
+          * Glenview
+          * Golf
+          * Kenilworth
+          * Lincolnwood
+          * Maine (not within Rosemont)
+          * Morton Grove
+          * New Trier
+          * Niles
+          * Northbrook
+          * Northfield (not within Prospect Heights)
+          * Park Ridge
+          * Skokie
+          * Wilmette
+          * Winnetka
+          * Wheeling (within Des Plaines)
+      - Third Municipal District, 2121 Euclid Avenue, Rolling Meadows: 17
+        help: |
+          The Third Municipal District covers the **northwestern suburbs of Cook County**. It includes:
+    
+          * Arlington Heights
+          * Barrington
+          * Barrington Hills
+          * Bartlett
+          * Bensenville
+          * Buffalo Grove
+          * East Dundee
+          * Elgin
+          * Elk Grove
+          * Elk Grove Village
+          * Hanover
+          * Hanover Park
+          * Harwood Heights
+          * Hoffman Estates
+          * Inverness
+          * Leyden (within Rosemont and Schiller Park)
+          * Maine (within Rosemont)
+          * Mount Prospect
+          * Norridge
+          * Northfield (within Prospect Heights)
+          * Norwood Park (not within Chicago)
+          * Palatine
+          * Prospect Heights
+          * Rolling Meadows
+          * Roselle
+          * Rosemont
+          * Schaumburg
+          * Schiller Park
+          * South Barrington
+          * Streamwood
+          * Wheeling (not within Des Plaines)    
+      - Fourth Municipal District, 1500 Maybrook Drive, Maywood: 18
+        help: |
+          The Fourth Municipal District covers the **western suburbs of Cook County**. It includes:
+          
+          * Bellwood
+          * Berkeley
+          * Berwyn
+          * Broadview
+          * Brookfield
+          * Cicero
+          * Elmwood Park
+          * Forest Park
+          * Franklin Park
+          * Hillside
+          * La Grange Park
+          * Leyden (not within Rosemont and Schiller Park)
+          * Maywood
+          * Melrose Park
+          * Northlake
+          * North Riverside
+          * Oak Park
+          * Proviso
+          * River Forest
+          * River Grove
+          * Riverside
+          * Stone Park
+          * Westchester  
+      - Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview: 19
+        help: |
+          The Fifth Municipal District covers the **southwestern suburbs of Cook County**. It includes:
+          
+          * Alsip
+          * Bedford Park
+          * Bridgeview
+          * Burbank
+          * Burr Ridge
+          * Chicago Ridge
+          * Crestwood
+          * Countryside
+          * Evergreen Park
+          * Forest View
+          * Hickory Hills
+          * Hinsdale
+          * Hodgkins
+          * Hometown
+          * Indian Head Park
+          * Justice
+          * La Grange
+          * Lemont
+          * Lyons
+          * McCook
+          * Merrionette Park
+          * Oak Forest
+          * Oak Lawn
+          * Orland Hills
+          * Orland Park
+          * Palos
+          * Palos Heights
+          * Palos Hills
+          * Palos Park
+          * Stickney
+          * Summit
+          * Tinley Park
+          * Western Springs
+          * Willow Springs
+          * Woodridge
+          * Worth
+      - Sixth Municipal District, 16501 South Kedzie Parkway, Markham: 20
+        help: |
+          The Sixth Municipal District covers the **southern suburbs of Cook County**. It includes:
+          
+          * Bloom
+          * Blue Island
+          * Bremen
+          * Burnham
+          * Calumet
+          * Calumet City
+          * Calumet Park
+          * Chicago Heights
+          * Country Club Hills
+          * Crete
+          * Dixmoor
+          * Dolton
+          * East Hazel Crest
+          * Flossmoor
+          * Ford Heights
+          * Glenwood
+          * Harvey
+          * Hazel Crest
+          * Homewood
+          * Lansing
+          * Lynwood
+          * Markham
+          * Matteson
+          * Midlothian
+          * Olympia Fields
+          * Park Forest
+          * Phoenix
+          * Posen
+          * Rich
+          * Richton Park
+          * Riverdale
+          * Robbins
+          * Sauk Village
+          * South Chicago Heights
+          * South Holland
+          * Steger
+          * Thornton  
 ---
 template: cook_district_help
 subject: |
@@ -835,29 +912,40 @@ content: |
 
   If you cannot find ${other_parties[i].name_full()}'s address, you may want to visit **[Illinois Court Help](https://www.ilcourthelp.gov/)** or call or text (833) 411-1121 for assistance.
 ---
-id: more than 9 defendants
+id: nine max
+continue button field: nine_max
 question: |
-  Are there any more defendants?
+  About additional defendants
 subquestion: |
-  You can sue more than 9 defendants with this program, but this program will only make *Summons* forms for the first 9 defendants.
-  
-  You will need to fill out *Summons* forms for any other defendants in your case. 
-  
-  If you choose **Yes**, you can download blank *Summons* forms at the end of this program.
-fields:
-  - "Anyone else?": blank_summons_check
-    datatype: yesnoradio
+  This program can only make forms for a case with nine or fewer defendants.
+
+  If you want to sue 10 or more defendants, you may want to talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+
+  If you want to make a *Small Claims Complaint* with nine defendants, click **Next**.
+---
+#id: more than 9 defendants
+#continue button field: blank_summons_note
+#question: |
+#  About additional defendants
+#subquestion: |
+#  You can sue more than nine defendants with this program, but this program will only make *Summons* forms for the first nine defendants. You can download blank *Summons* forms at the end of this program.
+#  
+#  You will need to fill out *Summons* forms for any other defendants in your case. 
 ---
 id: any other defendants
 question: |
   Do you have any other defendants to tell us about?
 subquestion: |
-  So far you have told us about ${other_parties.full_names()}.
+  You can list up to nine defendants. So far you have told us about ${fix_punctuation(other_parties.full_names())}
   
   ${collapse_template(help_suing_business)}
 fields:
   - "Anyone else?": other_parties.there_is_another
     datatype: yesnoradio
+---
+code: |
+  if other_parties.number_gathered() >= 9:
+    other_parties.there_is_another = False    
 ---
 id: landlord check
 question: |
@@ -911,6 +999,8 @@ fields:
     input type: area
     rows: 4
     maxlength: 175
+  - note: |
+      The form has room for about **175 characters** including spaces.
 ---
 id: demand payment check
 question: |
@@ -998,6 +1088,7 @@ fields:
       % endif
     field: claim_reason
     input type: area
+    label above field: True
     rows: 16
     maxlength: 1800
   - note: After you click **Next**, the program will take a moment to make a preview of the page.
@@ -1069,6 +1160,7 @@ subquestion: |
 fields:
   - Explanation (continued): more_reason
     input type: area
+    label above field: True
     rows: 16
     maxlength: 2600
   - note: After you click **Next**, the program will take a moment to make a preview of the page.
@@ -1213,10 +1305,12 @@ subquestion: |
   % if other_parties[i].agent_check == True:
   If ${other_parties[i].name_full()} has listed a different address where they named ${other_parties[i].agent.name_full()} as their registered agent on the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/) website, you must select **No** and then enter that address.
   % endif
-field: other_parties[i].same_address
-choices:
-  - Yes: True
-  - No, I want to enter a different address for service.: False
+fields: 
+  - no label: other_parties[i].same_address
+    input type: radio
+    choices:
+      - Yes: True
+      - No, I want to enter a different address for service.: False
 ---
 id: defendant service address
 question: |
@@ -1330,12 +1424,14 @@ subquestion: |
   * Special process server.
   
   To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/legal-information/serving-summons).
-field: other_parties[i].service_method
-choices:
-  - Circuit Clerk (only for defendants in Illinois): clerk
-  - Sheriff: sheriff
-  - Special process server: server
-  - I do not know yet.: unknown
+fields: 
+  - no label: other_parties[i].service_method
+    input type: radio
+    choices:
+      - Circuit Clerk (only for defendants in Illinois): clerk
+      - Sheriff: sheriff
+      - Special process server: server
+      - I do not know yet.: unknown
 ---
 template: signature_help
 subject: |
@@ -1534,15 +1630,17 @@ question: |
   What city was the rental property in?
 subquestion: |
   Some cities have local laws about security deposits.
-field: apartment_city
-choices:
-  - Chicago
-  - DeKalb
-  - Evanston
-  - Mount Prospect
-  - Oak Park
-  - Urbana
-  - None of the above
+fields: 
+  - no label: apartment_city
+    input type: radio
+    choices:
+      - Chicago
+      - DeKalb
+      - Evanston
+      - Mount Prospect
+      - Oak Park
+      - Urbana
+      - None of the above
 ---
 id: municipal law intro
 continue button field: municipal_intro
@@ -1682,12 +1780,14 @@ fields:
 id: merged unit number general
 question: |
   How many units are in the property?
-field: unit_number_general
-choices:
-  - 4 or fewer units: too_few_for_illinois
-  - 5 or 6 units: depends_on_area
-  - 7 or more units: enough_anywhere
-  - I do not know.: dont_know
+fields: 
+  - no label: unit_number_general
+    input type: radio
+    choices:
+      - 4 or fewer units: too_few_for_illinois
+      - 5 or 6 units: depends_on_area
+      - 7 or more units: enough_anywhere
+      - I do not know.: dont_know
 ---
 #This code determines which ordinance would apply to a given rental property and whether that property falls under any of the ordinance's exclusions. What rental units are covered vary between jurisdictions. All jurisdictions--save Illinois writ large--exclude certain types of property, whereas some jurisdictions exclude units in a property occupied by the owner with fewer than X units. Cook County has an additional quirk documented in the interview code block.
 #It is worth noting that this code alone does not determine whether the user can get "bonus" damages. That also can depend on other code dealing with the landlord's post move out actions. (Although as of March 2024 prior to SME review, I suspect that the landlord action code will become more influential. Currently it doesn't have much impact on the "bonus" damages calculation.)
@@ -2229,6 +2329,8 @@ fields:
     input type: area
     rows: 2
     maxlength: 175
+  - note: |
+      The form has room for about **175 characters** including spaces.
 ---
 id: deposit payment proof
 question: |
@@ -2458,10 +2560,9 @@ subquestion: |
   </ul><p>
   <p>See the <a href="https://ilcourtsaudio.blob.core.windows.net/antilles-resources/resources/9ce1fce9-895f-463e-b87d-f9b7631f8fde/Rule%20137.pdf"><b>Illinois Supreme Court Rule 137</b></a> for more information.</p>
   </div>
-field: e_signature
-choices:
-  - Yes: True
-  - No, I will sign my forms later.: False
+fields: 
+  - "Add e-signature?": e_signature
+    datatype: yesnoradio
 terms:
   - "e-signature": |
       An e-signature is an electronic signature. It is a digital version of a signature that has the same effect as a hand-written signature.
@@ -2527,20 +2628,40 @@ objects:
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
   - letter_to_sheriff: ALDocument.using(title="Letter to sheriff (complete for each out-of-state defendant)", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
-  - summons_one: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
-  - summons_two: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
-  - summons_three: ALDocument.using(title="Summons 3", filename="summons_3.pdf", has_addendum=False)
-  - summons_four: ALDocument.using(title="Summons 4", filename="summons_4.pdf", has_addendum=False)
-  - summons_five: ALDocument.using(title="Summons 5", filename="summons_5.pdf", has_addendum=False)
-  - summons_six: ALDocument.using(title="Summons 6", filename="summons_6.pdf", has_addendum=False)
-  - summons_seven: ALDocument.using(title="Summons 7", filename="summons_7.pdf", has_addendum=False)
-  - summons_eight: ALDocument.using(title="Summons 8", filename="summons_8.pdf", has_addendum=False)
-  - summons_nine: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
-  - summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
+  - summons_one_a: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
+  - summons_one_b: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)  
+  - summons_two_a: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
+  - summons_two_b: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
+  - summons_three_a: ALDocument.using(title="Summons 3", filename="summons_3.pdf", has_addendum=False)
+  - summons_three_b: ALDocument.using(title="Summons 3", filename="summons_3.pdf", has_addendum=False)
+  - summons_four_a: ALDocument.using(title="Summons 4", filename="summons_4.pdf", has_addendum=False)
+  - summons_four_b: ALDocument.using(title="Summons 4", filename="summons_4.pdf", has_addendum=False)
+  - summons_five_a: ALDocument.using(title="Summons 5", filename="summons_5.pdf", has_addendum=False)
+  - summons_five_b: ALDocument.using(title="Summons 5", filename="summons_5.pdf", has_addendum=False)
+  - summons_six_a: ALDocument.using(title="Summons 6", filename="summons_6.pdf", has_addendum=False)
+  - summons_six_b: ALDocument.using(title="Summons 6", filename="summons_6.pdf", has_addendum=False)
+  - summons_seven_a: ALDocument.using(title="Summons 7", filename="summons_7.pdf", has_addendum=False)
+  - summons_seven_b: ALDocument.using(title="Summons 7", filename="summons_7.pdf", has_addendum=False)
+  - summons_eight_a: ALDocument.using(title="Summons 8", filename="summons_8.pdf", has_addendum=False)
+  - summons_eight_b: ALDocument.using(title="Summons 8", filename="summons_8.pdf", has_addendum=False)
+  - summons_nine_a: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
+  - summons_nine_b: ALDocument.using(title="Summons 9", filename="summons_9.pdf", has_addendum=False)
+  #- summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_one, summons_two, summons_three, summons_four, summons_five, summons_six, summons_seven, summons_eight, summons_nine, summons_blank], filename="small_claims_complaint.pdf", title="All forms")
+  - summons_bundle: ALDocumentBundle.using(elements=[summons_one_a, summons_one_b], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
+  - summons_two_bundle: ALDocumentBundle.using(elements=[summons_two_a, summons_two_b], title= "Summons 2", filename="summons_2.pdf", has_addendum=False, enabled=True)
+  - summons_three_bundle: ALDocumentBundle.using(elements=[summons_three_a, summons_three_b], title= "Summons 3", filename="summons_3.pdf", has_addendum=False, enabled=True)
+  - summons_four_bundle: ALDocumentBundle.using(elements=[summons_four_a, summons_four_b], title= "Summons 4", filename="summons_4.pdf", has_addendum=False, enabled=True)
+  - summons_five_bundle: ALDocumentBundle.using(elements=[summons_five_a, summons_five_b], title= "Summons 5", filename="summons_5.pdf", has_addendum=False, enabled=True)
+  - summons_six_bundle: ALDocumentBundle.using(elements=[summons_six_a, summons_six_b], title= "Summons 6", filename="summons_6.pdf", has_addendum=False, enabled=True)
+  - summons_seven_bundle: ALDocumentBundle.using(elements=[summons_seven_a, summons_seven_b], title= "Summons 7", filename="summons_7.pdf", has_addendum=False, enabled=True)
+  - summons_eight_bundle: ALDocumentBundle.using(elements=[summons_eight_a, summons_eight_b], title= "Summons 8", filename="summons_8.pdf", has_addendum=False, enabled=True)
+  - summons_nine_bundle: ALDocumentBundle.using(elements=[summons_nine_a, summons_nine_b], title= "Summons 9", filename="summons_9.pdf", has_addendum=False, enabled=True)
+---
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
 ---
 objects:
   - small_claims_complaint_single_pdf_bundle: ALDocumentBundle.using(elements=[complaint, additional_defendants, additional_reasons], filename="small_claims_complaint_bundle.pdf", title="Small Claims Complaint", enabled=True)
@@ -2552,17 +2673,24 @@ code: |
   additional_reasons.enabled = False
   letter_to_sheriff.enabled = False
   order.enabled = True
-  summons_one.enabled = True
-  summons_two.enabled = False
-  summons_three.enabled = False
-  summons_four.enabled = False
-  summons_five.enabled = False
-  summons_six.enabled = False
-  summons_seven.enabled = False
-  summons_eight.enabled = False
-  summons_nine.enabled = False
-  summons_blank.enabled = False
-  
+  summons_one_a.enabled = True
+  summons_one_b.enabled = True
+  summons_two_a.enabled = False
+  summons_two_b.enabled = False
+  summons_three_a.enabled = False
+  summons_three_b.enabled = False
+  summons_four_a.enabled = False
+  summons_four_b.enabled = False
+  summons_five_a.enabled = False
+  summons_five_b.enabled = False
+  summons_six_a.enabled = False
+  summons_six_b.enabled = False
+  summons_seven_a.enabled = False
+  summons_seven_b.enabled = False
+  summons_eight_a.enabled = False
+  summons_eight_b.enabled = False
+  summons_nine_a.enabled = False
+  summons_nine_b.enabled = False
   if other_parties.number_gathered() > 2:
     additional_defendants.enabled = True
     
@@ -2591,23 +2719,29 @@ code: |
           letter_to_sheriff.enabled = True
   
   if other_parties.number() > 1:
-      summons_two.enabled = True
+      summons_two_a.enabled = True
+      summons_two_b.enabled = True
       if other_parties.number() > 2:
-        summons_three.enabled = True
+        summons_three_a.enabled = True
+        summons_three_b.enabled = True
         if other_parties.number() > 3:
-          summons_four.enabled = True
+          summons_four_a.enabled = True
+          summons_four_b.enabled = True  
           if other_parties.number() > 4:
-            summons_five.enabled = True
+            summons_five_a.enabled = True
+            summons_five_b.enabled = True
             if other_parties.number() > 5:
-              summons_six.enabled = True
+              summons_six_a.enabled = True
+              summons_six_b.enabled = True
               if other_parties.number() > 6:
-                summons_seven.enabled = True
+                summons_seven_a.enabled = True
+                summons_seven_b.enabled = True
                 if other_parties.number() > 7:
-                  summons_eight.enabled = True
+                  summons_eight_a.enabled = True
+                  summons_eight_b.enabled = True
                   if other_parties.number() > 8:
-                    summons_nine.enabled = True
-                    if blank_summons_check == True:
-                      summons_blank.enabled = True
+                    summons_nine_a.enabled = True
+                    summons_nine_b.enabled = True
 ---
 attachment:
   variable name: instructions[i]
@@ -2724,12 +2858,12 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
 ---
 attachment:
-  variable name: summons_one[i]
-  name: summons_one
-  filename: summons_one
+  variable name: summons_one_a[i]
+  name: summons_one_a
+  filename: summons_one_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
@@ -2757,21 +2891,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_two[i]
-  name: summons_two
-  filename: summons_two
+  variable name: summons_two_a[i]
+  name: summons_two_a
+  filename: summons_two_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[1].name_full()}
-    - "defendant_name_again": ${other_parties[1].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[1].name_full() if other_parties[1].alt_delivery == True else ""}
     - "agent_name": ${other_parties[1].agent.name_full()}
     - "main_service_street": ${other_parties[1].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[1].where_to_serve.line_two()}
@@ -2791,21 +2934,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_three[i]
-  name: summons_three
-  filename: summons_three
+  variable name: summons_three_a[i]
+  name: summons_three_a
+  filename: summons_three_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[2].name_full()}
-    - "defendant_name_again": ${other_parties[2].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[2].name_full() if other_parties[2].alt_delivery == True else ""}
     - "agent_name": ${other_parties[2].agent.name_full()}
     - "main_service_street": ${other_parties[2].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[2].where_to_serve.line_two()}
@@ -2825,21 +2977,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_four[i]
-  name: summons_four
-  filename: summons_four
+  variable name: summons_four_a[i]
+  name: summons_four_a
+  filename: summons_four_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[3].name_full()}
-    - "defendant_name_again": ${other_parties[3].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[3].name_full() if other_parties[3].alt_delivery == True else ""}
     - "agent_name": ${other_parties[3].agent.name_full()}
     - "main_service_street": ${other_parties[3].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[3].where_to_serve.line_two()}
@@ -2859,21 +3020,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_five[i]
-  name: summons_five
-  filename: summons_five
+  variable name: summons_five_a[i]
+  name: summons_five_a
+  filename: summons_five_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[4].name_full()}
-    - "defendant_name_again": ${other_parties[4].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[4].name_full() if other_parties[4].alt_delivery == True else ""}
     - "agent_name": ${other_parties[4].agent.name_full()}
     - "main_service_street": ${other_parties[4].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[4].where_to_serve.line_two()}
@@ -2893,21 +3063,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_six[i]
-  name: summons_six
-  filename: summons_six
+  variable name: summons_six_a[i]
+  name: summons_six_a
+  filename: summons_six_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[5].name_full()}
-    - "defendant_name_again": ${other_parties[5].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[5].name_full() if other_parties[5].alt_delivery == True else ""}
     - "agent_name": ${other_parties[5].agent.name_full()}
     - "main_service_street": ${other_parties[5].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[5].where_to_serve.line_two()}
@@ -2927,21 +3106,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_seven[i]
-  name: summons_seven
-  filename: summons_seven
+  variable name: summons_seven_a[i]
+  name: summons_seven_a
+  filename: summons_seven_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[6].name_full()}
-    - "defendant_name_again": ${other_parties[6].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[6].name_full() if other_parties[6].alt_delivery == True else ""}
     - "agent_name": ${other_parties[6].agent.name_full()}
     - "main_service_street": ${other_parties[6].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[6].where_to_serve.line_two()}
@@ -2961,21 +3149,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_eight[i]
-  name: summons_eight
-  filename: summons_eight
+  variable name: summons_eight_a[i]
+  name: summons_eight_a
+  filename: summons_eight_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[7].name_full()}
-    - "defendant_name_again": ${other_parties[7].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[7].name_full() if other_parties[7].alt_delivery == True else ""}
     - "agent_name": ${other_parties[7].agent.name_full()}
     - "main_service_street": ${other_parties[7].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[7].where_to_serve.line_two()}
@@ -2995,21 +3192,30 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_nine[i]
-  name: summons_nine
-  filename: summons_nine
+  variable name: summons_nine_a[i]
+  name: summons_nine_a
+  filename: summons_nine_a
   skip undefined: True
-  editable: False
-  pdf template file: SMC_Summons.pdf
+  editable: True
+  pdf template file: SMC_Summons_Part1.pdf
   fields:
     - "case_number": ${""}
     - "filing_county": ${court_county.upper()}
     - "plaintiff_name": ${users[0].name_full()}
     - "defendant_list": ${other_parties.full_names()}
+    - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[8].name_full()}
-    - "defendant_name_again": ${other_parties[8].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[8].name_full() if other_parties[8].alt_delivery == True else ""}
     - "agent_name": ${other_parties[8].agent.name_full()}
     - "main_service_street": ${other_parties[8].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[8].where_to_serve.line_two()}
@@ -3029,16 +3235,141 @@ attachment:
     - "courthouse_address": ${ courthouse_info }
     - "clerk_phone": ${ trial_court.phone }
     - "clerk_website": ${ trial_court.website }
+    - "court_date": ${hearing_date if has_court_date else ""}
+    - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
+    - "courtroom_number": ${courtroom if has_court_date else ""}
+    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
+    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
+    - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
+    - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
 ---
 attachment:
-  variable name: summons_blank[i]
-  name: summons_blank
-  filename: summons_blank
+  variable name: summons_one_b[i]
+  name: summons_one_b
+  filename: summons_one_b
   skip undefined: True
   editable: False
-  pdf template file: SMC_Summons_Blank.pdf
+  pdf template file: SMC_Summons_Part2.pdf
   fields:
-   - "fake": ${""}
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_two_b[i]
+  name: summons_two_b
+  filename: summons_two_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_three_b[i]
+  name: summons_three_b
+  filename: summons_three_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_four_b[i]
+  name: summons_four_b
+  filename: summons_four_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_five_b[i]
+  name: summons_five_b
+  filename: summons_five_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_six_b[i]
+  name: summons_six_b
+  filename: summons_six_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_seven_b[i]
+  name: summons_seven_b
+  filename: summons_seven_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_eight_b[i]
+  name: summons_eight_b
+  filename: summons_eight_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+attachment:
+  variable name: summons_nine_b[i]
+  name: summons_nine_b
+  filename: summons_nine_b
+  skip undefined: True
+  editable: False
+  pdf template file: SMC_Summons_Part2.pdf
+  fields:
+    - "case_number": ${""}
+    - "plaintiff_name": ${users[0].name_full()}
+    - "defendant_list": ${other_parties.full_names()}
+    - "filing_county": ${court_county.upper()}
+---
+#attachment:
+#  variable name: summons_blank[i]
+#  name: summons_blank
+#  filename: summons_blank
+#  skip undefined: True
+#  editable: False
+#  pdf template file: SMC_Summons_Blank.pdf
+#  fields:
+#   - "fake": ${""}
 ---
 id: review screen
 event: review_answers
@@ -3047,6 +3378,8 @@ question: |
 subquestion: |
   Edit your answers below.
 review: 
+  - note: |
+      <h4>About the case</h4>
   - Edit: amount_check
     button: |
       **You are suing for:**
@@ -3060,6 +3393,23 @@ review:
     button: |
       **Which county are you filing your *Small Claims Complaint* in?**
       ${end_in_county(court_county)}
+  - Edit: cook_district
+    button: |
+      **Cook County courthouse:**
+      % if cook_district == "15":
+      ${ "Daley Center, 50 W. Washington Street, Chicago" }
+      % elif cook_district == "16":
+      ${ "Second Municipal District, 5600 Old Orchard Road, Skokie" }
+      % elif cook_district == "17":
+      ${ "Third Municipal District, 2121 Euclid Avenue, Rolling Meadows" }
+      % elif cook_district == "18":
+      ${ "Fourth Municipal District, 1500 Maybrook Drive, Maywood" }
+      % elif cook_district == "19":
+      ${ "Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview" }
+      % else:
+      ${ "Sixth Municipal District, 16501 South Kedzie Parkway, Markham" }
+      % endif      
+    show if: trial_court_index == -1
   - Edit: other_parties.revisit
     button: |
       **Defendants: (Edit to change names, addresses, and other information)**
@@ -3296,7 +3646,6 @@ review:
       
       ${deposit_claim_reason}
     show if: landlord_check == True and use_new_text == True
-    #jump to
   - Edit: add_second_page
     button: |
       **Do you need a second page to explain your claim?**
@@ -3358,7 +3707,7 @@ review:
       % else:
       **Do you need a second page to explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}?**
       % endif
-      ${add_second_page}
+      ${word(yesno(add_second_page))}
     show if: landlord_check == False
   - Edit: more_reason
     button: |
@@ -3370,6 +3719,58 @@ review:
       
       ${more_reason}
     show if: landlord_check == False
+  - note: |
+      <h4>Service information</h4>
+  - Edit: has_court_date
+    button: |
+      **Do you know the court date?**
+      ${word(yesno(has_court_date))}
+  - Edit: hearing_date
+    button: |
+      **Hearing information:**
+      
+      % if hearing_date != "":
+      * Date: ${hearing_date}
+      % else:
+      * Date: None entered
+      % endif
+      % if hearing_time != "":
+      * Time: ${ format_time(hearing_time, "h:mm a") }
+      % else:
+      * Time: None entered
+      % endif
+      % if hearing_type['person'] and not hearing_type['remote']:
+      * Type: In person
+      % elif hearing_type['remote'] and not hearing_type['person']:
+      * Type: By phone or video
+      % elif hearing_type['remote'] and hearing_type['person']:
+      * Type: In person or by phone or video
+      % else:
+      * Type: None entered
+      % endif
+      % if courtroom != "":
+      * Courtroom: ${courtroom}
+      % else:
+      * Courtroom: None entered
+      % endif
+      % if remote_website != "":
+      * Video conference website (URL): ${remote_website}
+      % else:
+      * Video conference website (URL): None entered
+      % endif
+      % if remote_login != "":
+      * Log-in information: ${remote_login}
+      % else:
+      * Log-in information: None entered
+      % endif
+      % if remote_phone != "":
+      * Call-in phone number: ${ phone_number_formatted(remote_phone) }
+      % else:
+      * Call-in phone number: None entered
+      % endif
+    show if: has_court_date
+  - note: |
+      <h4>About you</h4>
   - Edit: users[0].name.first
     button: |
       **Your name:**
@@ -3415,7 +3816,9 @@ question: |
 subquestion: |
   ${ other_parties.table }
 
+  % if other_parties.number_gathered() < 9:
   ${ other_parties.add_action() }
+  % endif
 ---
 table: other_parties.table
 rows: other_parties
@@ -3426,6 +3829,7 @@ columns:
       action_button_html(url_action(row_item.attr_name("review_defendant_info")), label="Edit", icon="pencil-alt")
 delete buttons: True
 confirm: True
+allow append: False
 ---
 id: defendant info review screen
 continue button field: x.review_defendant_info
@@ -3565,6 +3969,23 @@ review:
     button: |
       **Which county are you filing your *Small Claims Complaint* in?**
       ${end_in_county(court_county)}
+  - Edit: cook_district
+    button: |
+      **Cook County courthouse:**
+      % if cook_district == "15":
+      ${ "Daley Center, 50 W. Washington Street, Chicago" }
+      % elif cook_district == "16":
+      ${ "Second Municipal District, 5600 Old Orchard Road, Skokie" }
+      % elif cook_district == "17":
+      ${ "Third Municipal District, 2121 Euclid Avenue, Rolling Meadows" }
+      % elif cook_district == "18":
+      ${ "Fourth Municipal District, 1500 Maybrook Drive, Maywood" }
+      % elif cook_district == "19":
+      ${ "Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview" }
+      % else:
+      ${ "Sixth Municipal District, 16501 South Kedzie Parkway, Markham" }
+      % endif      
+    show if: trial_court_index == -1
   - Edit: landlord_check
     button: |
       **Are you suing your former landlord to return a security deposit?**
@@ -3847,18 +4268,14 @@ review:
       
       ${claim_reason}
     show if: landlord_check == False
-  - Edit: preview_complaint
+  - Edit: add_second_page
     button: |
       % if other_parties.number_gathered() > 1:
       **Do you need a second page to explain why the defendants owe you ${currency(amount_check)}?**
       % else:
       **Do you need a second page to explain why ${other_parties[0].name_full()} owes you ${currency(amount_check)}?**
       % endif
-      % if preview_complaint == "Additional page":
-      Yes
-      % else:
-      No
-      % endif
+      ${word(yesno(add_second_page))}
     show if: landlord_check == False
   - Edit: more_reason
     button: |
@@ -3877,6 +4294,54 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name_full() }
       % endfor
+  - Edit: has_court_date
+    button: |
+      **Do you know the court date?**
+      ${word(yesno(has_court_date))}
+  - Edit: hearing_date
+    button: |
+      **Hearing information:**
+      
+      % if hearing_date != "":
+      * Date: ${hearing_date}
+      % else:
+      * Date: None entered
+      % endif
+      % if hearing_time != "":
+      * Time: ${ format_time(hearing_time, "h:mm a") }
+      % else:
+      * Time: None entered
+      % endif
+      % if hearing_type['person'] and not hearing_type['remote']:
+      * Type: In person
+      % elif hearing_type['remote'] and not hearing_type['person']:
+      * Type: By phone or video
+      % elif hearing_type['remote'] and hearing_type['person']:
+      * Type: In person or by phone or video
+      % else:
+      * Type: None entered
+      % endif
+      % if courtroom != "":
+      * Courtroom: ${courtroom}
+      % else:
+      * Courtroom: None entered
+      % endif
+      % if remote_website != "":
+      * Video conference website (URL): ${remote_website}
+      % else:
+      * Video conference website (URL): None entered
+      % endif
+      % if remote_login != "":
+      * Log-in information: ${remote_login}
+      % else:
+      * Log-in information: None entered
+      % endif
+      % if remote_phone != "":
+      * Call-in phone number: ${ phone_number_formatted(remote_phone) }
+      % else:
+      * Call-in phone number: None entered
+      % endif
+    show if: has_court_date
 ---
 section: About you
 id: user review screen
@@ -3922,6 +4387,54 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name_full() }
       % endfor
+  - Edit: has_court_date
+    button: |
+      **Do you know the court date?**
+      ${word(yesno(has_court_date))}
+  - Edit: hearing_date
+    button: |
+      **Hearing information:**
+      
+      % if hearing_date != "":
+      * Date: ${hearing_date}
+      % else:
+      * Date: None entered
+      % endif
+      % if hearing_time != "":
+      * Time: ${ format_time(hearing_time, "h:mm a") }
+      % else:
+      * Time: None entered
+      % endif
+      % if hearing_type['person'] and not hearing_type['remote']:
+      * Type: In person
+      % elif hearing_type['remote'] and not hearing_type['person']:
+      * Type: By phone or video
+      % elif hearing_type['remote'] and hearing_type['person']:
+      * Type: In person or by phone or video
+      % else:
+      * Type: None entered
+      % endif
+      % if courtroom != "":
+      * Courtroom: ${courtroom}
+      % else:
+      * Courtroom: None entered
+      % endif
+      % if remote_website != "":
+      * Video conference website (URL): ${remote_website}
+      % else:
+      * Video conference website (URL): None entered
+      % endif
+      % if remote_login != "":
+      * Log-in information: ${remote_login}
+      % else:
+      * Log-in information: None entered
+      % endif
+      % if remote_phone != "":
+      * Call-in phone number: ${ phone_number_formatted(remote_phone) }
+      % else:
+      * Call-in phone number: None entered
+      % endif
+    show if: has_court_date
 ---
 #code block for creating variables used only in attachment blocks. Why oh why docassemble won't let me just put this code by the corresponding fields is beyond me.
 #service_address is the baseline service address, alt_service_address is used for the question paths that still ask for a second service address. The where_to_serve variable is the potentially redundant one; it is used to determine whether opposing_parties[i].address or opposing_parties[i].service_address is used in the form based on the value of opposing_parties[i].same_address.
@@ -3987,12 +4500,13 @@ code: |
       have_demanded_field = demand_check
     
       
-  for person in other_parties:
-    if person.agent_check == True:
-      person.where_to_serve = person.service_address
-    elif person.same_address == False:
-      person.where_to_serve = person.service_address
-    else:
-      person.where_to_serve = person.address
+  for index, person in enumerate(other_parties):
+    if index < 9:
+      if person.agent_check == True:
+        person.where_to_serve = person.service_address
+      elif person.same_address == False:
+        person.where_to_serve = person.service_address
+      else:
+        person.where_to_serve = person.address
      
   attachment_logic = True
