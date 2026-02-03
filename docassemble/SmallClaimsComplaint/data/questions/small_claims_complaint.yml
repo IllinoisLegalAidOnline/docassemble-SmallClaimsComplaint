@@ -2739,7 +2739,7 @@ code: |
                 if other_parties.number() > 7:
                   summons_eight_a.enabled = True
                   summons_eight_b.enabled = True
-                  if other_parties.number() >= 9:
+                  if other_parties.number() > 8:
                     summons_nine_a.enabled = True
                     summons_nine_b.enabled = True
 ---
