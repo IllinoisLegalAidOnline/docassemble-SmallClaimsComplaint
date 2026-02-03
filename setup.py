@@ -44,9 +44,9 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.SmallClaimsComplaint',
-      version='1.0.23',
+      version='1.0.24',
       description=('A docassemble extension.'),
-      long_description='# docassemble.SmallClaimsComplaint\r\n\r\nA docassemble extension.\r\n\r\n## Author\r\n\r\nVivian McNaughton, vmcnaughton@illinoislegalaid.org\r\n\r\n',
+      long_description='4# docassemble.SmallClaimsComplaint\r\n\r\nA docassemble extension.\r\n\r\n## Author\r\n\r\nVivian McNaughton, vmcnaughton@illinoislegalaid.org\r\n\r\n',
       long_description_content_type='text/markdown',
       author='Vivian McNaughton',
       author_email='vmcnaughton@illinoislegalaid.org',

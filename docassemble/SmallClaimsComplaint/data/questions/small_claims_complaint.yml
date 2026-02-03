@@ -83,7 +83,7 @@ code: |
       if cook_district == "15":
         daley_center_note
   other_parties.gather()
-  if other_parties.number_gathered() > 8:
+  if other_parties.number_gathered() >= 9:
     nine_max
 
   set_progress(20)
@@ -944,7 +944,7 @@ fields:
     datatype: yesnoradio
 ---
 code: |
-  if other_parties.number_gathered() > 8:
+  if other_parties.number_gathered() >= 9:
     other_parties.there_is_another = False    
 ---
 id: landlord check
@@ -2739,7 +2739,7 @@ code: |
                 if other_parties.number() > 7:
                   summons_eight_a.enabled = True
                   summons_eight_b.enabled = True
-                  if other_parties.number() > 8:
+                  if other_parties.number() >= 9:
                     summons_nine_a.enabled = True
                     summons_nine_b.enabled = True
 ---
