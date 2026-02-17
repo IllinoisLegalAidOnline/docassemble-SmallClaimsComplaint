@@ -1,7 +1,7 @@
 metadata:
   title: Small claims complaint
   short title: Small claims complaint
-  comment: This program makes the forms to sue someone for up to $10,000. It can be used to sue a landlord for a security deposit.
+  comment: This Easy Form makes the forms to sue someone for up to $10,000. It can be used to sue a landlord for a security deposit.
   authors:
     - Vivian McNaughton
     - Matt Newsted
@@ -351,6 +351,16 @@ subquestion: |
   * Your landlord refuses to return your security deposit,
   * Someone owes you money for work you have done, but refuses to pay you, or
   * You paid for work to be done, but the work was done poorly and the contractor refuses to fix it.
+
+  ${collapse_template(mult_plaintiffs)}
+---
+template: mult_plaintiffs
+subject: |
+  **What if I want to sue together with another person?**
+content: |
+  Illinois's *Small Claims Complaint* form only allows one plaintiff. Filing a complaint with co-plaintiffs has additional legal requirements that the state forms do not handle.
+
+  If you want to file as a co-plaintiff, you can talk with a lawyer about your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 ---
 id: considerations
 continue button field: to_consider
@@ -376,6 +386,8 @@ fields:
     code: |
       name_suffix()
     required: False
+  - note: |
+      ${collapse_template(mult_plaintiffs)}
 ---
 id: user address
 question: |
