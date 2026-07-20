@@ -3889,7 +3889,7 @@ review:
       **Where do you want to serve ${x.name_full()}?**
       % endif
       ${x.service_address.on_one_line(bare=True)}
-    show if: x.same_address == False
+    show if: x.agent_check == True or x.same_address == False
   - Edit: x.service_phone
     button: |
       % if x.agent_check == True:
