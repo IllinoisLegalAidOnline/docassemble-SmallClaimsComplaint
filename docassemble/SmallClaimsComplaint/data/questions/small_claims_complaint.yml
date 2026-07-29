@@ -25,6 +25,7 @@ objects:
   - deposit_dates: DAList
   - another_deposit: DAList
   - other_parties[i].where_to_serve: ALAddress
+  - other_parties[i].second_summons_address: ALAddress
 ---
 mandatory: True
 objects:
@@ -132,7 +133,7 @@ code: |
     if partial_return_check == True:
       partial_return_amount
       partial_return_date
-      
+
     if deposit_balance_owed > 0:
       deposit_still_owed
       #if deposit_balance_owed < 10000:
@@ -2085,15 +2086,15 @@ fields:
     alMin: ${deposit_dates[0]}
 ---
 #Tenants may have paid security deposit in installments. A landlord may have returned a portion of the security deposit. This uses the list of payments--deposit_payments--and the amount the landlord returned--partial_return_amount--to calculate the total deposit_balance_owed
-#reconsider: True
-depends on:
-  - deposit_payments[0]
-  - deposit_payments[1]
-  - deposit_payments[2]
-  - another_deposit[0]
-  - another_deposit[1]
-  - partial_return_check
-  - partial_return_amount
+reconsider: True
+#depends on:
+#  - deposit_payments[0]
+#  - deposit_payments[1]
+#  - deposit_payments[2]
+#  - another_deposit[0]
+#  - another_deposit[1]
+#  - partial_return_check
+#  - partial_return_amount
 code: |
   deposit_balance_owed = deposit_payments[0]
   if another_deposit[0] == True:
@@ -2881,14 +2882,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[0].name_full()}
-    - "defendant_name_again": ${other_parties[0].name_full() if other_parties[0].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[0].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[0].agent.name_full()}
     - "main_service_street": ${other_parties[0].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[0].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[0].service_phone) if other_parties[0].service_phone != "" else ""}
     - "main_service_email": ${other_parties[0].service_email}
-    - "alt_service_street": ${other_parties[0].alt_service_address.line_one(bare=True)  if other_parties[0].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[0].alt_service_address.line_two()  if other_parties[0].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[0].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[0].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[0].alt_service_phone) if other_parties[0].alt_service_phone != "" and other_parties[0].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[0].alt_service_email if other_parties[0].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[0].service_method == "clerk" else False}
@@ -2924,14 +2925,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[1].name_full()}
-    - "defendant_name_again": ${other_parties[1].name_full() if other_parties[1].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[1].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[1].agent.name_full()}
     - "main_service_street": ${other_parties[1].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[1].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[1].service_phone) if other_parties[1].service_phone != "" else ""}
     - "main_service_email": ${other_parties[1].service_email}
-    - "alt_service_street": ${other_parties[1].alt_service_address.line_one(bare=True)  if other_parties[1].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[1].alt_service_address.line_two()  if other_parties[1].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[1].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[1].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[1].alt_service_phone) if other_parties[1].alt_service_phone != "" and other_parties[1].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[1].alt_service_email if other_parties[1].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[1].service_method == "clerk" else False}
@@ -2967,14 +2968,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[2].name_full()}
-    - "defendant_name_again": ${other_parties[2].name_full() if other_parties[2].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[2].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[2].agent.name_full()}
     - "main_service_street": ${other_parties[2].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[2].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[2].service_phone) if other_parties[2].service_phone != "" else ""}
     - "main_service_email": ${other_parties[2].service_email}
-    - "alt_service_street": ${other_parties[2].alt_service_address.line_one(bare=True)  if other_parties[2].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[2].alt_service_address.line_two()  if other_parties[2].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[2].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[2].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[2].alt_service_phone) if other_parties[2].alt_service_phone != "" and other_parties[2].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[2].alt_service_email if other_parties[2].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[2].service_method == "clerk" else False}
@@ -3010,14 +3011,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[3].name_full()}
-    - "defendant_name_again": ${other_parties[3].name_full() if other_parties[3].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[3].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[3].agent.name_full()}
     - "main_service_street": ${other_parties[3].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[3].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[3].service_phone) if other_parties[3].service_phone != "" else ""}
     - "main_service_email": ${other_parties[3].service_email}
-    - "alt_service_street": ${other_parties[3].alt_service_address.line_one(bare=True)  if other_parties[3].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[3].alt_service_address.line_two()  if other_parties[3].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[3].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[3].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[3].alt_service_phone) if other_parties[3].alt_service_phone != "" and other_parties[3].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[3].alt_service_email if other_parties[3].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[3].service_method == "clerk" else False}
@@ -3053,14 +3054,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[4].name_full()}
-    - "defendant_name_again": ${other_parties[4].name_full() if other_parties[4].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[4].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[4].agent.name_full()}
     - "main_service_street": ${other_parties[4].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[4].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[4].service_phone) if other_parties[4].service_phone != "" else ""}
     - "main_service_email": ${other_parties[4].service_email}
-    - "alt_service_street": ${other_parties[4].alt_service_address.line_one(bare=True)  if other_parties[4].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[4].alt_service_address.line_two()  if other_parties[4].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[4].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[4].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[4].alt_service_phone) if other_parties[4].alt_service_phone != "" and other_parties[4].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[4].alt_service_email if other_parties[4].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[4].service_method == "clerk" else False}
@@ -3096,14 +3097,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[5].name_full()}
-    - "defendant_name_again": ${other_parties[5].name_full() if other_parties[5].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[5].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[5].agent.name_full()}
     - "main_service_street": ${other_parties[5].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[5].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[5].service_phone) if other_parties[5].service_phone != "" else ""}
     - "main_service_email": ${other_parties[5].service_email}
-    - "alt_service_street": ${other_parties[5].alt_service_address.line_one(bare=True)  if other_parties[5].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[5].alt_service_address.line_two()  if other_parties[5].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[5].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[5].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[5].alt_service_phone) if other_parties[5].alt_service_phone != "" and other_parties[5].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[5].alt_service_email if other_parties[5].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[5].service_method == "clerk" else False}
@@ -3139,14 +3140,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[6].name_full()}
-    - "defendant_name_again": ${other_parties[6].name_full() if other_parties[6].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[6].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[6].agent.name_full()}
     - "main_service_street": ${other_parties[6].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[6].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[6].service_phone) if other_parties[6].service_phone != "" else ""}
     - "main_service_email": ${other_parties[6].service_email}
-    - "alt_service_street": ${other_parties[6].alt_service_address.line_one(bare=True)  if other_parties[6].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[6].alt_service_address.line_two()  if other_parties[6].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[6].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[6].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[6].alt_service_phone) if other_parties[6].alt_service_phone != "" and other_parties[6].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[6].alt_service_email if other_parties[6].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[6].service_method == "clerk" else False}
@@ -3182,14 +3183,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[7].name_full()}
-    - "defendant_name_again": ${other_parties[7].name_full() if other_parties[7].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[7].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[7].agent.name_full()}
     - "main_service_street": ${other_parties[7].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[7].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[7].service_phone) if other_parties[7].service_phone != "" else ""}
     - "main_service_email": ${other_parties[7].service_email}
-    - "alt_service_street": ${other_parties[7].alt_service_address.line_one(bare=True)  if other_parties[7].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[7].alt_service_address.line_two()  if other_parties[7].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[7].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[7].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[7].alt_service_phone) if other_parties[7].alt_service_phone != "" and other_parties[7].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[7].alt_service_email if other_parties[7].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[7].service_method == "clerk" else False}
@@ -3225,14 +3226,14 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[8].name_full()}
-    - "defendant_name_again": ${other_parties[8].name_full() if other_parties[8].alt_delivery == True else ""}
+    - "defendant_name_again": ${other_parties[8].name_full() if other_parties[0].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[8].agent.name_full()}
     - "main_service_street": ${other_parties[8].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[8].where_to_serve.line_two()}
     - "main_service_phone": ${ phone_number_formatted(other_parties[8].service_phone) if other_parties[8].service_phone != "" else ""}
     - "main_service_email": ${other_parties[8].service_email}
-    - "alt_service_street": ${other_parties[8].alt_service_address.line_one(bare=True)  if other_parties[8].alt_delivery == True else ""}
-    - "alt_service_csz": ${other_parties[8].alt_service_address.line_two()  if other_parties[8].alt_delivery == True else ""}
+    - "alt_service_street": ${other_parties[8].second_summons_address.line_one(bare=True)}
+    - "alt_service_csz": ${other_parties[8].second_summons_address.line_two()}
     - "alt_service_phone": ${ phone_number_formatted(other_parties[8].alt_service_phone) if other_parties[8].alt_service_phone != "" and other_parties[8].alt_delivery == True else ""}
     - "alt_service_email": ${other_parties[8].alt_service_email if other_parties[8].alt_delivery == True else ""}
     - "by_mail": ${ True if other_parties[8].service_method == "clerk" else False}
@@ -4514,9 +4515,16 @@ code: |
     if index < 9:
       if person.agent_check == True:
         person.where_to_serve = person.service_address
+        person.second_summons_address = person.address
       elif person.same_address == False:
         person.where_to_serve = person.service_address
-      else:
+        person.second_summons_address = person.address
+      else:     
         person.where_to_serve = person.address
+        if person.alt_delivery:
+          person.second_summons_address = person.alt_service_address
+        else:
+          person.second_summons_address.address = ""
+          person.second_summons_address.city = ""
      
   attachment_logic = True
