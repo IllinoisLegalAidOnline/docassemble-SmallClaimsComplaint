@@ -17,7 +17,7 @@ objects:
   - filing_location: ALAddress
   - other_parties: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'], there_are_any=True)
   - other_parties[i].agent: ALIndividual
-  - other_parties[i].service_address: ALAdress
+  - other_parties[i].service_address: ALAddress
   - other_parties[i].alt_service_address: ALAddress
   - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts.xlsx')
   - rental_address: ALAddress
@@ -88,6 +88,7 @@ code: |
     nine_max
 
   set_progress(20)
+  trial_with
   #Here lies the security deposit path
   if landlord_check == True:
     rental_address.address
@@ -98,13 +99,13 @@ code: |
       if rental_address.city.lower() == "chicago":
         #The chicago fire page is included because someone who moved out due to a fire or natural disaster is entitled to their security deposit more quickly, and also because complications can arise.
         chicago_fire
-      #some types of properties are not covered by the revelvant municipal/county ordinances. What those types are can vary from ordinance to ordinance.
+      #some types of properties are not covered by the revelant municipal/county ordinances. What those types are can vary from ordinance to ordinance.
       if property_type_check == False:
         #municipal/county ordinances generally do not apply for units in owner-occupied properties containing few enough units. The unit number limits vary a bit.
         if owner_occupant == True:
           unit_number_general
            
-          #if a rental unit is covered by the cook county ordinance, there is another condition that can impact whether the property is covered. If it is the only residential unit leased by the owner and the The owner or immediate family member has actually resided at the property for at least one (1) month in the 12 months prior to marketing the property, then the Cook County ordinance does not cover it. This is a fairly specific situation,, to be sure.
+          #if a rental unit is covered by the cook county ordinance, there is another condition that can impact whether the property is covered. If it is the only residential unit leased by the owner and the The owner or immediate family member has actually resided at the property for at least one (1) month in the 12 months prior to marketing the property, then the Cook County ordinance does not cover it. This is a fairly specific situation, to be sure.
         elif end_in_county(rental_address.county).lower() == "cook county" and rental_address.city.lower() != "evanston" and rental_address.city.lower() != "mount prospect" and rental_address.city.lower() != "chicago" and rental_address.city.lower() != "oak park":
           cook_family_check
     else:
@@ -354,6 +355,8 @@ subquestion: |
   * You paid for work to be done, but the work was done poorly and the contractor refuses to fix it.
 
   ${collapse_template(mult_plaintiffs)}
+
+  To learn more, read ILAO's article, [**Small claims complaint (FAQ)**](https://www.illinoislegalaid.org/node/190606).
 ---
 template: mult_plaintiffs
 subject: |
@@ -373,7 +376,9 @@ subquestion: |
   * Try contacting the other person or business to solve the problem out of court. If you are successful, you save time, effort, and money. Call or write the other party to explain your position and the settlement you want.
   * Consider whether the person or business has money, income, or property. If they do not have any money, you may not be able to collect even if the judge decides they owe you money and enters a judgment against them.
   
-  To learn more, read ILAO's article about [**your options before filing a small claims case**](https://www.illinoislegalaid.org/legal-information/what-consider-filing-small-claims-case).
+  To learn more, read ILAO's article about [**how small claims court works**](https://www.illinoislegalaid.org/legal-information/what-consider-filing-small-claims-case).
+
+  If you think you may need legal help, read ILAO's article about [**finding legal help for a small claims case**](https://www.illinoislegalaid.org/node/190431).
 ---
 id: user name
 question: |
@@ -421,7 +426,7 @@ fields:
       This email address will appear on your court forms. Be sure to check 
       this email daily, otherwise you may miss important information about 
       your case.
-    show if: x.has_email_address      
+    show if: users[0].has_email_address      
   - Email address: users[0].email    
     datatype: email
     show if: 
@@ -892,7 +897,7 @@ content: |
   If the business has a registered agent, you do not need to list the agent as a defendant. You will be able to add their information later in the interview.
 ---
 sets:
-  -other_parties[i].address.address
+  - other_parties[i].address.address
 id: defendant address
 question: |
   What is ${other_parties[i].name_full()}'s address?
@@ -933,6 +938,39 @@ subquestion: |
   If you want to sue 10 or more defendants, you may want to talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 
   If you want to make a *Small Claims Complaint* with nine defendants, click **Next**.
+---
+id: trial by jury
+question: |
+  Who do you want to decide your case?
+subquestion: |
+  A judge or a jury can hear your small claims case.
+  
+  If a judge hears the case, [**small claims court rules**](https://www.illinoislegalaid.org/legal-information/small-claims-court-rules) allow the judge to hold an informal hearing instead of a formal trial. Either party can ask for an informal hearing. The judge can also decide to hold an informal hearing even if no party asks for one.
+
+  If a jury hears the case, there will be a formal trial and there may be a fee. In a jury trial, both parties need to prepare jury instructions, pick jurors, and follow formal rules.
+  
+  Having a jury hear your case is optional. If you say you want a jury, the program will include a *Jury Request* form with your documents. Jury trials are more complicated and can take more time than a case decided by a judge alone.
+
+  ${ collapse_template(jury_trial_help) }  
+
+  To learn more, read ILAO's article about [**civil jury trials and civil bench trials**](https://www.illinoislegalaid.org/node/178441).
+fields: 
+  - no label: trial_with
+    input type: radio
+    choices:
+      - A judge: Judge only
+      - A judge and a 6-person jury: Judge and six-person jury
+      - A judge and a 12-person jury: Judge and twelve-person jury
+---
+template: jury_trial_help
+subject: |
+  **What's the difference between a 6-person jury and a 12-person jury?**
+content: |  
+  The number of people on the jury can affect the cost. Usually, a 12-person jury is more expensive. Ask your local circuit clerk about the fees.
+  
+  In Illinois, different kinds of cases allow different size juries. A 6-person jury or a 12-person jury might not be an option for your case. Contact your local circuit clerk to find out what size jury is available in your case.
+  
+  Use the [**Illinois Court's website**](https://www.illinoiscourts.gov/courts-directory/interactive-map/by-court-type) to look up your local circuit clerk. 
 ---
 #id: more than 9 defendants
 #continue button field: blank_summons_note
@@ -1056,7 +1094,7 @@ subquestion: |
   % if other_parties.number_gathered() > 1: 
   You can only use this program if the defendants still owe you money.
   % else:
-  You can only use this program if ${other_parties[0].name_full()} still owea you money.
+  You can only use this program if ${other_parties[0].name_full()} still owes you money.
   % endif
   
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
@@ -1075,7 +1113,7 @@ subquestion: |
   % if other_parties.number_gathered() > 1:
   Explain why the defendants owe you money. 
   % else:
-  Explain why the ${other_parties[0].name_full()} owes you money. 
+  Explain why ${other_parties[0].name_full()} owes you money. 
   % endif
   
   Be specific. Include:
@@ -1271,7 +1309,7 @@ subquestion: |
   
   If you want to make changes, click **Back** or go to the [**About the case**](${ url_action('section_case') }) section.
   
-  If these look good, click *Next*.
+  If these look good, click **Next**.
 ---
 depends on:
   - other_parties[i].person_type
@@ -1681,36 +1719,36 @@ question: |
   Is the rental property one of the following?
 subquestion: |
   % if rental_address.city.lower() == "chicago":
-  * A medical, educational, or relgious facility,
+  * A medical, educational, or religious facility,
   * A hotel or motel,
   * Something you have signed a contract to buy,
   * A place you had to rent because the landlord is your employer, and the job required you to rent there, or
   * A co-op
   % elif rental_address.city.lower() == "dekalb":
-  * A medical, educational, or relgious facility,
+  * A medical, educational, or religious facility,
   * A hotel or motel,
   * Government-owned, or
   * A rooming house
   % elif rental_address.city.lower() == "evanston":
-  * A medical, educational, or relgious facility,
+  * A medical, educational, or religious facility,
   * A hotel or motel,
   * A fraternity or social organization,
   * Something you have signed a contract to buy,
   * A co-op, or
   * An educational institution
   % elif rental_address.city.lower() == "mount prospect":
-  * A medical, educational, or relgious facility,
+  * A medical, educational, or religious facility,
   * A residential care home,
   * A hotel or motel, or
   * Something you have signed a contract to buy
   % elif rental_address.city.lower() == "oak park":
   * A hotel or motel,
-  * A medical, educational, or relgious facility,
+  * A medical, educational, or religious facility,
   * A school dormitory,
   * A temporary or transitional shelter,
   * A place you had to rent because the landlord is your employer, and the job required you to rent there
   % elif rental_address.city.lower() == "urbana":
-  * A medical, educational, or relgious facility,
+  * A medical, educational, or religious facility,
   * A hotel or motel,
   * A fraternity or social organization,
   * Something you have signed a contract to buy, or
@@ -2369,8 +2407,8 @@ id: dispute withholding
 question: |
   Do you agree with the amount the landlord said was needed to make repairs?
 fields:
-  no label: dispute_withholding
-  datatype: yesnoradio
+  - no label: dispute_withholding
+    datatype: yesnoradio
 ---
 id: paragraph number debug
 continue button field: made_it_this_far
@@ -2639,6 +2677,8 @@ objects:
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
   - letter_to_sheriff: ALDocument.using(title="Letter to sheriff (complete for each out-of-state defendant)", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
+  - jury_request: ALDocument.using(title="Jury Request", filename="jury_request.pdf", has_addendum=False)
+  - appearance_instructions: ALDocument.using(title="Jury Request Instructions", filename="jury_request_instructions.pdf", has_addendum=False)
   - summons_one_a: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
   - summons_one_b: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)  
   - summons_two_a: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
@@ -2660,6 +2700,7 @@ objects:
   #- summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
+  - jury_bundle: ALDocumentBundle.using(elements=[appearance_instructions, jury_request],title="Jury Request", filename="jury_request.pdf", has_addendum=False)
   - summons_bundle: ALDocumentBundle.using(elements=[summons_one_a, summons_one_b], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
   - summons_two_bundle: ALDocumentBundle.using(elements=[summons_two_a, summons_two_b], title= "Summons 2", filename="summons_2.pdf", has_addendum=False, enabled=True)
   - summons_three_bundle: ALDocumentBundle.using(elements=[summons_three_a, summons_three_b], title= "Summons 3", filename="summons_3.pdf", has_addendum=False, enabled=True)
@@ -2671,8 +2712,8 @@ objects:
   - summons_nine_bundle: ALDocumentBundle.using(elements=[summons_nine_a, summons_nine_b], title= "Summons 9", filename="summons_9.pdf", has_addendum=False, enabled=True)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, jury_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, jury_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
 ---
 objects:
   - small_claims_complaint_single_pdf_bundle: ALDocumentBundle.using(elements=[complaint, additional_defendants, additional_reasons], filename="small_claims_complaint_bundle.pdf", title="Small Claims Complaint", enabled=True)
@@ -2684,6 +2725,9 @@ code: |
   additional_reasons.enabled = False
   letter_to_sheriff.enabled = False
   order.enabled = True
+  jury_request.enabled = False
+  appearance_instructions.enabled = False
+  jury_bundle.enabled = False
   summons_one_a.enabled = True
   summons_one_b.enabled = True
   summons_two_a.enabled = False
@@ -2712,6 +2756,11 @@ code: |
     if use_new_text == True:
       if add_second_page == True:
         additional_reasons.enabled = True
+
+  if trial_with != "Judge only":
+    jury_request.enabled = True
+    appearance_instructions.enabled = True
+    jury_bundle.enabled = True
     
   for person in other_parties:
     if person.service_method == "sheriff":
@@ -2925,7 +2974,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[1].name_full()}
-    - "defendant_name_again": ${other_parties[1].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[1].name_full() if other_parties[1].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[1].agent.name_full()}
     - "main_service_street": ${other_parties[1].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[1].where_to_serve.line_two()}
@@ -2968,7 +3017,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[2].name_full()}
-    - "defendant_name_again": ${other_parties[2].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[2].name_full() if other_parties[2].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[2].agent.name_full()}
     - "main_service_street": ${other_parties[2].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[2].where_to_serve.line_two()}
@@ -3011,7 +3060,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[3].name_full()}
-    - "defendant_name_again": ${other_parties[3].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[3].name_full() if other_parties[3].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[3].agent.name_full()}
     - "main_service_street": ${other_parties[3].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[3].where_to_serve.line_two()}
@@ -3054,7 +3103,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[4].name_full()}
-    - "defendant_name_again": ${other_parties[4].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[4].name_full() if other_parties[4].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[4].agent.name_full()}
     - "main_service_street": ${other_parties[4].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[4].where_to_serve.line_two()}
@@ -3097,7 +3146,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[5].name_full()}
-    - "defendant_name_again": ${other_parties[5].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[5].name_full() if other_parties[5].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[5].agent.name_full()}
     - "main_service_street": ${other_parties[5].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[5].where_to_serve.line_two()}
@@ -3140,7 +3189,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[6].name_full()}
-    - "defendant_name_again": ${other_parties[6].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[6].name_full() if other_parties[6].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[6].agent.name_full()}
     - "main_service_street": ${other_parties[6].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[6].where_to_serve.line_two()}
@@ -3183,7 +3232,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[7].name_full()}
-    - "defendant_name_again": ${other_parties[7].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[7].name_full() if other_parties[7].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[7].agent.name_full()}
     - "main_service_street": ${other_parties[7].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[7].where_to_serve.line_two()}
@@ -3226,7 +3275,7 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "amount_owed_no_symbol": ${currency(amount_check, symbol=u'') if landlord_check == False else currency(calculated_deposit_claim, symbol=u'')}
     - "defendant_name": ${other_parties[8].name_full()}
-    - "defendant_name_again": ${other_parties[8].name_full() if other_parties[0].second_summons_address.address != "" else ""}
+    - "defendant_name_again": ${other_parties[8].name_full() if other_parties[8].second_summons_address.address != "" else ""}
     - "agent_name": ${other_parties[8].agent.name_full()}
     - "main_service_street": ${other_parties[8].where_to_serve.line_one(bare=True)}
     - "main_service_csz": ${other_parties[8].where_to_serve.line_two()}
@@ -3372,15 +3421,105 @@ attachment:
     - "defendant_list": ${other_parties.full_names()}
     - "filing_county": ${court_county.upper()}
 ---
-#attachment:
-#  variable name: summons_blank[i]
-#  name: summons_blank
-#  filename: summons_blank
-#  skip undefined: True
-#  editable: False
-#  pdf template file: SMC_Summons_Blank.pdf
-#  fields:
-#   - "fake": ${""}
+attachment:
+  variable name: appearance_instructions[i]
+  name: appearance_instructions
+  filename: appearance-instructions
+  skip undefined: True
+  editable: False
+  pdf template file: appearance_instructions.pdf
+  fields:
+      - "fake": ${ "" }
+---
+attachment:
+  variable name: jury_request[i]
+  name: jury_request
+  filename: jury_request
+  skip undefined: True
+  editable: False
+  pdf template file: jury_request.pdf
+  fields:
+      - "trial_court_county": ${court_county.upper()}
+      - "plaintiffs": ${users[0].name_full()}
+      - "defendants": ${other_parties.full_names()}
+      - "user__1": ${ users[0].name_full() }
+      - "user__2": ${ users[0].name_full() }
+      - "user__3": ${ users[0].name_full() }
+      - "user_mail_address_one_line__1": ${ users[0].address.on_one_line(bare=True) }
+      - "user_mail_address_one_line__2": ${ users[0].address.on_one_line(bare=True) }
+      - "user_phone_number__1": ${ phone_number_formatted(users[0].phone_number) }
+      - "user_phone_number__2": ${ phone_number_formatted(users[0].phone_number) }
+      - "user_email": ${ users[0].email if users[0].has_email_address else '' }
+      - "user_email__2": ${ users[0].email if users[0].has_email_address else '' }
+      - "case_number__1": ${""}
+      - "case_number__2": ${ "" }
+      - "case_number__3": ${ "" }
+
+      - "plaintiff_cb": ${ True }
+      - "defendant_cb": ${ False }
+
+      - "jury_six": ${ trial_with == "Judge and six-person jury" }
+      - "jury_twelve": ${ trial_with == "Judge and twelve-person jury" }
+      
+      - "e_sign_name__1": ${ users[0].name_full() if e_signature else '' }
+      - "e_sign_name__2": ${ users[0].name_full() if e_signature else '' }
+
+      - "document_name": ${"Jury Request"}
+      - "delivery_party1_name_full": | 
+          % if other_parties[0].agent_check:
+          ${ other_parties[0].agent.name_full() } (agent for ${ other_parties[0].name_full() })
+          % else:
+          ${ other_parties[0].name_full() }
+          % endif
+      - "delivery_party1_mail_address_on_one_line": ${ other_parties[0].address.on_one_line(bare=True) }
+      - "delivery_party1_email": ${ other_parties[0].delivery_email if other_parties[0].knows_delivery_method else '' }
+      - "delivery_party1_email_efsp": ${ other_parties[0].delivery_efsp_email if other_parties[0].knows_delivery_method else '' }
+      - "is_delivery_party1_hand_yes": ${ other_parties[0].hand_delivery if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery else '' }
+      - "is_delivery_party1_mail_yes": ${ other_parties[0].mail_delivery if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery else '' }
+      - "is_delivery_party1_efm_yes": ${ other_parties[0].efm_delivery if other_parties[0].knows_delivery_method else '' }
+      - "is_delivery_party1_email_yes": ${ other_parties[0].email_delivery if other_parties[0].knows_delivery_method else '' }
+      - "delivery_party1_date": ${ other_parties[0].delivery_date if other_parties[0].knows_delivery_method and other_parties[0].knows_delivery_date else '' }
+      - "delivery_party1_time": ${ format_time(other_parties[0].delivery_time, format='h:mm a') if other_parties[0].knows_delivery_method and other_parties[0].knows_delivery_time else '' }
+      
+      - "is_delivery_party1_not_electronic": ${ True if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery else '' }
+      - "delivery_party1_mail_location": |
+          % if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery and other_parties[0].mail_delivery:
+          % if other_parties[0].delivery_mail_address != "" and other_parties[0].delivery_mail_city != "" and other_parties[0].delivery_mail_state != "":
+          ${other_parties[0].delivery_mail_address }, ${other_parties[0].delivery_mail_city}, ${ state_name(other_parties[0].delivery_mail_state) }
+          % elif other_parties[0].delivery_mail_address != "" and other_parties[0].delivery_mail_city != "":
+          ${other_parties[0].delivery_mail_address }, ${other_parties[0].delivery_mail_city}
+          % elif other_parties[0].delivery_mail_address != "" and other_parties[0].delivery_mail_state != "":
+          ${other_parties[0].delivery_mail_address }, ${ state_name(other_parties[0].delivery_mail_state) }
+          % elif other_parties[0].delivery_mail_city != "" and other_parties[0].delivery_mail_state != "":
+          ${other_parties[0].delivery_mail_city}, ${ state_name(other_parties[0].delivery_mail_state) }
+          % elif other_parties[0].delivery_mail_address != "":
+          ${other_parties[0].delivery_mail_address}
+          % elif other_parties[0].delivery_mail_city != "":
+          ${other_parties[0].delivery_mail_city}
+          % else:
+          ${state_name(other_parties[0].delivery_mail_state)}
+          % endif
+          % else:
+          ${ "" }
+          % endif
+      - "is_delivery_party1_jail_yes": ${ True if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery and other_parties[0].jail_delivery else '' }
+      - "delivery_party1_jail_name": |
+          % if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery and other_parties[0].jail_delivery:
+          % if other_parties[0].delivery_jail_name != "" and other_parties[0].jail_delivery_address.address != "" and other_parties[0].jail_delivery_address.city != "" and other_parties[0].jail_delivery_address.state != "":
+          ${ other_parties[0].delivery_jail_name }, ${ other_parties[0].jail_delivery_address.on_one_line(bare=True)}
+          % elif other_parties[0].delivery_jail_name == "":
+          ${ other_parties[0].jail_delivery_address.on_one_line(bare=True)}
+          % else:
+          ${ other_parties[0].delivery_jail_name }
+          % endif
+          % else:
+          ${""}
+          % endif
+      - "myself": ${True}
+      - "for_self": ${True}
+      - "for_self_2": ${True}
+
+      - "is_additional_proof_delivery_yes": ${ other_parties.number() > 1 }
 ---
 id: review screen
 event: review_answers
@@ -3461,36 +3600,36 @@ review:
       **Is the property:**
       
       % if rental_address.city.lower() == "chicago":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **Something you have signed a contract to buy,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
       * **A co-op**
       % elif rental_address.city.lower() == "dekalb":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **Government-owned, or**
       * **A rooming house**
       % elif rental_address.city.lower() == "evanston":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy,**
       * **A co-op, or**
       * **An educational institution**
       % elif rental_address.city.lower() == "mount prospect":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A residential care home,**
       * **A hotel or motel, or**
       * **Something you have signed a contract to buy**
       % elif rental_address.city.lower() == "oak park":
       * **A hotel or motel,**
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A school dormitory,**
       * **A temporary or transitional shelter,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
       % elif rental_address.city.lower() == "urbana":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy, or**
@@ -4030,36 +4169,36 @@ review:
       **Is the property:**
       
       % if rental_address.city.lower() == "chicago":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **Something you have signed a contract to buy,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there, or**
       * **A co-op**
       % elif rental_address.city.lower() == "dekalb":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **Government-owned, or**
       * **A rooming house**
       % elif rental_address.city.lower() == "evanston":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy,**
       * **A co-op, or**
       * **An educational institution**
       % elif rental_address.city.lower() == "mount prospect":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A residential care home,**
       * **A hotel or motel, or**
       * **Something you have signed a contract to buy**
       % elif rental_address.city.lower() == "oak park":
       * **A hotel or motel,**
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A school dormitory,**
       * **A temporary or transitional shelter,**
       * **A place you had to rent because the landlord is your employer, and the job required you to rent there**
       % elif rental_address.city.lower() == "urbana":
-      * **A medical, educational, or relgious facility,**
+      * **A medical, educational, or religious facility,**
       * **A hotel or motel,**
       * **A fraternity or social organization,**
       * **Something you have signed a contract to buy, or**
