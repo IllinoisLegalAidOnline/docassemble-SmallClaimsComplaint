@@ -230,6 +230,8 @@ code: |
   trial_court
   #order_info
   snapshot_forms
+  
+  refresh_delivery_bundle
   set_progress_to_100_once
   get_docs_screen
 ---
@@ -892,7 +894,7 @@ content: |
   * A sole proprietorship, or
   * A general partnership.
   
-  Incorporated businesses are listed in the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/). You do not need to list an owner for an incorporated business.
+  Incorporated businesses are listed on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/). You do not need to list an owner for an incorporated business.
   
   If the business has a registered agent, you do not need to list the agent as a defendant. You will be able to add their information later in the interview.
 ---
@@ -900,8 +902,10 @@ sets:
   - other_parties[i].address.address
 id: defendant address
 question: |
-  What is ${other_parties[i].name_full()}'s address?
+  What is ${other_parties[i].name_full()}'s current address?
 subquestion: |
+  You must know ${other_parties[i].name_full()}'s  current address in order to file a claim against them. To learn more, read ILAO's article about [**how small claims court works**](https://www.illinoislegalaid.org/legal-information/how-small-claims-court-works#doesasmallclaimsplaintiffneedthedefendantscurrentaddress).
+  
   % if other_parties[i].person_type == "business":
   You can find the address of some businesses on the [**Illinois Secretary of State's website**](https://apps.ilsos.gov/businessentitysearch/).
 
@@ -949,7 +953,7 @@ subquestion: |
 
   If a jury hears the case, there will be a formal trial and there may be a fee. In a jury trial, both parties need to prepare jury instructions, pick jurors, and follow formal rules.
   
-  Having a jury hear your case is optional. If you say you want a jury, the program will include a *Jury Request* form with your documents. Jury trials are more complicated and can take more time than a case decided by a judge alone.
+  Having a jury hear your case is optional. If you say you want a jury, the program will include a blank *Jury Request* form and instructions on how to request a jury with your documents. Jury trials are more complicated and can take more time than a case decided by a judge alone.
 
   ${ collapse_template(jury_trial_help) }  
 
@@ -1058,7 +1062,7 @@ subquestion: |
   % if other_parties.number_gathered() > 1:
   This does not need to be a written request. If you asked the defendants to pay you ${currency(amount_check)}, click **Yes**.
   % else:
-  This does not need to be a written request. If you asked the ${other_parties[0].name_full()} to pay you ${currency(amount_check)}, click **Yes**.
+  This does not need to be a written request. If you asked ${other_parties[0].name_full()} to pay you ${currency(amount_check)}, click **Yes**.
   % endif
 fields:
   - no label: demand_check
@@ -1352,7 +1356,7 @@ subquestion: |
   ${other_parties[i].address.line_two()}
   
   % if other_parties[i].agent_check == True:
-  If ${other_parties[i].name_full()} has listed a different address where they named ${other_parties[i].agent.name_full()} as their registered agent on the [**Illinois Secretary of State**](www.ilsos.gov/corporatellc/) website, you must select **No** and then enter that address.
+  If ${other_parties[i].name_full()} has listed a different address where they named ${other_parties[i].agent.name_full()} as their registered agent on the [**Illinois Secretary of State**](https://www.ilsos.gov/corporatellc/) website, you must select **No** and then enter that address.
   % endif
 fields: 
   - no label: other_parties[i].same_address
@@ -1950,7 +1954,7 @@ subquestion: |
   % elif which_rlto == "Mount Prospect":
   Mount Prospect's residential landlord and tenant regulations may apply to the rental property. Mount Prospect does not allow for extra damages.
   % elif which_rlto == "Cook County":
-  Cook County has a Residential Tenant Landlord Ordinance, but it may not appliy to the rental property. Illinois state law may apply to your case.
+  Cook County has a Residential Tenant Landlord Ordinance, but it may not apply to the rental property. Illinois state law may apply to your case.
   % else:
   Based on your answers, Illinois state law may apply to your case.
   % endif
@@ -2022,7 +2026,7 @@ subquestion: |
 
   Run this program on or after ${return_deadline} to make your *Small Claims Complaint*.
   
-  To learn more, read ILAO's gude to [**Getting or returning a security deposit**](https://www.illinoislegalaid.org/legal-information/getting-or-returning-security-deposit).
+  To learn more, read ILAO's guide to [**Getting or returning a security deposit**](https://www.illinoislegalaid.org/legal-information/getting-or-returning-security-deposit).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -2095,7 +2099,7 @@ fields:
 ---
 id: partial return amount
 question: |
-  How much did of the security deposit did your landlord give back to you?
+  How much of the security deposit did your landlord give back to you?
 subquestion: |
   If your landlord paid you back in parts, enter the total amount returned.
 fields:
@@ -2155,7 +2159,7 @@ event: all_paid_error
 question: |
   Sorry
 subquestion: |
-  According to your answers, your landlord had paid back your security deposit
+  According to your answers, your landlord has paid back your security deposit.
 
   Click **Back** or **Restart** if you reached this page by mistake.
 buttons:
@@ -2321,6 +2325,7 @@ code: |
   if deposit_with_damages > 10000:
     lets_stay_small = True
     deposit_damages_too_big
+    calculated_deposit_claim = 10000
     
   amount_updated = True
 ---
@@ -2677,7 +2682,7 @@ objects:
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
   - letter_to_sheriff: ALDocument.using(title="Letter to sheriff (complete for each out-of-state defendant)", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
-  - jury_request: ALDocument.using(title="Jury Request", filename="jury_request.pdf", has_addendum=False)
+  - jury_request: ALDocument.using(title="Jury Request (blank)", filename="jury_request.pdf", has_addendum=False)
   - appearance_instructions: ALDocument.using(title="Jury Request Instructions", filename="jury_request_instructions.pdf", has_addendum=False)
   - summons_one_a: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
   - summons_one_b: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)  
@@ -2700,7 +2705,7 @@ objects:
   #- summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
-  - jury_bundle: ALDocumentBundle.using(elements=[appearance_instructions, jury_request],title="Jury Request", filename="jury_request.pdf", has_addendum=False)
+  - jury_bundle: ALDocumentBundle.using(elements=[appearance_instructions, jury_request, additional_delivery_bundle],title="Jury Request (blank)", filename="jury_request.pdf", has_addendum=False)
   - summons_bundle: ALDocumentBundle.using(elements=[summons_one_a, summons_one_b], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
   - summons_two_bundle: ALDocumentBundle.using(elements=[summons_two_a, summons_two_b], title= "Summons 2", filename="summons_2.pdf", has_addendum=False, enabled=True)
   - summons_three_bundle: ALDocumentBundle.using(elements=[summons_three_a, summons_three_b], title= "Summons 3", filename="summons_3.pdf", has_addendum=False, enabled=True)
@@ -2773,7 +2778,7 @@ code: |
             letter_to_sheriff.enabled = True
         if person.alt_delivery == True:
           if person.alt_service_address.state != "IL":
-            letter_to_sheriff.enabled == True
+            letter_to_sheriff.enabled = True
       else:
         if person.service_address.state != "IL":
           letter_to_sheriff.enabled = True
@@ -2954,8 +2959,8 @@ attachment:
     - "court_date": ${hearing_date if has_court_date else ""}
     - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
     - "courtroom_number": ${courtroom if has_court_date else ""}
-    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
-    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "court_am": ${True if has_court_date and hearing_time != "" and format_time(hearing_time, format='a')=='AM' else ""}
+    - "court_pm": ${True if has_court_date and hearing_time != "" and format_time(hearing_time, format='a')=='PM' else ""}
     - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
     - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
     - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
@@ -2997,8 +3002,8 @@ attachment:
     - "court_date": ${hearing_date if has_court_date else ""}
     - "court_time": ${format_time(hearing_time, format='h:mm') if has_court_date and hearing_time != "" else ""}
     - "courtroom_number": ${courtroom if has_court_date else ""}
-    - "court_am": ${True if has_court_date and format_time(hearing_time, format='a')=='AM' and hearing_time != "" else ""}
-    - "court_pm": ${True if has_court_date and format_time(hearing_time, format='a')=='PM' and hearing_time != "" else ""}
+    - "court_am": ${True if has_court_date and hearing_time != "" and format_time(hearing_time, format='a')=='AM' else ""}
+    - "court_pm": ${True if has_court_date and hearing_time != "" and format_time(hearing_time, format='a')=='PM' else ""}
     - "call_in_phone": ${ phone_number_formatted(remote_phone) if has_court_date and hearing_type['remote'] else ""}
     - "video_website": ${ remote_website if has_court_date and hearing_type['remote'] else ""}
     - "log_in_info": ${ remote_login if has_court_date and hearing_type['remote'] else ""}
@@ -3436,21 +3441,21 @@ attachment:
   name: jury_request
   filename: jury_request
   skip undefined: True
-  editable: False
+  editable: True
   pdf template file: jury_request.pdf
   fields:
       - "trial_court_county": ${court_county.upper()}
       - "plaintiffs": ${users[0].name_full()}
       - "defendants": ${other_parties.full_names()}
       - "user__1": ${ users[0].name_full() }
-      - "user__2": ${ users[0].name_full() }
-      - "user__3": ${ users[0].name_full() }
-      - "user_mail_address_one_line__1": ${ users[0].address.on_one_line(bare=True) }
-      - "user_mail_address_one_line__2": ${ users[0].address.on_one_line(bare=True) }
-      - "user_phone_number__1": ${ phone_number_formatted(users[0].phone_number) }
-      - "user_phone_number__2": ${ phone_number_formatted(users[0].phone_number) }
-      - "user_email": ${ users[0].email if users[0].has_email_address else '' }
-      - "user_email__2": ${ users[0].email if users[0].has_email_address else '' }
+      - "user__2": ${ "" }
+      - "user__3": ${ ""}
+      - "user_mail_address_one_line__1": ${ ""}
+      - "user_mail_address_one_line__2": ${ "" }
+      - "user_phone_number__1": ${ "" }
+      - "user_phone_number__2": ${ "" }
+      - "user_email": ${ "" }
+      - "user_email__2": ${ "" }
       - "case_number__1": ${""}
       - "case_number__2": ${ "" }
       - "case_number__3": ${ "" }
@@ -3461,65 +3466,92 @@ attachment:
       - "jury_six": ${ trial_with == "Judge and six-person jury" }
       - "jury_twelve": ${ trial_with == "Judge and twelve-person jury" }
       
-      - "e_sign_name__1": ${ users[0].name_full() if e_signature else '' }
-      - "e_sign_name__2": ${ users[0].name_full() if e_signature else '' }
+      - "e_sign_name__1": ${ "" }
+      - "e_sign_name__2": ${ "" }
 
-      - "document_name": ${"Jury Request"}
-      - "delivery_party1_name_full": | 
-          % if other_parties[0].agent_check:
-          ${ other_parties[0].agent.name_full() } (agent for ${ other_parties[0].name_full() })
-          % else:
-          ${ other_parties[0].name_full() }
-          % endif
-      - "delivery_party1_mail_address_on_one_line": ${ other_parties[0].address.on_one_line(bare=True) }
-      - "delivery_party1_email": ${ other_parties[0].delivery_email if other_parties[0].knows_delivery_method else '' }
-      - "delivery_party1_email_efsp": ${ other_parties[0].delivery_efsp_email if other_parties[0].knows_delivery_method else '' }
-      - "is_delivery_party1_hand_yes": ${ other_parties[0].hand_delivery if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery else '' }
-      - "is_delivery_party1_mail_yes": ${ other_parties[0].mail_delivery if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery else '' }
-      - "is_delivery_party1_efm_yes": ${ other_parties[0].efm_delivery if other_parties[0].knows_delivery_method else '' }
-      - "is_delivery_party1_email_yes": ${ other_parties[0].email_delivery if other_parties[0].knows_delivery_method else '' }
-      - "delivery_party1_date": ${ other_parties[0].delivery_date if other_parties[0].knows_delivery_method and other_parties[0].knows_delivery_date else '' }
-      - "delivery_party1_time": ${ format_time(other_parties[0].delivery_time, format='h:mm a') if other_parties[0].knows_delivery_method and other_parties[0].knows_delivery_time else '' }
+      - "document_name": ${""}
+      - "delivery_party1_name_full": ${""}
+      - "delivery_party1_mail_address_on_one_line": ${""}
+      - "delivery_party1_email": ${""}
+      - "delivery_party1_email_efsp": ${""}
+      - "is_delivery_party1_hand_yes": ${""}
+      - "is_delivery_party1_mail_yes": ${""}
+      - "is_delivery_party1_efm_yes": ${""}
+      - "is_delivery_party1_email_yes": ${""}
+      - "delivery_party1_date": ${""}
+      - "delivery_party1_time": ${""}
+      - "is_delivery_party1_not_electronic": ${""}
+      - "delivery_party1_mail_location": ${""}
+      - "is_delivery_party1_jail_yes": ${""}
+      - "delivery_party1_jail_name": ${""}
+      - "myself": ${False}
+      - "for_self": ${False}
+      - "for_self_2": ${False}
+      - "is_additional_proof_delivery_yes": ${ False }
+---
+generic object: ALIndividual
+objects:
+  - x.additional_proof: ALDocument.using(title="Additional Proof of Delivery", filename="additional_proof_of_delivery.pdf", has_addendum=False)
+---
+objects:
+  - additional_delivery_bundle: ALDocumentBundle.using(elements=[], title= "Additional Proof of Delivery", filename="additional_proof_of_delivery.pdf", has_addendum=False)
+---
+reconsider: True
+code: |
+  deliveries_to_bundle = []
+  additional_delivery_bundle.enabled = False
+  if trial_with != "Judge only":
+
+    for index, party in enumerate(other_parties):
+      if index == 0:
+        party.additional_proof.enabled = False
+      else:
+        party.additional_proof.enabled = True
+        additional_delivery_bundle.enabled = True
+        deliveries_to_bundle.append(party.additional_proof)
+  
+  additional_delivery_bundle.elements = deliveries_to_bundle
+  refresh_delivery_bundle = True
+---
+generic object: ALIndividual
+attachment:
+  variable name: x.additional_proof[i]
+  name: additional_proof
+  filename: additional_proof
+  skip undefined: True
+  editable: True
+  pdf template file: additional_proof_of_delivery.pdf
+  fields:
+      - "trial_court_county": ${ trial_court.address.county }
+      - "plaintiffs": ${users[0].name_full()}
       
-      - "is_delivery_party1_not_electronic": ${ True if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery else '' }
-      - "delivery_party1_mail_location": |
-          % if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery and other_parties[0].mail_delivery:
-          % if other_parties[0].delivery_mail_address != "" and other_parties[0].delivery_mail_city != "" and other_parties[0].delivery_mail_state != "":
-          ${other_parties[0].delivery_mail_address }, ${other_parties[0].delivery_mail_city}, ${ state_name(other_parties[0].delivery_mail_state) }
-          % elif other_parties[0].delivery_mail_address != "" and other_parties[0].delivery_mail_city != "":
-          ${other_parties[0].delivery_mail_address }, ${other_parties[0].delivery_mail_city}
-          % elif other_parties[0].delivery_mail_address != "" and other_parties[0].delivery_mail_state != "":
-          ${other_parties[0].delivery_mail_address }, ${ state_name(other_parties[0].delivery_mail_state) }
-          % elif other_parties[0].delivery_mail_city != "" and other_parties[0].delivery_mail_state != "":
-          ${other_parties[0].delivery_mail_city}, ${ state_name(other_parties[0].delivery_mail_state) }
-          % elif other_parties[0].delivery_mail_address != "":
-          ${other_parties[0].delivery_mail_address}
-          % elif other_parties[0].delivery_mail_city != "":
-          ${other_parties[0].delivery_mail_city}
-          % else:
-          ${state_name(other_parties[0].delivery_mail_state)}
-          % endif
-          % else:
-          ${ "" }
-          % endif
-      - "is_delivery_party1_jail_yes": ${ True if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery and other_parties[0].jail_delivery else '' }
-      - "delivery_party1_jail_name": |
-          % if other_parties[0].knows_delivery_method and other_parties[0].physical_delivery and other_parties[0].jail_delivery:
-          % if other_parties[0].delivery_jail_name != "" and other_parties[0].jail_delivery_address.address != "" and other_parties[0].jail_delivery_address.city != "" and other_parties[0].jail_delivery_address.state != "":
-          ${ other_parties[0].delivery_jail_name }, ${ other_parties[0].jail_delivery_address.on_one_line(bare=True)}
-          % elif other_parties[0].delivery_jail_name == "":
-          ${ other_parties[0].jail_delivery_address.on_one_line(bare=True)}
-          % else:
-          ${ other_parties[0].delivery_jail_name }
-          % endif
-          % else:
-          ${""}
-          % endif
-      - "myself": ${True}
-      - "for_self": ${True}
-      - "for_self_2": ${True}
+      - "defendants": ${ other_parties.full_names() }    
+      - "user__1": ${ ""}
+      - "user__2": ${ ""}
+      - "user_mail_address_one_line__1": ${ ""}
+      - "user_phone_number__1": ${ ""}
+      - "user_email": ${ ""}
+      - "case_number__1": ${ ""}
+      - "case_number__2": ${ ""}
+      - "e_sign_name__1": ${ ""}
+      - "for_self": ${ ""}
+      - "document_name": ${ ""}
 
-      - "is_additional_proof_delivery_yes": ${ other_parties.number() > 1 }
+      - "delivery_party1_name_full": ${ ""}
+      - "delivery_party1_mail_address_on_one_line": ${ ""}
+      - "delivery_party1_email": ${ ""}
+      - "delivery_party1_email_efsp": ${ ""}
+      - "is_delivery_party1_hand_yes": ${ ""}
+      - "is_delivery_party1_mail_yes": ${ ""}
+      - "is_delivery_party1_efm_yes": ${ ""}
+      - "is_delivery_party1_email_yes": ${ ""}
+      - "delivery_party1_date": ${ ""}
+      - "delivery_party1_time": ${ ""}
+      
+      - "is_delivery_party1_not_electronic": ${ ""}
+      - "delivery_party1_mail_location": ${ ""}
+      - "is_delivery_party1_jail_yes": ${ ""}
+      - "delivery_party1_jail_name": ${ ""}
 ---
 id: review screen
 event: review_answers
