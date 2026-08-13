@@ -75,14 +75,14 @@ code: |
     note_about_amount_limit
   trial_court_index
   filing_location.get_county
-  if trial_court_index == -1:
-    if landlord_check == False:
-      if amount_check < 3000.01:
-        if cook_district == "15":
-          daley_center_note
-    else:
-      if cook_district == "15":
-        daley_center_note
+  #if trial_court_index == -1:
+  #  if landlord_check == False:
+  #    if amount_check < 3000.01:
+  #      if cook_district == "15":
+  #        daley_center_note
+  #  else:
+  #    if cook_district == "15":
+  #      daley_center_note
   other_parties.gather()
   if other_parties.number_gathered() >= 9:
     nine_max
@@ -581,7 +581,7 @@ subquestion: |
 
   If you do not have this information now, you can click **Back** and change your answer.
 
-  **Note:** Be sure to add the date and time to your *Notice of Court Date for Motion* before you send it to other parties in your case.
+  **Note:** Be sure to add the date and time to your *Summons* before you send it to other parties in your case.
 fields:
   - Date: hearing_date
     datatype: date
@@ -635,11 +635,6 @@ fields:
     datatype: integer
     code: |
       ilao_court_county_lookup(court_list)
----
-depends on:
-  - trial_court_index
-code: |
-  trial_court = court_list.as_court('trial_court', trial_court_index)
 ---
 depends on:
   - trial_court_index
@@ -852,14 +847,14 @@ subject: |
 content: |  
   Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text (833) 411-1121 for assistance.
 ---
-id: daley center note
-continue button field: daley_center_note
-question: |
-  Free help at the Daley Center
-subquestion: |
-  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Small Claims Court**](https://www.cookcountycourt.org/district/first-municipal-district-chicago/pro-se-small-claims-court).
-  
-  While it may be easier to get help at the Daley Center, you can still continue to make forms with this program.
+#id: daley center note
+#continue button field: daley_center_note
+#question: |
+#  Free help at the Daley Center
+#subquestion: |
+#  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Small Claims Court**](https://www.cookcountycourt.org/district/first-municipal-district-chicago/pro-se-small-claims-court).
+#  
+#  While it may be easier to get help at the Daley Center, you can still continue to make forms with this program.
 ---
 #Note: may need to change this so that a non-incorporated business's name and owner's name are associated with the same indvidual within other_parties
 sets:
@@ -947,13 +942,17 @@ id: trial by jury
 question: |
   Who do you want to decide your case?
 subquestion: |
-  A judge or a jury can hear your small claims case.
+  A judge or a jury can hear your small claims case. Jury trials are more complicated and can take more time than a case decided by a judge alone.
   
   If a judge hears the case, [**small claims court rules**](https://www.illinoislegalaid.org/legal-information/small-claims-court-rules) allow the judge to hold an informal hearing instead of a formal trial. Either party can ask for an informal hearing. The judge can also decide to hold an informal hearing even if no party asks for one.
 
   If a jury hears the case, there will be a formal trial and there may be a fee. In a jury trial, both parties need to prepare jury instructions, pick jurors, and follow formal rules.
-  
-  Having a jury hear your case is optional. If you say you want a jury, the program will include a blank *Jury Request* form and instructions on how to request a jury with your documents. Jury trials are more complicated and can take more time than a case decided by a judge alone.
+
+  % if other_parties.number_gathered() == 1:
+  Having a jury hear your case is optional. If you say you want a jury, the program will include a *Jury Request* form with your documents. You should include it with the forms you send to the court and to ${fix_punctuation(other_parties[0].name_full())}.
+  % else:
+  Having a jury hear your case is optional. If you say you want a jury, the program will include a *Jury Request* form with your documents. You should include it with the forms you send to the court and to the defendants.
+  % endif
 
   ${ collapse_template(jury_trial_help) }  
 
@@ -1864,7 +1863,6 @@ code: |
     else:
       rlto_applies = True
     which_rlto = "Mount Prospect"
-    rlto_applies = False
   elif rental_address.city.lower() == "chicago":
     which_rlto = "Chicago"
     if property_type_check == True:
@@ -1894,7 +1892,16 @@ code: |
     if property_type_check == True:
       rlto_applies = False
     else:  
-      rlto_applies = True    
+      rlto_applies = True   
+  elif rental_address.city.lower() == "dekalb":
+    which_rlto = "DeKalb"
+    if property_type_check:
+      rlto_applies = False
+    elif owner_occupant and unit_number_general == "too_few_for_illinois":
+      rlto_applies = False
+    else:
+      rlto_applies = True
+  
   elif end_in_county(rental_address.county).lower() == "cook county":
     which_rlto = "Cook County"
     if property_type_check == True:
@@ -2682,8 +2689,7 @@ objects:
   - additional_reasons: ALDocument.using(title="Additional Reasons", filename="additional_reasons.pdf", has_addendum=False)
   - letter_to_sheriff: ALDocument.using(title="Letter to sheriff (complete for each out-of-state defendant)", filename="letter_to_sheriff.pdf", has_addendum=False)
   - order: ALDocument.using(title="Order", filename="order.pdf", has_addendum=False)
-  - jury_request: ALDocument.using(title="Jury Request (blank)", filename="jury_request.pdf", has_addendum=False)
-  - appearance_instructions: ALDocument.using(title="Jury Request Instructions", filename="jury_request_instructions.pdf", has_addendum=False)
+  - jury_request: ALDocument.using(title="Jury Request", filename="jury_request.pdf", has_addendum=False)
   - summons_one_a: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)
   - summons_one_b: ALDocument.using(title="Summons", filename="summons.pdf", has_addendum=False)  
   - summons_two_a: ALDocument.using(title="Summons 2", filename="summons_2.pdf", has_addendum=False)
@@ -2705,7 +2711,6 @@ objects:
   #- summons_blank: ALDocument.using(title="Blank Summons", filename="summons_blank.pdf", has_addendum=False)
 ---
 objects:
-  - jury_bundle: ALDocumentBundle.using(elements=[appearance_instructions, jury_request, additional_delivery_bundle],title="Jury Request (blank)", filename="jury_request.pdf", has_addendum=False)
   - summons_bundle: ALDocumentBundle.using(elements=[summons_one_a, summons_one_b], title= "Summons", filename="summons.pdf", has_addendum=False, enabled=True)
   - summons_two_bundle: ALDocumentBundle.using(elements=[summons_two_a, summons_two_b], title= "Summons 2", filename="summons_2.pdf", has_addendum=False, enabled=True)
   - summons_three_bundle: ALDocumentBundle.using(elements=[summons_three_a, summons_three_b], title= "Summons 3", filename="summons_3.pdf", has_addendum=False, enabled=True)
@@ -2717,8 +2722,8 @@ objects:
   - summons_nine_bundle: ALDocumentBundle.using(elements=[summons_nine_a, summons_nine_b], title= "Summons 9", filename="summons_9.pdf", has_addendum=False, enabled=True)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, jury_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, jury_bundle, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, jury_request, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, small_claims_complaint_single_pdf_bundle, jury_request, letter_to_sheriff, order, summons_bundle, summons_two_bundle, summons_three_bundle, summons_four_bundle, summons_five_bundle, summons_six_bundle, summons_seven_bundle, summons_eight_bundle, summons_nine_bundle], filename="small_claims_complaint.pdf", title="All forms")
 ---
 objects:
   - small_claims_complaint_single_pdf_bundle: ALDocumentBundle.using(elements=[complaint, additional_defendants, additional_reasons], filename="small_claims_complaint_bundle.pdf", title="Small Claims Complaint", enabled=True)
@@ -2731,8 +2736,6 @@ code: |
   letter_to_sheriff.enabled = False
   order.enabled = True
   jury_request.enabled = False
-  appearance_instructions.enabled = False
-  jury_bundle.enabled = False
   summons_one_a.enabled = True
   summons_one_b.enabled = True
   summons_two_a.enabled = False
@@ -2764,8 +2767,6 @@ code: |
 
   if trial_with != "Judge only":
     jury_request.enabled = True
-    appearance_instructions.enabled = True
-    jury_bundle.enabled = True
     
   for person in other_parties:
     if person.service_method == "sheriff":
@@ -3427,34 +3428,24 @@ attachment:
     - "filing_county": ${court_county.upper()}
 ---
 attachment:
-  variable name: appearance_instructions[i]
-  name: appearance_instructions
-  filename: appearance-instructions
-  skip undefined: True
-  editable: False
-  pdf template file: appearance_instructions.pdf
-  fields:
-      - "fake": ${ "" }
----
-attachment:
   variable name: jury_request[i]
   name: jury_request
   filename: jury_request
   skip undefined: True
-  editable: True
+  editable: False
   pdf template file: jury_request.pdf
   fields:
       - "trial_court_county": ${court_county.upper()}
       - "plaintiffs": ${users[0].name_full()}
       - "defendants": ${other_parties.full_names()}
       - "user__1": ${ users[0].name_full() }
-      - "user__2": ${ "" }
+      - "user__2": ${ users[0].name_full() }
       - "user__3": ${ ""}
-      - "user_mail_address_one_line__1": ${ ""}
+      - "user_mail_address_one_line__1": ${users[0].address.on_one_line(bare=True)}
       - "user_mail_address_one_line__2": ${ "" }
-      - "user_phone_number__1": ${ "" }
+      - "user_phone_number__1": ${phone_number_formatted(users[0].phone_number) if users[0].phone_number != "" else ""}
       - "user_phone_number__2": ${ "" }
-      - "user_email": ${ "" }
+      - "user_email": ${ users[0].email }
       - "user_email__2": ${ "" }
       - "case_number__1": ${""}
       - "case_number__2": ${ "" }
@@ -3466,7 +3457,7 @@ attachment:
       - "jury_six": ${ trial_with == "Judge and six-person jury" }
       - "jury_twelve": ${ trial_with == "Judge and twelve-person jury" }
       
-      - "e_sign_name__1": ${ "" }
+      - "e_sign_name__1": ${ users[0].name_full() if e_signature else "" }
       - "e_sign_name__2": ${ "" }
 
       - "document_name": ${""}
@@ -3485,7 +3476,7 @@ attachment:
       - "is_delivery_party1_jail_yes": ${""}
       - "delivery_party1_jail_name": ${""}
       - "myself": ${False}
-      - "for_self": ${False}
+      - "for_self": ${True}
       - "for_self_2": ${False}
       - "is_additional_proof_delivery_yes": ${ False }
 ---
@@ -4026,10 +4017,10 @@ review:
   - Edit: x.name.first
     button: |
       **Is ${x.name_full()} a person or a business?**
-      % if x.person_type == "ALIndividual":
-      A person
-      % else:
+      % if x.person_type == "business":
       A business
+      % else:
+      A person
       % endif
   - Edit: x.address.address
     button: |
@@ -4039,7 +4030,7 @@ review:
     button: |
       **Does ${x.name_full()} have a registered agent?**
       ${word(yesno(x.agent_check))}
-    show if: x.person_type != "ALIndividual"
+    show if: x.person_type == "business"
   - Edit: x.agent.name.first
     button: |
       **What is ${x.name_full()}'s registered agent's name?**
@@ -4080,10 +4071,10 @@ review:
       ${x.service_email}
   - Edit: x.alt_delivery
     button: |
-      % if other_parties[i].agent_check == True:
-      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].agent.name_full()}?**
+      % if x.agent_check == True:
+      **Do you want to list an alternate address, phone number, or email for ${x.agent.name_full()}?**
       % else:
-      **Do you want to list an alternate address, phone number, or email for ${other_parties[i].name_full()}?**
+      **Do you want to list an alternate address, phone number, or email for ${x.name_full()}?**
       % endif
       ${word(yesno(x.alt_delivery))}
   - Edit: x.alt_service_address.address
@@ -4628,7 +4619,8 @@ code: |
         reasons_attach = True
       else:
         reasons_attach = False
-  
+    else:
+      reasons_attach = False
     if lease_check == False:
       no_agreement_logic = True
     else:
