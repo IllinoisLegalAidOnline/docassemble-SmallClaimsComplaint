@@ -305,7 +305,7 @@ subquestion: |
 
   This program makes the forms to sue a person or business for up to $10,000. It can be used to sue a landlord for a security deposit.
   
-  To learn more, read ILAO's article about [**suing someone for $10,000 or less**](https://www.illinoislegalaid.org/node/31626).
+  To learn more, see ILAO's guide to [**small claims basics**](https://www.illinoislegalaid.org/node/190406).
 field: sees_nav_bar
 ---
 id: how to use
@@ -357,7 +357,7 @@ subquestion: |
 
   ${collapse_template(mult_plaintiffs)}
 
-  To learn more, see ILAO's [**Small claims complaint (FAQ)**](https://www.illinoislegalaid.org/node/190606).
+  To learn more, see ILAO's [**Small claims common questions FAQ**](https://www.illinoislegalaid.org/node/190411).
 ---
 template: mult_plaintiffs
 subject: |
@@ -377,7 +377,7 @@ subquestion: |
   * Try contacting the other person or business to solve the problem out of court. If you are successful, you save time, effort, and money. Call or write the other party to explain your position and the settlement you want.
   * Consider whether the person or business has money, income, or property. If they do not have any money, you may not be able to collect even if the judge decides they owe you money and enters a judgment against them.
   
-  To learn more, read ILAO's article about [**how small claims court works**](https://www.illinoislegalaid.org/legal-information/what-consider-filing-small-claims-case).
+  To learn more, see ILAO's [**how small claims court works FAQ**](https://www.illinoislegalaid.org/node/190426).
 
   If you think you may need legal help, read ILAO's article about [**finding legal help for a small claims case**](https://www.illinoislegalaid.org/node/190431).
 ---
@@ -551,7 +551,7 @@ question: |
 subquestion: |
   You can only sue for $10,000 or less in Small Claims Court. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
-  Depending on where your rental unit is, you may be able to sue for damages in addition to the amount of your unreturned security deposit. However, these damages may make your claim too big for Small Claims Court.
+  Depending on where your rental unit is, you may be able to sue for double the amount of the deposit plus court costs. However, this may make your claim too big for Small Claims Court.
   
   If your total claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000.
   
@@ -844,7 +844,7 @@ template: cook_district_help
 subject: |
   **What if I am not sure?**
 content: |  
-  Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text (833) 411-1121 for assistance.
+  Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text [**(833) 411-1121**](tel:833-411-1121) for assistance.
 ---
 #id: daley center note
 #continue button field: daley_center_note
@@ -1002,17 +1002,13 @@ id: landlord check
 question: |
   Are you suing your former landlord to return a security deposit?
 subquestion: |
-  To learn more, read ILAO's article about [**getting or returning a security deposit**](https://www.illinoislegalaid.org/node/31176).
+  To learn more, see ILAO's guide to [**getting back a security deposit**](https://www.illinoislegalaid.org/node/31156).
 
   If you gave a landlord a security deposit but did not move into the unit they were renting, click **No**.
 fields:
   - no label: landlord_check
     datatype: yesnoradio
 ---
-id: under construction
-continue button field: under_construction
-question: |
-  Under construction
 ---
 id: agreement check
 question: |
@@ -1624,7 +1620,7 @@ question: |
 subquestion: |
   Your landlord does not have to return your security deposit if you have not moved out of the property.
   
-  To learn more, read ILAO's article on [**getting back a security deposit**](https://www.illinoislegalaid.org/legal-information/getting-back-security-deposit).
+  To learn more, see ILAO's guide to [**getting back a security deposit**](https://www.illinoislegalaid.org/node/31156).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -2208,6 +2204,7 @@ depends on:
   - damages_check
   - damages_date
 code: |
+  days_to_respond = 30
   if rlto_applies == True:
     # if the landlord did not send a damages letter at all, the landlord is not timely with their damages letter!
     if damages_check == False:
@@ -2215,7 +2212,7 @@ code: |
     else:
       damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
       if rental_address.city.lower() == "evanston":
-        
+        days_to_respond = 21
         if damage_date_difference.days > 21:
           landlord_timely = False
         else:
@@ -2226,6 +2223,7 @@ code: |
         else:
           landlord_timely = True
       elif rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "dekalb":
+        days_to_respond = 45
         if damage_date_difference.days > 45:
           landlord_timely = False
         else:
@@ -2243,8 +2241,12 @@ code: |
   else:
     #the value of landlord_timely should not matter if rtlo_applies is False
     landlord_timely = True
+  if date_difference(starting=move_out_date.plus(days=days_to_respond), ending=today()).years > 2:
+    within_sol = False
+  else:
+    within_sol = True
 ---
-#If the unit does not fall under the landlord's exclusions and the landlord did not timely send a damages letter, then the tenant can get extra damages. Wait... some jurisdictions don't allow extra damages? Did I put that catch in the default text generation code? Oy.
+#If the unit does not fall under the landlord's exclusions and the landlord did not timely send a damages letter, then the tenant can get extra damages.
 depends on:
   - landlord_timely
   - rlto_applies
@@ -2252,7 +2254,7 @@ depends on:
   - rental_address.county
 code: |
   if rlto_applies == True:
-    if landlord_timely == False:
+    if landlord_timely == False and within_sol:
       extra_damages = True
     else:
       extra_damages = False
