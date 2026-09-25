@@ -113,9 +113,8 @@ code: |
     if moved_out == False:
       no_move_kickout
     move_out_date
-    if demand_letter_check == False:
-      no_demand_kickout
-    demand_letter_date
+    if demand_letter_check:
+      demand_letter_date
     set_progress(40)
     if return_date_diff_reference.days < 0 or damage_date_diff_reference.days < 0:
       landlord_time_kickout
@@ -155,7 +154,8 @@ code: |
       if lease_attach_check == False:
         lease_attach_explain
     deposit_payment_proof
-    demand_letter_attach
+    if demand_letter_check:
+      demand_letter_attach
     generate_default
     use_that_default
     chop_off_county
@@ -1502,31 +1502,32 @@ depends on:
   - lease_check
   - lease_attach_check
   - deposit_payment_proof
+  - demand_letter_check
   - demand_letter_attach
 code: |
   if lease_check == True:
-    if lease_attach_check == True and deposit_payment_proof == True and demand_letter_attach == True:
+    if lease_attach_check == True and deposit_payment_proof == True and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the lease agreement, proof you paid a security deposit, and the demand letter you sent to your landlord"
-    elif lease_attach_check == True and deposit_payment_proof == True and demand_letter_attach == False:
+    elif lease_attach_check == True and deposit_payment_proof == True and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "the lease agreement and proof you paid a security deposit"
-    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_attach == True:
+    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the lease agreement and the demand letter you sent to your landlord"
-    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_attach == True:
+    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_check and demand_letter_attach == True:
       which_evidence = "proof you paid a security deposit and the demand letter you sent to your landlord"
-    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_attach == False:
+    elif lease_attach_check == True and deposit_payment_proof == False and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "the lease agreement"
-    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_attach == False:
+    elif lease_attach_check == False and deposit_payment_proof == True and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "proof you paid a security deposit"
-    elif lease_attach_check == False and deposit_payment_proof == False and demand_letter_attach == True:
+    elif lease_attach_check == False and deposit_payment_proof == False and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the demand letter you sent to your landlord"
     else:
       which_evidence = "none"
   else:      
-    if deposit_payment_proof == True and demand_letter_attach == True:
+    if deposit_payment_proof == True and demand_letter_check and demand_letter_attach == True:
       which_evidence = "proof you paid a security deposit and the demand letter you sent to your landlord"
-    elif deposit_payment_proof == True and demand_letter_attach == False:
+    elif deposit_payment_proof == True and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "proof you paid a security deposit"
-    elif deposit_payment_proof == False and demand_letter_attach == True:
+    elif deposit_payment_proof == False and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the demand letter you sent your landlord"
     else:
       which_evidence = "none"
@@ -2430,6 +2431,7 @@ depends on:
   - deposit_payments
   - deposit_payment_proof
   - move_out_date
+  - demand_letter_check
   - demand_letter_date
   - demand_letter_attach
   - partial_return_check
@@ -2473,11 +2475,12 @@ code: |
     
   default_deposit_claim_reason += str(paragraph_number) + ". I moved out of the unit on " + move_out_date + ". "  
 
-  default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + other_parties.full_names() + " on " + demand_letter_date + ". "
-  if demand_letter_attach == True:
-    default_deposit_claim_reason += "A copy of the letter is attached. "
-  default_deposit_claim_reason += "\n" + "\n"
-  paragraph_number += 1
+  if demand_letter_check:
+    default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + other_parties.full_names() + " on " + demand_letter_date + ". "
+    if demand_letter_attach == True:
+      default_deposit_claim_reason += "A copy of the letter is attached. "
+    default_deposit_claim_reason += "\n" + "\n"
+    paragraph_number += 1
   
   if partial_return_check ==  False:
     default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + other_parties.full_names() + " had returned $0 of the security deposit" + ".\n" + "\n"
@@ -3596,11 +3599,16 @@ review:
       **Move out date:**
       ${move_out_date}
     show if: landlord_check
+  - Edit: demand_letter_check
+    button: |
+      **Did you send a letter requesting your security deposit?**
+      ${word(yesno(demand_letter_check))}
+    show if: landlord_check
   - Edit: demand_letter_date
     button: |
       **When did you send a letter requesting your security deposit?**
       ${demand_letter_date}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - rental_address.address
@@ -3787,7 +3795,7 @@ review:
     button: |
       **Will you attach a copy of the demand letter you sent?**
       ${word(yesno(demand_letter_attach))}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - use_new_text
@@ -4170,11 +4178,16 @@ review:
       **Move out date:**
       ${move_out_date}
     show if: landlord_check
+  - Edit: demand_letter_check
+    button: |
+      **Did you send a letter requesting your security deposit?**
+      ${word(yesno(demand_letter_check))}
+    show if: landlord_check
   - Edit: demand_letter_date
     button: |
       **When did you send a letter requesting your security deposit?**
       ${demand_letter_date}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - rental_address.address
@@ -4361,7 +4374,7 @@ review:
     button: |
       **Will you attach a copy of the demand letter you sent?**
       ${word(yesno(demand_letter_attach))}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - use_new_text
