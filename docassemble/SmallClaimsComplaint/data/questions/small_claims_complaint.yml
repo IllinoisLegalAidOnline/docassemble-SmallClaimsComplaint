@@ -304,7 +304,7 @@ subquestion: |
 
   This program makes the forms to sue a person or business for up to $10,000. It can be used to sue a landlord for a security deposit.
   
-  To learn more, see ILAO's guide to [**small claims basics**](https://www.illinoislegalaid.org/node/190406).
+  To learn more, see ILAO's intro to [**small claims basics**](https://www.illinoislegalaid.org/node/190406).
 field: sees_nav_bar
 ---
 id: how to use
@@ -505,7 +505,7 @@ subquestion: |
 
   The Small Claims Court judge cannot require a person or business to do something or stop doing something, or to return property.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -519,7 +519,7 @@ question: |
 subquestion: |
   If your total claim is over $10,000 you can still sue in Small Claims Court, but the most you can ask for is $10,000. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
@@ -931,7 +931,7 @@ id: trial by jury
 question: |
   Who do you want to decide your case?
 subquestion: |
-  A judge or a jury can hear your small claims case. Jury trials are more complicated and can take more time than a case decided by a judge alone.
+  A judge will hear your small claims case unless you or another party ask for a jury. Jury trials are more complicated and can take more time than a case decided by a judge alone.
   
   If a judge hears the case, [**small claims court rules**](https://www.illinoislegalaid.org/legal-information/small-claims-court-rules) allow the judge to hold an informal hearing instead of a formal trial. Either party can ask for an informal hearing. The judge can also decide to hold an informal hearing even if no party asks for one.
 
@@ -992,7 +992,7 @@ id: landlord check
 question: |
   Are you suing your former landlord to return a security deposit?
 subquestion: |
-  To learn more, see ILAO's [**Security deposits**](https://www.illinoislegalaid.org/node/190936) Guide.
+  To learn more, see ILAO's article on [**Security deposits**](https://www.illinoislegalaid.org/node/190936).
 
   **Note:** If you gave a landlord a security deposit but you **did not move into the unit** they were renting, click **No**. You can explain what happened on another screen.
 fields:
@@ -1459,7 +1459,7 @@ subquestion: |
   * Sheriff, or
   * Special process server.
   
-  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/legal-information/serving-summons).
+  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
 fields: 
   - no label: other_parties[i].service_method
     input type: radio
@@ -1573,7 +1573,7 @@ subquestion: |
   To "serve" means to officially deliver court forms to a defendant. If your *Small Claims Complaint* is not served correctly, your case might be dismissed.
   % endif
   
-  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/legal-information/serving-summons).
+  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
   
   ${collapse_template(help_business_service)}
 ---
@@ -1610,7 +1610,7 @@ question: |
 subquestion: |
   Your landlord does not have to return your security deposit if you have not moved out of the property.
   
-  To learn more, see ILAO's [**Security deposits**](https://www.illinoislegalaid.org/node/190936) Guide.
+  To learn more, see ILAO's article on [**Security deposits**](https://www.illinoislegalaid.org/node/190936).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -2020,7 +2020,7 @@ subquestion: |
 
   Run this program on or after ${return_deadline} to make your *Small Claims Complaint*.
   
-  To learn more, see ILAO's [**Security deposits**](https://www.illinoislegalaid.org/node/190936) Guide.
+  To learn more, see ILAO's article on [**Security deposits**](https://www.illinoislegalaid.org/node/190936).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -2336,7 +2336,7 @@ question: |
 subquestion: |
   Your claim amount is at least ${currency(deposit_balance_owed)}. You can only sue for $10,000 or less in Small Claims Court.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
@@ -2349,7 +2349,7 @@ question: |
 subquestion: |
   With damages, your claim amount is ${currency(deposit_with_damages)}. You can only sue for $10,000 or less in Small Claims Court.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
