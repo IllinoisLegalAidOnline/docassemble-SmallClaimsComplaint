@@ -8,7 +8,6 @@ metadata:
 ---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
-  - docassemble.ALToolbox:phone-number-validation.yml
   - docassemble.ILAO:ilao-interview-framework.yml
   - docassemble.ILAO:shared-basic-questions.yml
 ---
@@ -114,9 +113,8 @@ code: |
     if moved_out == False:
       no_move_kickout
     move_out_date
-    if demand_letter_check == False:
-      no_demand_kickout
-    demand_letter_date
+    if demand_letter_check:
+      demand_letter_date
     set_progress(40)
     if return_date_diff_reference.days < 0 or damage_date_diff_reference.days < 0:
       landlord_time_kickout
@@ -156,7 +154,8 @@ code: |
       if lease_attach_check == False:
         lease_attach_explain
     deposit_payment_proof
-    demand_letter_attach
+    if demand_letter_check:
+      demand_letter_attach
     generate_default
     use_that_default
     chop_off_county
@@ -305,7 +304,7 @@ subquestion: |
 
   This program makes the forms to sue a person or business for up to $10,000. It can be used to sue a landlord for a security deposit.
   
-  To learn more, read ILAO's article about [**suing someone for $10,000 or less**](https://www.illinoislegalaid.org/node/31626).
+  To learn more, see ILAO's article about [**small claims**](https://www.illinoislegalaid.org/node/190406).
 field: sees_nav_bar
 ---
 id: how to use
@@ -357,7 +356,7 @@ subquestion: |
 
   ${collapse_template(mult_plaintiffs)}
 
-  To learn more, see ILAO's [**Small claims complaint (FAQ)**](https://www.illinoislegalaid.org/node/190606).
+  To learn more, see ILAO's [**Small claims FAQ**](https://www.illinoislegalaid.org/node/190411).
 ---
 template: mult_plaintiffs
 subject: |
@@ -377,7 +376,7 @@ subquestion: |
   * Try contacting the other person or business to solve the problem out of court. If you are successful, you save time, effort, and money. Call or write the other party to explain your position and the settlement you want.
   * Consider whether the person or business has money, income, or property. If they do not have any money, you may not be able to collect even if the judge decides they owe you money and enters a judgment against them.
   
-  To learn more, read ILAO's article about [**how small claims court works**](https://www.illinoislegalaid.org/legal-information/what-consider-filing-small-claims-case).
+  To learn more, see ILAO's [**how small claims court works FAQ**](https://www.illinoislegalaid.org/node/190426).
 
   If you think you may need legal help, read ILAO's article about [**finding legal help for a small claims case**](https://www.illinoislegalaid.org/node/190431).
 ---
@@ -506,7 +505,7 @@ subquestion: |
 
   The Small Claims Court judge cannot require a person or business to do something or stop doing something, or to return property.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -520,7 +519,7 @@ question: |
 subquestion: |
   If your total claim is over $10,000 you can still sue in Small Claims Court, but the most you can ask for is $10,000. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
@@ -551,7 +550,7 @@ question: |
 subquestion: |
   You can only sue for $10,000 or less in Small Claims Court. If you want to sue for more, check with your local circuit clerk to learn which division you should use.
   
-  Depending on where your rental unit is, you may be able to sue for damages in addition to the amount of your unreturned security deposit. However, these damages may make your claim too big for Small Claims Court.
+  Depending on where your rental unit is, you may be able to sue for double the amount of the deposit plus court costs. However, this may make your claim too big for Small Claims Court.
   
   If your total claim is over $10,000, you can still sue in Small Claims Court, but the most you can ask for is $10,000.
   
@@ -844,16 +843,7 @@ template: cook_district_help
 subject: |
   **What if I am not sure?**
 content: |  
-  Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text (833) 411-1121 for assistance.
----
-#id: daley center note
-#continue button field: daley_center_note
-#question: |
-#  Free help at the Daley Center
-#subquestion: |
-#  If you are filing for $3,000.00 or less, you may be able to get free help at the [**Daley Center's Pro Se Small Claims Court**](https://www.cookcountycourt.org/district/first-municipal-district-chicago/pro-se-small-claims-court).
-#  
-#  While it may be easier to get help at the Daley Center, you can still continue to make forms with this program.
+  Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text [**(833) 411-1121**](tel:833-411-1121) for assistance.
 ---
 #Note: may need to change this so that a non-incorporated business's name and owner's name are associated with the same indvidual within other_parties
 sets:
@@ -941,7 +931,7 @@ id: trial by jury
 question: |
   Who do you want to decide your case?
 subquestion: |
-  A judge or a jury can hear your small claims case. Jury trials are more complicated and can take more time than a case decided by a judge alone.
+  A judge will hear your small claims case unless you or another party ask for a jury. Jury trials are more complicated and can take more time than a case decided by a judge alone.
   
   If a judge hears the case, [**small claims court rules**](https://www.illinoislegalaid.org/legal-information/small-claims-court-rules) allow the judge to hold an informal hearing instead of a formal trial. Either party can ask for an informal hearing. The judge can also decide to hold an informal hearing even if no party asks for one.
 
@@ -1002,17 +992,12 @@ id: landlord check
 question: |
   Are you suing your former landlord to return a security deposit?
 subquestion: |
-  To learn more, read ILAO's article about [**getting or returning a security deposit**](https://www.illinoislegalaid.org/node/31176).
+  To learn more, see ILAO's article on [**Security deposits**](https://www.illinoislegalaid.org/node/190936).
 
-  If you gave a landlord a security deposit but did not move into the unit they were renting, click **No**.
+  **Note:** If you gave a landlord a security deposit but you **did not move into the unit** they were renting, click **No**. You can explain what happened on another screen.
 fields:
   - no label: landlord_check
     datatype: yesnoradio
----
-id: under construction
-continue button field: under_construction
-question: |
-  Under construction
 ---
 id: agreement check
 question: |
@@ -1474,7 +1459,7 @@ subquestion: |
   * Sheriff, or
   * Special process server.
   
-  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/legal-information/serving-summons).
+  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
 fields: 
   - no label: other_parties[i].service_method
     input type: radio
@@ -1517,31 +1502,32 @@ depends on:
   - lease_check
   - lease_attach_check
   - deposit_payment_proof
+  - demand_letter_check
   - demand_letter_attach
 code: |
   if lease_check == True:
-    if lease_attach_check == True and deposit_payment_proof == True and demand_letter_attach == True:
+    if lease_attach_check == True and deposit_payment_proof == True and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the lease agreement, proof you paid a security deposit, and the demand letter you sent to your landlord"
-    elif lease_attach_check == True and deposit_payment_proof == True and demand_letter_attach == False:
+    elif lease_attach_check == True and deposit_payment_proof == True and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "the lease agreement and proof you paid a security deposit"
-    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_attach == True:
+    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the lease agreement and the demand letter you sent to your landlord"
-    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_attach == True:
+    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_check and demand_letter_attach == True:
       which_evidence = "proof you paid a security deposit and the demand letter you sent to your landlord"
-    elif lease_attach_check == True and deposit_payment_proof == False and demand_letter_attach == False:
+    elif lease_attach_check == True and deposit_payment_proof == False and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "the lease agreement"
-    elif lease_attach_check == False and deposit_payment_proof == True and demand_letter_attach == False:
+    elif lease_attach_check == False and deposit_payment_proof == True and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "proof you paid a security deposit"
-    elif lease_attach_check == False and deposit_payment_proof == False and demand_letter_attach == True:
+    elif lease_attach_check == False and deposit_payment_proof == False and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the demand letter you sent to your landlord"
     else:
       which_evidence = "none"
   else:      
-    if deposit_payment_proof == True and demand_letter_attach == True:
+    if deposit_payment_proof == True and demand_letter_check and demand_letter_attach == True:
       which_evidence = "proof you paid a security deposit and the demand letter you sent to your landlord"
-    elif deposit_payment_proof == True and demand_letter_attach == False:
+    elif deposit_payment_proof == True and (not demand_letter_check or demand_letter_attach == False):
       which_evidence = "proof you paid a security deposit"
-    elif deposit_payment_proof == False and demand_letter_attach == True:
+    elif deposit_payment_proof == False and demand_letter_check and demand_letter_attach == True:
       which_evidence = "the demand letter you sent your landlord"
     else:
       which_evidence = "none"
@@ -1587,7 +1573,7 @@ subquestion: |
   To "serve" means to officially deliver court forms to a defendant. If your *Small Claims Complaint* is not served correctly, your case might be dismissed.
   % endif
   
-  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/legal-information/serving-summons).
+  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
   
   ${collapse_template(help_business_service)}
 ---
@@ -1624,7 +1610,7 @@ question: |
 subquestion: |
   Your landlord does not have to return your security deposit if you have not moved out of the property.
   
-  To learn more, read ILAO's article on [**getting back a security deposit**](https://www.illinoislegalaid.org/legal-information/getting-back-security-deposit).
+  To learn more, see ILAO's article on [**Security deposits**](https://www.illinoislegalaid.org/node/190936).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -1654,7 +1640,7 @@ question: |
 subquestion: |
   You have to send a demand letter to your former landlord before suing for your security deposit.
 
-  To make a demand letter, you can use ILAO's [**Security deposit demand letter Easy Form**](https://www.illinoislegalaid.org/legal-information/security-deposit-demand-letter).
+  To make a demand letter, you can use ILAO's [**Security deposit demand letter Easy Form**](https://www.illinoislegalaid.org/node/165826).
 
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -2034,7 +2020,7 @@ subquestion: |
 
   Run this program on or after ${return_deadline} to make your *Small Claims Complaint*.
   
-  To learn more, read ILAO's guide to [**Getting or returning a security deposit**](https://www.illinoislegalaid.org/legal-information/getting-or-returning-security-deposit).
+  To learn more, see ILAO's article on [**Security deposits**](https://www.illinoislegalaid.org/node/190936).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -2208,6 +2194,7 @@ depends on:
   - damages_check
   - damages_date
 code: |
+  days_to_respond = 30
   if rlto_applies == True:
     # if the landlord did not send a damages letter at all, the landlord is not timely with their damages letter!
     if damages_check == False:
@@ -2215,7 +2202,7 @@ code: |
     else:
       damage_date_difference = date_difference(starting=move_out_date, ending=damages_date)
       if rental_address.city.lower() == "evanston":
-        
+        days_to_respond = 21
         if damage_date_difference.days > 21:
           landlord_timely = False
         else:
@@ -2226,6 +2213,7 @@ code: |
         else:
           landlord_timely = True
       elif rental_address.city.lower() == "mount prospect" or rental_address.city.lower() == "dekalb":
+        days_to_respond = 45
         if damage_date_difference.days > 45:
           landlord_timely = False
         else:
@@ -2243,8 +2231,12 @@ code: |
   else:
     #the value of landlord_timely should not matter if rtlo_applies is False
     landlord_timely = True
+  if date_difference(starting=move_out_date.plus(days=days_to_respond), ending=today()).years > 2:
+    within_sol = False
+  else:
+    within_sol = True
 ---
-#If the unit does not fall under the landlord's exclusions and the landlord did not timely send a damages letter, then the tenant can get extra damages. Wait... some jurisdictions don't allow extra damages? Did I put that catch in the default text generation code? Oy.
+#If the unit does not fall under the landlord's exclusions and the landlord did not timely send a damages letter, then the tenant can get extra damages.
 depends on:
   - landlord_timely
   - rlto_applies
@@ -2252,7 +2244,7 @@ depends on:
   - rental_address.county
 code: |
   if rlto_applies == True:
-    if landlord_timely == False:
+    if landlord_timely == False and within_sol:
       extra_damages = True
     else:
       extra_damages = False
@@ -2344,7 +2336,7 @@ question: |
 subquestion: |
   Your claim amount is at least ${currency(deposit_balance_owed)}. You can only sue for $10,000 or less in Small Claims Court.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
@@ -2357,7 +2349,7 @@ question: |
 subquestion: |
   With damages, your claim amount is ${currency(deposit_with_damages)}. You can only sue for $10,000 or less in Small Claims Court.
   
-  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/legal-information/starting-lawsuit-0).
+  To learn more about your other options, read ILAO's article on [**starting a lawsuit**](https://www.illinoislegalaid.org/node/32636).
   
    Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
    
@@ -2439,6 +2431,7 @@ depends on:
   - deposit_payments
   - deposit_payment_proof
   - move_out_date
+  - demand_letter_check
   - demand_letter_date
   - demand_letter_attach
   - partial_return_check
@@ -2477,16 +2470,17 @@ code: |
   if deposit_payment_proof == True:
     default_deposit_claim_reason += "Proof showing that I paid the security deposit is attached" + ".\n" + "\n"
   else:
-    default_deposit_claim_reason += ".\n" + "\n"
+    default_deposit_claim_reason += "\n" + "\n"
   paragraph_number += 1
     
   default_deposit_claim_reason += str(paragraph_number) + ". I moved out of the unit on " + move_out_date + ". "  
 
-  default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + other_parties.full_names() + " on " + demand_letter_date + ". "
-  if demand_letter_attach == True:
-    default_deposit_claim_reason += "A copy of the letter is attached. "
-  default_deposit_claim_reason += "\n" + "\n"
-  paragraph_number += 1
+  if demand_letter_check:
+    default_deposit_claim_reason += "I sent a letter demanding return of my security deposit to " + other_parties.full_names() + " on " + demand_letter_date + ". "
+    if demand_letter_attach == True:
+      default_deposit_claim_reason += "A copy of the letter is attached. "
+    default_deposit_claim_reason += "\n" + "\n"
+    paragraph_number += 1
   
   if partial_return_check ==  False:
     default_deposit_claim_reason += str(paragraph_number) + ". As of " + today() + " " + other_parties.full_names() + " had returned $0 of the security deposit" + ".\n" + "\n"
@@ -3605,11 +3599,16 @@ review:
       **Move out date:**
       ${move_out_date}
     show if: landlord_check
+  - Edit: demand_letter_check
+    button: |
+      **Did you send a letter requesting your security deposit?**
+      ${word(yesno(demand_letter_check))}
+    show if: landlord_check
   - Edit: demand_letter_date
     button: |
       **When did you send a letter requesting your security deposit?**
       ${demand_letter_date}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - rental_address.address
@@ -3796,7 +3795,7 @@ review:
     button: |
       **Will you attach a copy of the demand letter you sent?**
       ${word(yesno(demand_letter_attach))}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - use_new_text
@@ -4179,11 +4178,16 @@ review:
       **Move out date:**
       ${move_out_date}
     show if: landlord_check
+  - Edit: demand_letter_check
+    button: |
+      **Did you send a letter requesting your security deposit?**
+      ${word(yesno(demand_letter_check))}
+    show if: landlord_check
   - Edit: demand_letter_date
     button: |
       **When did you send a letter requesting your security deposit?**
       ${demand_letter_date}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - rental_address.address
@@ -4370,7 +4374,7 @@ review:
     button: |
       **Will you attach a copy of the demand letter you sent?**
       ${word(yesno(demand_letter_attach))}
-    show if: landlord_check
+    show if: landlord_check and demand_letter_check
   - label: Edit
     fields:
       - use_new_text
