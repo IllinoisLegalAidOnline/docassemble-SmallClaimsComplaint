@@ -18,7 +18,7 @@ objects:
   - other_parties[i].agent: ALIndividual
   - other_parties[i].service_address: ALAddress
   - other_parties[i].alt_service_address: ALAddress
-  - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts.xlsx')
+  - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts_plus.xlsx')
   - rental_address: ALAddress
   - deposit_payments: DAList
   - deposit_dates: DAList
@@ -71,8 +71,11 @@ code: |
       amount_kickout
   else:
     note_about_amount_limit
-  trial_court_index
-  filing_location.get_county
+  if trial_court_index == -1:
+    cook_district
+  elif trial_court_index == -2:
+    kane_district
+  courthouse_info
   #if trial_court_index == -1:
   #  if landlord_check == False:
   #    if amount_check < 3000.01:
@@ -158,7 +161,7 @@ code: |
       demand_letter_attach
     generate_default
     use_that_default
-    chop_off_county
+    #chop_off_county
     if use_new_text == True:
       preview_complaint
       if add_second_page == True:
@@ -287,14 +290,14 @@ code: |
   #other_parties[i].address.address
   other_parties[i].complete = True
 ---
-reconsider: True
-code: |
-  quick_county_storage = trial_court.address.county.lower()
-  if quick_county_storage.endswith(" county"):
-    trial_court.address.county = trial_court.address.county[:-7]
-    chop_off_county = True
-  else:
-    chop_off_county = False
+#reconsider: True
+#code: |
+#  quick_county_storage = trial_court.address.county.lower()
+#  if quick_county_storage.endswith(" county"):
+#    trial_court.address.county = trial_court.address.county[:-7]
+#    chop_off_county = True
+#  else:
+#    chop_off_county = False
 ---
 id: welcome
 question: |
@@ -378,7 +381,7 @@ subquestion: |
   
   To learn more, see ILAO's [**how small claims court works FAQ**](https://www.illinoislegalaid.org/node/190426).
 
-  If you think you may need legal help, read ILAO's article about [**finding legal help for a small claims case**](https://www.illinoislegalaid.org/node/190431).
+  If you think you may need legal help, see ILAO's [**finding legal help for a small claims case FAQ**](https://www.illinoislegalaid.org/node/190431).
 ---
 id: user name
 question: |
@@ -632,14 +635,29 @@ fields:
   - County: trial_court_index
     datatype: integer
     code: |
-      ilao_court_county_lookup(court_list)
+      court_county_lookup()
+---
+code: |
+  def court_county_lookup(lowercase=False):
+    all_court_counties = court_list._load_courts()['address_county'].items()
+    filtered_courts = [(-1, "cook"), (-2, "kane")] if lowercase else [(-1, "Cook"), (-2, "Kane")]
+    for court in all_court_counties:
+      if court[1] != "Cook" and court[1] != "Kane":
+        court_name = court[1].lower() if lowercase else court[1]
+        filtered_courts.append((court[0],court_name))
+    return sorted( filtered_courts, key=lambda y: y[1])
 ---
 depends on:
   - trial_court_index
   - cook_district
+  - kane_district
 code: |
   if trial_court_index == -1:
-    trial_court = court_list.as_court('trial_court', cook_district)
+    trial_court = court_list.as_court('trial_court', int(cook_district))
+
+  elif trial_court_index == -2:
+    trial_court = court_list.as_court('trial_court', int(kane_district))
+  
   else:
     trial_court = court_list.as_court('trial_court', trial_court_index)
     
@@ -648,17 +666,14 @@ code: |
   court_city = str(trial_court.address.city)
   court_state = str(trial_court.address.state)
   court_zip = str(trial_court.address.zip)
-  quick_county_storage = trial_court.address.county.lower()
-  if quick_county_storage.endswith(" county"):
-    trial_court.address.county = trial_court.address.county[:-7]
   court_county = str(trial_court.address.county)
-  courthouse_info = court_name + ", " + court_street_address + ", " + court_city + ", " + court_state + " " + court_zip
+  courthouse_info = court_name + ", " + court_street_address + ", " + court_city + ", " + court_state
 ---
-depends on:
-  - trial_court_index
-code: |  
-  filing_location.county = trial_court.address.county + " County" 
-  filing_location.get_county = True
+#depends on:
+#  - trial_court_index
+#code: |  
+#  filing_location.county = trial_court.address.county + " County" 
+#  filing_location.get_county = True
 ---
 id: Cook County district
 question: |
@@ -843,7 +858,33 @@ template: cook_district_help
 subject: |
   **What if I am not sure?**
 content: |  
-  Visit **[Illinois Court Help](https://www.ilcourthelp.gov/)**, or you can call or text [**(833) 411-1121**](tel:833-411-1121) for assistance.
+  For assistance you can contact Illinois Court Help:
+
+  * **[Visit the Illinois Court Help website :external-link:](https://www.ilcourthelp.gov/)**,
+  * <a href="tel:833-411-1121">**Call (833) 411-1121 :phone:**</a>, or
+  * <a href="sms:833-411-1121">**Text (833) 411-1121 :comment:**</a>.
+---
+id: Kane County district
+question: |
+  In which Kane County courthouse will you file your case?
+subquestion: |
+  ${ collapse_template(kane_district_help) }  
+field: kane_district
+choices:
+  - Kane County Courthouse, 100 S. 3rd Street, Geneva: 52
+  - Kane County Judicial Center, 37W777 Route 38, St. Charles: 53
+  - Kane County Juvenile Justice Center, 37W655 Route 38, St. Charles: 54
+---
+template: kane_district_help
+subject: |
+  **What if I am not sure?**
+content: |  
+  For assistance you can contact Illinois Court Help:
+
+  * **[Visit the Illinois Court Help website :external-link:](https://www.ilcourthelp.gov/)**,
+  * <a href="tel:833-411-1121">**Call (833) 411-1121 :phone:**</a>, or
+  * <a href="sms:833-411-1121">**Text (833) 411-1121 :comment:**</a>.
+
 ---
 #Note: may need to change this so that a non-incorporated business's name and owner's name are associated with the same indvidual within other_parties
 sets:
@@ -914,7 +955,7 @@ subject: |
 content: |
   When you are suing someone, it is important to know their address so you can serve them with legal documents and so the court knows where they are. If you do not know their address, try looking up their information online or reaching out to people who know them.
   
-  If you know ${other_parties[i].name_full()}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name_full()} has filed a change of address request. You can call USPS at 1-800-275-8777. 
+  If you know ${other_parties[i].name_full()}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name_full()} has filed a change of address request. You can <a href="tel:1-800-275-8777">**call USPS at 1-800-275-8777 :phone:**</a>. 
 ---
 id: nine max
 continue button field: nine_max
@@ -933,7 +974,7 @@ question: |
 subquestion: |
   A judge will hear your small claims case unless you or another party ask for a jury. Jury trials are more complicated and can take more time than a case decided by a judge alone.
   
-  If a judge hears the case, [**small claims court rules**](https://www.illinoislegalaid.org/legal-information/small-claims-court-rules) allow the judge to hold an informal hearing instead of a formal trial. Either party can ask for an informal hearing. The judge can also decide to hold an informal hearing even if no party asks for one.
+  If a judge hears the case, [**small claims court rules**](https://www.illinoislegalaid.org/node/190551) allow the judge to hold an informal hearing instead of a formal trial. Either party can ask for an informal hearing. The judge can also decide to hold an informal hearing even if no party asks for one.
 
   If a jury hears the case, there will be a formal trial and there may be a fee. In a jury trial, both parties need to prepare jury instructions, pick jurors, and follow formal rules.
 
@@ -945,7 +986,7 @@ subquestion: |
 
   ${ collapse_template(jury_trial_help) }  
 
-  To learn more, read ILAO's article about [**civil jury trials and civil bench trials**](https://www.illinoislegalaid.org/node/178441).
+  To learn more, see ILAO's article about [**civil jury trials and civil bench trials**](https://www.illinoislegalaid.org/node/178441).
 fields: 
   - no label: trial_with
     input type: radio
@@ -1459,7 +1500,7 @@ subquestion: |
   * Sheriff, or
   * Special process server.
   
-  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
+  To learn more, see ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
 fields: 
   - no label: other_parties[i].service_method
     input type: radio
@@ -1573,7 +1614,7 @@ subquestion: |
   To "serve" means to officially deliver court forms to a defendant. If your *Small Claims Complaint* is not served correctly, your case might be dismissed.
   % endif
   
-  To learn more, read ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
+  To learn more, see ILAO's article on [**serving a summons**](https://www.illinoislegalaid.org/node/147221).
   
   ${collapse_template(help_business_service)}
 ---
@@ -3508,7 +3549,7 @@ attachment:
   editable: True
   pdf template file: additional_proof_of_delivery.pdf
   fields:
-      - "trial_court_county": ${ trial_court.address.county }
+      - "trial_court_county": ${ court_county }
       - "plaintiffs": ${users[0].name_full()}
       
       - "defendants": ${ other_parties.full_names() }    
@@ -3560,8 +3601,11 @@ review:
         - trial_court
     button: |
       **Which county are you filing your *Small Claims Complaint* in?**
-      ${end_in_county(court_county)}
-  - Edit: cook_district
+      ${ court_county }
+  - Edit: 
+      - cook_district
+      - recompute:
+        - trial_court
     button: |
       **Cook County courthouse:**
       % if cook_district == "15":
@@ -3574,10 +3618,28 @@ review:
       ${ "Fourth Municipal District, 1500 Maybrook Drive, Maywood" }
       % elif cook_district == "19":
       ${ "Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview" }
-      % else:
+      % elif cook_district == "20":
       ${ "Sixth Municipal District, 16501 South Kedzie Parkway, Markham" }
+      % else:
+      No courthouse selected
       % endif      
     show if: trial_court_index == -1
+  - Edit:
+      - kane_district
+      - recompute:
+        - trial_court
+    button: |
+      **Kane County courthouse:**
+      % if kane_district == "52":
+      ${ "Kane County Courthouse, 100 S. 3rd Street, Geneva" }
+      % elif kane_district == "53":
+      ${ "Kane County Judicial Center, 37W777 Route 38, St. Charles" }
+      % elif kane_district == "54":
+      ${ "Kane County Juvenile Justice Center, 37W655 Route 38, St. Charles" }
+      % else:
+      No courthouse selected
+      % endif
+    show if: trial_court_index == -2
   - Edit: other_parties.revisit
     button: |
       **Defendants: (Edit to change names, addresses, and other information)**
@@ -4143,11 +4205,14 @@ review:
     fields:
       - trial_court_index
       - recompute:
-        - courthouse_info
+        - trial_court
     button: |
       **Which county are you filing your *Small Claims Complaint* in?**
-      ${end_in_county(court_county)}
-  - Edit: cook_district
+      ${ court_county }
+  - Edit: 
+      - cook_district
+      - recompute:
+        - trial_court
     button: |
       **Cook County courthouse:**
       % if cook_district == "15":
@@ -4160,10 +4225,28 @@ review:
       ${ "Fourth Municipal District, 1500 Maybrook Drive, Maywood" }
       % elif cook_district == "19":
       ${ "Fifth Municipal District, 10220 S. 76th Avenue, Bridgeview" }
-      % else:
+      % elif cook_district == "20":
       ${ "Sixth Municipal District, 16501 South Kedzie Parkway, Markham" }
+      % else:
+      No courthouse selected
       % endif      
     show if: trial_court_index == -1
+  - Edit:
+      - kane_district
+      - recompute:
+        - trial_court
+    button: |
+      **Kane County courthouse:**
+      % if kane_district == "52":
+      ${ "Kane County Courthouse, 100 S. 3rd Street, Geneva" }
+      % elif kane_district == "53":
+      ${ "Kane County Judicial Center, 37W777 Route 38, St. Charles" }
+      % elif kane_district == "54":
+      ${ "Kane County Juvenile Justice Center, 37W655 Route 38, St. Charles" }
+      % else:
+      No courthouse selected
+      % endif
+    show if: trial_court_index == -2
   - Edit: landlord_check
     button: |
       **Are you suing your former landlord to return a security deposit?**
