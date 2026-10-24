@@ -861,8 +861,8 @@ content: |
   For assistance you can contact Illinois Court Help:
 
   * **[Visit the Illinois Court Help website :external-link:](https://www.ilcourthelp.gov/)**,
-  * <a href="tel:833-411-1121">**Call (833) 411-1121 :phone:**</a>, or
-  * <a href="sms:833-411-1121">**Text (833) 411-1121 :comment:**</a>.
+  * <a href="tel:+18334111121">**Call (833) 411-1121 :phone:**</a>, or
+  * <a href="sms:+18334111121">**Text (833) 411-1121 :comment:**</a>.
 ---
 id: Kane County district
 question: |
@@ -882,8 +882,8 @@ content: |
   For assistance you can contact Illinois Court Help:
 
   * **[Visit the Illinois Court Help website :external-link:](https://www.ilcourthelp.gov/)**,
-  * <a href="tel:833-411-1121">**Call (833) 411-1121 :phone:**</a>, or
-  * <a href="sms:833-411-1121">**Text (833) 411-1121 :comment:**</a>.
+  * <a href="tel:+18334111121">**Call (833) 411-1121 :phone:**</a>, or
+  * <a href="sms:+18334111121">**Text (833) 411-1121 :comment:**</a>.
 
 ---
 #Note: may need to change this so that a non-incorporated business's name and owner's name are associated with the same indvidual within other_parties
@@ -955,7 +955,7 @@ subject: |
 content: |
   When you are suing someone, it is important to know their address so you can serve them with legal documents and so the court knows where they are. If you do not know their address, try looking up their information online or reaching out to people who know them.
   
-  If you know ${other_parties[i].name_full()}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name_full()} has filed a change of address request. You can <a href="tel:1-800-275-8777">**call USPS at 1-800-275-8777 :phone:**</a>. 
+  If you know ${other_parties[i].name_full()}'s previous address, you may be able to ask the [**United States Postal Service (USPS)**](https://www.usps.com/help/contact-us.htm) if ${other_parties[i].name_full()} has filed a change of address request. You can <a href="tel:+18002758777">**call USPS at 1-800-275-8777**</a>. 
 ---
 id: nine max
 continue button field: nine_max
